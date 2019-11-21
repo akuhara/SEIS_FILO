@@ -21,6 +21,7 @@ module mod_vmodel
      procedure :: get_h => vmodel_get_h
      ! utilities
      procedure :: set_example_ocean => vmodel_set_example_ocean
+     procedure :: set_example_land => vmodel_set_example_land
      procedure :: display => vmodel_display
      procedure :: vp2rho_brocher => vmodel_vp2rho_brocher
      procedure :: vp2vs_brocher => vmodel_vp2vs_brocher
@@ -268,6 +269,34 @@ contains
 
     return 
   end subroutine vmodel_set_example_ocean
+  
+  !---------------------------------------------------------------------
+
+  subroutine vmodel_set_example_land(self)
+    class(vmodel), intent(inout) :: self
+    
+    call self%set_nlay(3)
+    
+    ! Ocean
+    call self%set_vp(1, 0.255d0)
+    call self%set_vs(1, 0.150d0)
+    call self%set_rho(1, 1.00d0)
+    call self%set_h(1, 0.002d0)
+
+    ! Sediment
+    call self%set_vp(2, 0.340d0)
+    call self%set_vs(2, 0.200d0)
+    call self%set_rho(2, 1.00d0)
+    call self%set_h(2, 0.002d0)
+
+    ! Basement
+    call self%set_vp(3, 0.510d0)
+    call self%set_vs(3, 0.300d0)
+    call self%set_rho(3, 1.00d0)
+    call self%set_h(3, 100.d0)
+
+    return 
+  end subroutine vmodel_set_example_land
   
   !---------------------------------------------------------------------
   

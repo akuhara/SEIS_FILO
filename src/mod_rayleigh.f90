@@ -4,7 +4,7 @@ module mod_rayleigh
   
   double precision, private, parameter :: pi = acos(-1.d0)
   double precision, private, parameter :: eps = 1.0d-10
-  double precision, private, parameter :: huge = 500.d0
+  double precision, private, parameter :: huge = 100.d0
   integer, private, parameter :: i12 = 1, i13 = 2, i14 = 3
   integer, private, parameter :: i23 = 4, i24 = 5
 
@@ -12,10 +12,17 @@ module mod_rayleigh
   type rayleigh
      private
      type(vmodel) :: vmodel
+     
      double precision :: fmin 
      double precision :: fmax
      double precision :: df  
      integer :: nf
+
+     double precision :: cmin 
+     double precision :: cmax
+     double precision :: dc  
+     integer :: nc
+     
      double precision, allocatable :: c(:) ! phase velocity
      double precision, allocatable :: u(:) ! group velocity
      double precision :: y(5)
@@ -25,6 +32,7 @@ module mod_rayleigh
      procedure :: init_propagation => rayleigh_init_propagation
      procedure :: do_propagation => rayleigh_do_propagation
      procedure :: solid_propagator => rayleigh_solid_propagator
+     procedure :: liquid_propagator => rayleigh_liquid_propagator
   end type rayleigh
 
   interface rayleigh
@@ -35,10 +43,12 @@ contains
   
   !---------------------------------------------------------------------
   
-  type(rayleigh) function init_rayleigh(vm, fmin, fmax, df)
+  type(rayleigh) function init_rayleigh(vm, fmin, fmax, df, &
+       & cmin, cmax, dc)
     type(vmodel), intent(in) :: vm
     double precision, intent(in) :: fmin, fmax, df
-    integer :: nlay, nf
+    double precision, intent(in) :: cmin, cmax, dc
+    integer :: nlay
     
     ! velocity model
     init_rayleigh%vmodel = vm
@@ -56,15 +66,23 @@ contains
     init_rayleigh%fmin = fmin
     init_rayleigh%fmax = fmax
     init_rayleigh%df = df
-    
-    nf = nint((fmax - fmin) / df) + 1
-    if (nf < 1) then
-       write(0,*)"ERROR: fmax must be .gt. fmin (mod_rayleigh)"
+    init_rayleigh%nf = nint((fmax - fmin) / df) + 1
+    if (init_rayleigh%nf < 1) then
+       write(0,*)"ERROR: fmax must be .gt. fmin (init_rayleigh)"
        stop
     end if
-
-    allocate(init_rayleigh%c(nf), init_rayleigh%u(nf))
+    allocate(init_rayleigh%c(init_rayleigh%nf), &
+         &   init_rayleigh%u(init_rayleigh%nf))
     
+    init_rayleigh%cmin = cmin
+    init_rayleigh%cmax = cmax
+    init_rayleigh%dc = dc
+    init_rayleigh%nc = nint((cmax - cmin) / dc) + 1
+    if (init_rayleigh%nc < 1) then
+      write(0,*)"ERROR: cmax must be .gt. cmin (init_rayleigh)"
+      stop
+   end if
+
     return 
   end function init_rayleigh
     
@@ -72,16 +90,17 @@ contains
 
   subroutine rayleigh_dispersion(self)
     class(rayleigh), intent(inout) :: self
-    double precision :: omega, del_omega, omega_min, omega_max
-
-    omega_min = self%fmin * 2.d0 * pi
-    omega_max = self%fmax * 2.d0 * pi
-    del_omega = self%df * 2.d0 * pi
-    omega = omega_min
+    double precision :: omega, c, rslt
+    integer :: i, j
     
-    do while (omega <= omega_max) 
-       call self%init_propagation(1.d0)
-       omega = omega + del_omega
+    do i = 1, self%nf
+       omega = 2.d0 * pi * (self%fmin  + (i - 1) * self%df)
+       write(*,*) omega / (2.d0 * pi)
+       do j = 1, self%nc
+          c = self%cmin + (j - 1) * self%dc
+          call self%do_propagation(omega, c, rslt)
+          write(111,*)c, omega/ (2.d0 * pi), rslt
+       end do
     end do
 
     
@@ -94,6 +113,7 @@ contains
     class(rayleigh), intent(inout) :: self
     integer :: nlay
     double precision, intent(in) :: c
+
     double precision :: vp, vs, rho, ra, rb, gm
 
     ! get velocity of model bottom
@@ -119,17 +139,19 @@ contains
     self%y(i24) = -rho * (gm * self%y(i12) + rho * (gm - 1.d0)) 
 
     self%y(1:5) = self%y(1:5) * eps
-    write(*,*)eps
     
     return 
   end subroutine rayleigh_init_propagation
 
   !---------------------------------------------------------------------
 
-  subroutine rayleigh_do_propagation(self, omega, c)
+  subroutine rayleigh_do_propagation(self, omega, c, rslt)
     class(rayleigh), intent(inout) :: self
     double precision, intent(in) :: omega, c
+    double precision, intent(out) :: rslt
+    double precision :: maxamp
     integer :: i, nlay, i0
+    
     nlay = self%vmodel%get_nlay()
 
     if (self%is_ocean) then
@@ -137,9 +159,22 @@ contains
     else
        i0 = 1
     end if
+    
+    call self%init_propagation(c)
     do i = nlay-1, i0, -1
        self%y = matmul(self%solid_propagator(i, omega, c), self%y)
+       maxamp = maxval(abs(self%y))
+       self%y(1:5) = self%y(1:5) / maxamp
     end do
+
+    if (self%is_ocean) then
+       self%y(1) = self%y(3)
+       self%y(2) = self%y(5)
+       self%y(1:2) = matmul(self%liquid_propagator(omega, c), self%y(1:2))
+       rslt = self%y(2)
+    else
+       rslt = self%y(i24)
+    end if
     
     return 
   end subroutine rayleigh_do_propagation
@@ -156,7 +191,7 @@ contains
     double precision :: ca, sa, cb, sb, ra2, rb2, fac_a, fac_b, fac, gm
     
     vp = self%vmodel%get_vp(i)
-    vs = self%vmodel%get_vp(i)
+    vs = self%vmodel%get_vs(i)
     rho = self%vmodel%get_rho(i)
     h = self%vmodel%get_h(i)
     
@@ -216,12 +251,37 @@ contains
 
   !---------------------------------------------------------------------
   
+  function rayleigh_liquid_propagator(self, omega, c) result(p)
+    class(rayleigh), intent(inout) :: self
+    double precision, intent(in) :: omega, c
+    double precision :: vp, rho, h, k
+    double precision :: ca, sa, ra2, fac
+    double precision :: p(2, 2)
+    
+    vp = self%vmodel%get_vp(1)
+    rho = self%vmodel%get_rho(1)
+    h = self%vmodel%get_h(1)
+    
+    k = omega / c
+    call calc_hyp_trig(c, vp, h, k, ca, sa, ra2, fac)
+
+    p(1, 1) = ca
+    p(1, 2) = -ra2 * sa / rho
+    p(2, 1) = - rho * sa
+    p(2, 2) = ca
+    
+    return 
+  end function rayleigh_liquid_propagator
+
+  !---------------------------------------------------------------------
+  
   subroutine calc_hyp_trig(c, v, h, k, ch, sh, r2, fac)
     real(8), intent(in) :: c, v, h, k
     real(8), intent(out) :: sh, ch, r2, fac
     real(8) :: r
-
-    if (v >= c) then
+    
+    !write(*,*)c, v, h, k
+    if (v > c) then
        r = sqrt(1.d0 - (c/v)**2)
        r2 = r * r
        ch = 1.d0
@@ -231,13 +291,19 @@ contains
        else
           fac = 0.d0
        end if
-    else
+    else if (v < c) then
        ! Use cos and sin instead of cosh and sinh 
        !   to avoid complex values
        r = sqrt((c/v)**2 - 1.d0)
        r2 = - r * r
        ch = cos(r * h * k) 
        sh = sin(r * h * k) / r 
+       fac = 1.d0
+    else
+       r = 0.d0
+       r2 = 0.d0
+       ch = 1.d0
+       sh = 0.d0
        fac = 1.d0
     end if
     
