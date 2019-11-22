@@ -22,7 +22,9 @@ module mod_rayleigh
      double precision :: cmax
      double precision :: dc  
      integer :: nc
-     
+
+     integer :: niter = 5
+
      double precision, allocatable :: c(:) ! phase velocity
      double precision, allocatable :: u(:) ! group velocity
      double precision :: y(5)
@@ -33,6 +35,7 @@ module mod_rayleigh
      procedure :: do_propagation => rayleigh_do_propagation
      procedure :: solid_propagator => rayleigh_solid_propagator
      procedure :: liquid_propagator => rayleigh_liquid_propagator
+     procedure :: find_root => rayleigh_find_root
   end type rayleigh
 
   interface rayleigh
@@ -90,17 +93,19 @@ contains
 
   subroutine rayleigh_dispersion(self)
     class(rayleigh), intent(inout) :: self
-    double precision :: omega, c, rslt
-    integer :: i, j
+    double precision :: omega, c_next, c_start
+    logical :: is_first
+    integer :: i
     
+    is_first = .true.
+    c_start = self%cmin
     do i = 1, self%nf
        omega = 2.d0 * pi * (self%fmin  + (i - 1) * self%df)
-       write(*,*) omega / (2.d0 * pi)
-       do j = 1, self%nc
-          c = self%cmin + (j - 1) * self%dc
-          call self%do_propagation(omega, c, rslt)
-          write(111,*)c, omega/ (2.d0 * pi), rslt
-       end do
+       call self%find_root(omega, c_start, is_first, &
+            & self%c(i), self%u(i), c_next)
+       write(111,*) omega / (2.d0 * pi), self%c(i), self%u(i)
+       is_first = .false.
+       c_start = c_next
     end do
 
     
@@ -108,41 +113,92 @@ contains
   end subroutine rayleigh_dispersion
   
   !---------------------------------------------------------------------
-
-  subroutine rayleigh_init_propagation(self, c)
+  subroutine rayleigh_find_root(self, omega, c_start, is_first, c, u, c_next)
     class(rayleigh), intent(inout) :: self
-    integer :: nlay
-    double precision, intent(in) :: c
+    double precision, intent(in) :: omega, c_start
+    double precision, intent(out) :: c, u, c_next
+    logical, intent(in) :: is_first
+    integer :: i
+    double precision :: c_tmp, rslt, prev_rslt, cmin2, cmax2
+    double precision :: c1, c2, rslt1, rslt2, del_c
+    double precision :: omega1, omega2, del_omega
+    logical :: is_found
 
-    double precision :: vp, vs, rho, ra, rb, gm
+    is_found = .false.
 
-    ! get velocity of model bottom
-    nlay = self%vmodel%get_nlay()
-    vp = self%vmodel%get_vp(nlay)
-    vs = self%vmodel%get_vs(nlay)
-    rho = self%vmodel%get_rho(nlay)
+    ! First step
+    prev_rslt = 0.d0
     
-    if (c > vp .or. c > vs) then
-       write(0,*)"ERROR: phase velocity must be lower than Vp or Vs "
-       write(0,*)"     : at the model bottom (rayleigh_init_propagation)"
-       write(0,*)"     : vp=", vp, "vs=", vs, "c=", c
-       stop
+    do i = 1, self%nc
+       if (is_first) then ! increase c
+          c_tmp = c_start + (i - 1) * self%dc
+       else
+          c_tmp = c_start - (i - 1) * self%dc
+       end if
+       call self%do_propagation(omega, c_tmp, rslt)
+       if (prev_rslt * rslt < 0) then
+          is_found = .true.
+          prev_rslt = rslt
+          if (is_first) then
+             cmin2 = c_tmp - self%dc
+             cmax2 = c_tmp
+          else
+             cmin2 = c_tmp
+             cmax2 = c_tmp + self%dc
+          end if
+          exit
+       end if
+       prev_rslt = rslt
+    end do
+    if (.not. is_found) then
+       write(0,*)"Warning: root is not found (rayleigh_find_root)", &
+            & "       : omega = ", omega
+       c = -999.d0
+       u = -999.d9
+       return
     end if
-    ra = sqrt(1.d0 - (c / vp) ** 2)
-    rb = sqrt(1.d0 - (c / vs) ** 2)
-    gm = 2.d0 * (vs / c) ** 2
     
-    self%y(i13) = ra * rb - 1.d0 
-    self%y(i14) = -rho * ra       
-    self%y(i23) = -rho * rb      
-    self%y(i12) = rho * (gm * self%y(i13) + 1.d0) 
-    self%y(i24) = -rho * (gm * self%y(i12) + rho * (gm - 1.d0)) 
+       
+    ! Second step
 
-    self%y(1:5) = self%y(1:5) * eps
+    do i = 1, self%niter
+       c_tmp = 0.5d0 * (cmin2 + cmax2)
+       call self%do_propagation(omega, c_tmp, rslt)
+       if (is_first) then
+          if (prev_rslt * rslt > 0.d0) then
+             cmax2 = c_tmp
+          else
+             cmin2 = c_tmp
+          end if
+       else
+          if (prev_rslt * rslt > 0.d0) then
+             cmin2 = c_tmp
+          else
+             cmax2 = c_tmp
+          end if
+       end if
+    end do
+    c = 0.5d0 * (cmin2 + cmax2)
+    c_next = cmax2
     
-    return 
-  end subroutine rayleigh_init_propagation
+    ! Group velocity
+    c1 = c - 0.001d0 * self%dc 
+    call self%do_propagation(omega, c1, rslt1)
+    c2 = c + 0.001d0 * self%dc 
+    call self%do_propagation(omega, c2, rslt2)
+    del_c = (rslt2 - rslt1) / (c2 - c1)
 
+    omega1 = omega - 0.001d0 * self%df * 2.d0 * pi 
+    call self%do_propagation(omega1, c, rslt1)
+    omega2 = omega + 0.001d0 * self%df * 2.d0 * pi 
+    call self%do_propagation(omega2, c, rslt2)
+    del_omega = (rslt2 - rslt1) / (omega2 - omega1)
+    
+    u = c / (1.d0 + omega * del_omega / (c * del_c))
+    
+
+    return
+  end subroutine rayleigh_find_root
   !---------------------------------------------------------------------
 
   subroutine rayleigh_do_propagation(self, omega, c, rslt)
@@ -178,6 +234,42 @@ contains
     
     return 
   end subroutine rayleigh_do_propagation
+  
+  !---------------------------------------------------------------------
+  
+  subroutine rayleigh_init_propagation(self, c)
+    class(rayleigh), intent(inout) :: self
+    integer :: nlay
+    double precision, intent(in) :: c
+
+    double precision :: vp, vs, rho, ra, rb, gm
+
+    ! get velocity of model bottom
+    nlay = self%vmodel%get_nlay()
+    vp = self%vmodel%get_vp(nlay)
+    vs = self%vmodel%get_vs(nlay)
+    rho = self%vmodel%get_rho(nlay)
+    
+    if (c > vp .or. c > vs) then
+       write(0,*)"ERROR: phase velocity must be lower than Vp or Vs "
+       write(0,*)"     : at the model bottom (rayleigh_init_propagation)"
+       write(0,*)"     : vp=", vp, "vs=", vs, "c=", c
+       stop
+    end if
+    ra = sqrt(1.d0 - (c / vp) ** 2)
+    rb = sqrt(1.d0 - (c / vs) ** 2)
+    gm = 2.d0 * (vs / c) ** 2
+    
+    self%y(i13) = ra * rb - 1.d0 
+    self%y(i14) = -rho * ra       
+    self%y(i23) = -rho * rb      
+    self%y(i12) = rho * (gm * self%y(i13) + 1.d0) 
+    self%y(i24) = -rho * (gm * self%y(i12) + rho * (gm - 1.d0)) 
+
+    self%y(1:5) = self%y(1:5) * eps
+    
+    return 
+  end subroutine rayleigh_init_propagation
   
   !---------------------------------------------------------------------
   
@@ -291,19 +383,14 @@ contains
        else
           fac = 0.d0
        end if
-    else if (v < c) then
+    else 
        ! Use cos and sin instead of cosh and sinh 
        !   to avoid complex values
        r = sqrt((c/v)**2 - 1.d0)
+       if (r == 0.d0) r = eps ! to avoid zero division
        r2 = - r * r
        ch = cos(r * h * k) 
        sh = sin(r * h * k) / r 
-       fac = 1.d0
-    else
-       r = 0.d0
-       r2 = 0.d0
-       ch = 1.d0
-       sh = 0.d0
        fac = 1.d0
     end if
     
