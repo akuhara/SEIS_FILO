@@ -128,11 +128,10 @@ contains
 
     ! First step
     prev_rslt = 0.d0
-    
     do i = 1, self%nc
-       if (is_first) then ! increase c
+       if (is_first) then ! increase c (phase velocity)
           c_tmp = c_start + (i - 1) * self%dc
-       else
+       else               ! decrease in c (phase velocity)
           c_tmp = c_start - (i - 1) * self%dc
        end if
        call self%do_propagation(omega, c_tmp, rslt)
@@ -179,7 +178,7 @@ contains
        end if
     end do
     c = 0.5d0 * (cmin2 + cmax2)
-    c_next = cmax2
+    c_next = 2.d0 * cmax2 - c
     
     ! Group velocity
     c1 = c - 0.001d0 * self%dc 
@@ -194,6 +193,7 @@ contains
     call self%do_propagation(omega2, c, rslt2)
     del_omega = (rslt2 - rslt1) / (omega2 - omega1)
     
+    write(*,*)c, omega, del_omega, del_c, rslt2, rslt1
     u = c / (1.d0 + omega * del_omega / (c * del_c))
     
 
