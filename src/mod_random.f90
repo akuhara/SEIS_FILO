@@ -3,8 +3,16 @@ module mod_random
   
   double precision, parameter, private :: r_max = 2.d0 ** 32
   integer, private :: x, y, z, w
-  
+  integer, parameter, private :: k = 8
+  integer, parameter, private :: n = 2**k
+  double precision, parameter, private :: r = 3.6541528853610088d0
+  double precision, parameter, private :: v = 0.00492867323399d0
+  double precision, private :: xg(0:n)
+  double precision, parameter :: pi2 = 2.d0 * acos(-1.d0)
+
 contains
+
+  !---------------------------------------------------------------------
 
   subroutine init_random(i1, i2, i3, i4, rank)
     integer, intent(in) :: i1, i2, i3, i4
@@ -24,8 +32,13 @@ contains
     return 
   end subroutine init_random
 
+  !---------------------------------------------------------------------
+  
+  ! U[0, 1)
   double precision function rand_u()
     integer :: t
+    
+    
 
     t = ieor(x, ishft(x, 11))
     x = y
@@ -44,5 +57,17 @@ contains
     return 
   end function rand_u
 
+  !---------------------------------------------------------------------
+  
+  !---------------------------------------------------------------------
+  
+  double precision function rand_g()
+    double precision:: v1, v2
+    
+    v1 = rand_u() 
+    v2 = rand_u()
+    rand_g = sqrt(-2.d0 * log(v1)) * cos(pi2 * v2)
+
+  end function rand_g
 end module mod_random
   
