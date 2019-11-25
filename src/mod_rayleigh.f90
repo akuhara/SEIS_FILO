@@ -23,7 +23,11 @@ module mod_rayleigh
      double precision :: dc  
      integer :: nc
 
-     integer :: niter = 5
+     integer :: niter = 7
+
+     integer :: io
+
+     logical :: full_calculation = .false.
 
      double precision, allocatable :: c(:) ! phase velocity
      double precision, allocatable :: u(:) ! group velocity
@@ -36,6 +40,8 @@ module mod_rayleigh
      procedure :: solid_propagator => rayleigh_solid_propagator
      procedure :: liquid_propagator => rayleigh_liquid_propagator
      procedure :: find_root => rayleigh_find_root
+     procedure :: set_full_calculation => rayleigh_set_full_calculation
+     procedure :: do_full_calculation => rayleigh_do_full_calculation
   end type rayleigh
 
   interface rayleigh
@@ -86,6 +92,12 @@ contains
       stop
    end if
 
+   ! output file
+   open(newunit = init_rayleigh%io, status = "unknown", &
+        & file = "rayleigh.out")
+   
+
+
     return 
   end function init_rayleigh
     
@@ -101,11 +113,19 @@ contains
     c_start = self%cmin
     do i = 1, self%nf
        omega = 2.d0 * pi * (self%fmin  + (i - 1) * self%df)
-       call self%find_root(omega, c_start, is_first, &
-            & self%c(i), self%u(i), c_next)
-       write(111,*) omega / (2.d0 * pi), self%c(i), self%u(i)
-       is_first = .false.
-       c_start = c_next
+       if (.not. self%full_calculation) then
+          ! find root
+          call self%find_root(omega, c_start, is_first, &
+               & self%c(i), self%u(i), c_next)
+          write(self%io, *) omega / (2.d0 * pi), self%c(i), self%u(i)
+          is_first = .false.
+          c_start = c_next
+       else
+          ! full calculation
+          call self%do_full_calculation(omega)
+       end if
+
+       
     end do
 
     
@@ -113,7 +133,28 @@ contains
   end subroutine rayleigh_dispersion
   
   !---------------------------------------------------------------------
-  subroutine rayleigh_find_root(self, omega, c_start, is_first, c, u, c_next)
+  
+  subroutine rayleigh_do_full_calculation(self, omega)
+    class(rayleigh), intent(inout) :: self
+    double precision, intent(in) :: omega
+    integer :: i
+    double precision :: c_tmp, rslt
+
+    do i = 1, self%nc
+      c_tmp = self%cmin + (i - 1) * self%dc 
+      call self%do_propagation(omega, c_tmp, rslt)
+      write(self%io, *) omega / (2.d0 * pi), c_tmp, rslt
+      
+    end do
+    
+    
+    return 
+  end subroutine rayleigh_do_full_calculation
+
+  !---------------------------------------------------------------------
+  
+  subroutine rayleigh_find_root(self, omega, c_start, is_first, &
+       & c, u, c_next)
     class(rayleigh), intent(inout) :: self
     double precision, intent(in) :: omega, c_start
     double precision, intent(out) :: c, u, c_next
@@ -121,6 +162,7 @@ contains
     integer :: i
     double precision :: c_tmp, rslt, prev_rslt, cmin2, cmax2
     double precision :: c1, c2, rslt1, rslt2, del_c
+    double precision :: rslt_min, rslt_max
     double precision :: omega1, omega2, del_omega
     logical :: is_found
 
@@ -159,26 +201,30 @@ contains
     
        
     ! Second step
-
     do i = 1, self%niter
        c_tmp = 0.5d0 * (cmin2 + cmax2)
        call self%do_propagation(omega, c_tmp, rslt)
-       if (is_first) then
+       if (.not. is_first) then
           if (prev_rslt * rslt > 0.d0) then
-             cmax2 = c_tmp
-          else
              cmin2 = c_tmp
+             rslt_min = rslt
+          else
+             cmax2 = c_tmp
+             rslt_max = rslt
           end if
        else
           if (prev_rslt * rslt > 0.d0) then
-             cmin2 = c_tmp
-          else
              cmax2 = c_tmp
+             rslt_max = rslt
+          else
+             cmin2 = c_tmp
+             rslt_min = rslt
           end if
+
        end if
     end do
-    c = 0.5d0 * (cmin2 + cmax2)
-    c_next = 2.d0 * cmax2 - c
+    c = (rslt_min * cmax2 + rslt_max * cmax2) / (rslt_min + rslt_max)
+    c_next = c 
     
     ! Group velocity
     c1 = c - 0.001d0 * self%dc 
@@ -396,5 +442,20 @@ contains
     
     return 
   end subroutine calc_hyp_trig
+  
+  !---------------------------------------------------------------------
+
+  subroutine rayleigh_set_full_calculation(self, flag)
+    class(rayleigh), intent(inout) :: self
+    logical, intent(in), optional :: flag
+
+    if (present(flag)) then
+       self%full_calculation = flag
+    else
+       self%full_calculation = .true.
+    end if
+    
+    return 
+  end subroutine rayleigh_set_full_calculation
 
 end module mod_rayleigh

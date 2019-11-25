@@ -7,11 +7,12 @@ program main
   type(rayleigh) :: ray
   
   vm = init_vmodel()
-  call vm%set_example_land()
+  call vm%set_example_ocean()
   call vm%display()
 
-  ray = init_rayleigh(vm, fmin=80.d0, fmax=500.d0, df=0.1d0, &
-       & cmin=0.15d0, cmax=0.35d0, dc=0.01d0)
+  ray = init_rayleigh(vm, fmin=0.3d0, fmax=10.0d0, df=0.01d0, &
+       & cmin=1.0d0, cmax=1.4d0, dc=0.002d0)
+  call ray%set_full_calculation(.false.)
   call ray%dispersion()
   stop
 end program main
