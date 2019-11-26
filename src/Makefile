@@ -14,7 +14,8 @@ TARGET_TEST_RANDOM = ../bin/test_random
 OBJS_TEST_RANDOM   = test_random.o mod_random.o  
 
 TARGET_TEST_TRANS_D_MODEL = ../bin/test_trans_d_model
-OBJS_TEST_TRANS_D_MODEL = test_trans_d_model.o mod_trans_d_model.o
+OBJS_TEST_TRANS_D_MODEL = test_trans_d_model.o mod_trans_d_model.o \
+                          mod_random.o
 
 #TARGET = $(TARGET_TEST_VMODEL) $(TARGET_TEST_RAYLEIGH)
 TARGET = $(TARGET_TEST_RAYLEIGH) $(TARGET_TEST_VMODEL) \
@@ -30,7 +31,9 @@ test_vmodel.o: mod_vmodel.mod
 test_rayleigh.o: mod_vmodel.mod mod_rayleigh.mod
 mod_rayleigh.o: mod_vmodel.mod
 test_random.o: mod_random.mod
-test_trans_d_model.o: mod_trans_d_model.mod
+mod_trans_d_model.o: mod_random.mod
+test_trans_d_model.o: mod_trans_d_model.mod mod_random.mod
+
 
 $(TARGET_TEST_VMODEL): $(OBJS_TEST_VMODEL)
 	$(FC) $(FFLAGS) $^ -o $@
