@@ -17,9 +17,14 @@ TARGET_TEST_TRANS_D_MODEL = ../bin/test_trans_d_model
 OBJS_TEST_TRANS_D_MODEL = test_trans_d_model.o mod_trans_d_model.o \
                           mod_random.o
 
+TARGET_TEST_MCMC_STEP = ../bin/test_MCMC_step
+OBJS_TEST_MCMC_STEP = test_MCMC_step.o mod_MCMC_step.o mod_trans_d_model.o \
+	              mod_random.o
+
 #TARGET = $(TARGET_TEST_VMODEL) $(TARGET_TEST_RAYLEIGH)
 TARGET = $(TARGET_TEST_RAYLEIGH) $(TARGET_TEST_VMODEL) \
-         $(TARGET_TEST_RANDOM) $(TARGET_TEST_TRANS_D_MODEL)
+         $(TARGET_TEST_RANDOM) $(TARGET_TEST_TRANS_D_MODEL) \
+	 $(TARGET_TEST_MCMC_STEP)
 
 
 
@@ -33,6 +38,8 @@ mod_rayleigh.o: mod_vmodel.mod
 test_random.o: mod_random.mod
 mod_trans_d_model.o: mod_random.mod
 test_trans_d_model.o: mod_trans_d_model.mod mod_random.mod
+test_MCMC_step.o: mod_trans_d_model.mod mod_MCMC_step.mod mod_random.mod
+mod_MCMC_step.o: mod_trans_d_model.mod mod_random.mod
 
 
 $(TARGET_TEST_VMODEL): $(OBJS_TEST_VMODEL)
@@ -45,6 +52,9 @@ $(TARGET_TEST_RANDOM): $(OBJS_TEST_RANDOM)
 	$(FC) $(FFLAGS) $^ -o $@
 
 $(TARGET_TEST_TRANS_D_MODEL): $(OBJS_TEST_TRANS_D_MODEL)
+	$(FC) $(FFLAGS) $^ -o $@
+
+$(TARGET_TEST_MCMC_STEP): $(OBJS_TEST_MCMC_STEP)
 	$(FC) $(FFLAGS) $^ -o $@
 
 clean:
