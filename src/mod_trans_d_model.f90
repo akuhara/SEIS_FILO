@@ -16,6 +16,10 @@ module mod_trans_d_model
                       ! with the birth from uniform
      integer :: n_iux ! Number of integer parameter
                       ! with the birth from uniform
+     integer :: n_x   ! Number of all parameter
+     
+     integer, allocatable :: ix_type(:)
+     
      double precision, allocatable :: rgx(:, :) ! real Gaussian param.
      integer, allocatable          :: igx(:, :) ! int. Gaussian param.
      double precision, allocatable :: rux(:, :) ! real Uniform param.
@@ -31,9 +35,15 @@ module mod_trans_d_model
      procedure :: set_i_gauss_birth => trans_d_model_set_i_gauss_birth
      procedure :: set_x_uni_birth => trans_d_model_set_x_uni_birth
      procedure :: set_i_uni_birth => trans_d_model_set_i_uni_birth
+     procedure :: get_n_x => trans_d_model_get_n_x
      procedure :: generate_model => trans_d_model_generate_model
      procedure :: birth => trans_d_model_birth
      procedure :: death => trans_d_model_death
+     procedure :: perturb => trans_d_model_perturb
+     procedure :: perturb_rgx => trans_d_model_perturb_rgx
+     procedure :: perturb_igx => trans_d_model_perturb_igx
+     procedure :: perturb_rux => trans_d_model_perturb_rux
+     procedure :: perturb_iux => trans_d_model_perturb_iux
      procedure :: display => trans_d_model_display
      
   end type trans_d_model
@@ -50,6 +60,7 @@ contains
        & n_rgx, n_igx, n_rux, n_iux)
     integer, intent(in) :: k_min, k_max
     integer, intent(in), optional :: n_rgx, n_igx, n_rux, n_iux
+    integer :: i, j
     logical :: is_given
 
     ! Get dimension
@@ -76,7 +87,7 @@ contains
        is_given = .true.
     end if
     if (present(n_igx)) then
-       init_trans_d_model%n_rgx = n_igx
+       init_trans_d_model%n_igx = n_igx
        allocate(init_trans_d_model%igx(n_igx, k_max))
        allocate(init_trans_d_model%mean_i_birth(n_igx))
        allocate(init_trans_d_model%sig_i_birth(n_igx))
@@ -102,6 +113,31 @@ contains
        stop
     end if
     
+    init_trans_d_model%n_x = init_trans_d_model%n_rgx + &
+         & init_trans_d_model%n_igx + init_trans_d_model%n_rux + &
+         & init_trans_d_model%n_iux
+    allocate(init_trans_d_model%ix_type(init_trans_d_model%n_x))
+
+    j = 1
+    do i = 1, init_trans_d_model%n_rgx
+       init_trans_d_model%ix_type(j) = 1
+       j = j + 1
+    end do
+    do i = 1, init_trans_d_model%n_igx
+       init_trans_d_model%ix_type(j) = 2
+       j = j + 1
+    end do
+    do i = 1, init_trans_d_model%n_rux
+       init_trans_d_model%ix_type(j) = 3
+       j = j + 1
+    end do
+    do i = 1, init_trans_d_model%n_iux
+       init_trans_d_model%ix_type(j) = 4
+       j = j + 1
+    end do
+    
+    
+
     return 
   end function init_trans_d_model
   
@@ -215,6 +251,17 @@ contains
   
   !---------------------------------------------------------------------
 
+  integer function trans_d_model_get_n_x(self) result(n_x)
+    class(trans_d_model), intent(inout) :: self
+    
+    n_x = self%n_x
+
+    return 
+  end function trans_d_model_get_n_x
+    
+
+  !---------------------------------------------------------------------
+
   subroutine trans_d_model_generate_model(self)
     class(trans_d_model), intent(inout) :: self
     integer :: i, k
@@ -296,8 +343,6 @@ contains
        return
     end if
     
-
-    
     do i = k_target, self%k
        do j = 1, self%n_rgx
           self%rgx(j,  i) = self%rgx(j, i + 1) 
@@ -317,7 +362,95 @@ contains
   end subroutine trans_d_model_death
 
   !---------------------------------------------------------------------
+  
+  subroutine trans_d_model_perturb(self, iparam, dev)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision, intent(in) :: dev
+    
+    if (self%ix_type(iparam) == 1) then
+       call self%perturb_rgx(iparam, dev)
+    else if (self%ix_type(iparam) == 2) then
+       call self%perturb_igx(iparam, dev)
+    else if (self%ix_type(iparam) == 3) then
+       call self%perturb_rux(iparam, dev)
+    else if (self%ix_type(iparam) == 4) then
+       call self%perturb_iux(iparam, dev)
+    end if
+    
+    return 
+  end subroutine trans_d_model_perturb
 
+  
+  
+  !---------------------------------------------------------------------
+
+  subroutine trans_d_model_perturb_rgx(self, iparam, dev)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision, intent(in) :: dev
+    integer :: k_target
+
+    k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
+    
+    self%rgx(iparam, k_target) = self%rgx(iparam, k_target) + &
+         & rand_g() * dev
+    
+    return 
+  end subroutine trans_d_model_perturb_rgx
+
+  !---------------------------------------------------------------------
+
+  subroutine trans_d_model_perturb_igx(self, iparam, dev)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision, intent(in) :: dev
+    integer :: k_target
+    
+    k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
+    
+    self%igx(iparam, k_target) = self%igx(iparam, k_target) + &
+         & nint(rand_g() * dev)
+    
+    return 
+  end subroutine trans_d_model_perturb_igx
+
+  !---------------------------------------------------------------------
+
+  subroutine trans_d_model_perturb_rux(self, iparam, dev)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision, intent(in) :: dev
+    integer :: k_target
+
+    k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
+    
+    self%rux(iparam, k_target) = self%rux(iparam, k_target) + &
+         & rand_g() * dev
+    
+    return 
+  end subroutine trans_d_model_perturb_rux
+
+  !---------------------------------------------------------------------
+
+  subroutine trans_d_model_perturb_iux(self, iparam, dev)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision, intent(in) :: dev
+    integer :: k_target
+    
+    k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
+    
+    self%iux(iparam, k_target) = self%iux(iparam, k_target) + &
+         & nint(rand_g() * dev)
+    
+    return 
+  end subroutine trans_d_model_perturb_iux
+
+
+
+  !---------------------------------------------------------------------
+  
   subroutine trans_d_model_display(self)
     class(trans_d_model), intent(inout) :: self
     integer :: i, j
