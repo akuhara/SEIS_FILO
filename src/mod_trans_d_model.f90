@@ -24,11 +24,14 @@ module mod_trans_d_model
      double precision, allocatable :: ix_birth_param(:,:)
      double precision, allocatable :: rx_prior_param(:,:)
      double precision, allocatable :: ix_prior_param(:,:)
+     double precision, allocatable :: rx_perturb_param(:) ! STDEV
+     double precision, allocatable :: ix_perturb_param(:) ! STDEV
 
    contains
      procedure :: set_k => trans_d_model_set_k
      procedure :: set_birth => trans_d_model_set_birth
      procedure :: set_prior => trans_d_model_set_prior
+     procedure :: set_perturb => trans_d_model_set_perturb
      procedure :: get_n_x => trans_d_model_get_n_x
      procedure :: generate_model => trans_d_model_generate_model
      procedure :: birth => trans_d_model_birth
@@ -75,6 +78,7 @@ contains
        allocate(init_trans_d_model%rx_prior_type(n_rx))
        allocate(init_trans_d_model%rx_birth_param(n_rx, 2))
        allocate(init_trans_d_model%rx_prior_param(n_rx, 2))
+       allocate(init_trans_d_model%rx_perturb_param(n_rx))
        is_given = .true.
     end if
     if (present(n_ix)) then
@@ -84,6 +88,7 @@ contains
        allocate(init_trans_d_model%ix_prior_type(n_ix))
        allocate(init_trans_d_model%ix_birth_param(n_ix, 2))
        allocate(init_trans_d_model%ix_prior_param(n_ix, 2))
+       allocate(init_trans_d_model%ix_perturb_param(n_ix))
        is_given = .true.
     end if
     if (.not. is_given) then
@@ -193,6 +198,27 @@ contains
   end subroutine trans_d_model_set_prior
 
   !---------------------------------------------------------------------
+  
+  subroutine trans_d_model_set_perturb(self, iparam, d1)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision, intent(in) :: d1
+
+    if(iparam < 1 .or. iparam > self%k_max) then
+       write(0,*) "ERROR: out of range (trans_d_model_set_prior)"
+       write(0,*) "     : iparam=", iparam
+       stop
+    end if
+    
+    if (iparam <= self%n_rx) then
+       self%rx_perturb_param(iparam) = d1
+    else
+       self%ix_perturb_param(iparam - self%n_rx) = d1
+    end if
+    
+    return 
+  end subroutine trans_d_model_set_perturb
+  !---------------------------------------------------------------------
 
   integer function trans_d_model_get_n_x(self) result(n_x)
     class(trans_d_model), intent(inout) :: self
@@ -211,14 +237,14 @@ contains
     
     ! select k
     k = self%k_min + int(rand_u() * (self%k_max - self%k_min))
-    
     ! generate model parameters
     do i = 1, k
-       call self%birth(is_ok)
-       if (.not. is_ok) then
-          write(0,*)"ERROR: something wrong occurs (generate_model)"
-          stop
-       end if
+       is_ok = .false.
+       do 
+          call self%birth(is_ok)
+          !write(*,*)is_ok
+          if (is_ok) exit
+       end do
     end do
 
     return 
@@ -229,45 +255,62 @@ contains
   subroutine trans_d_model_birth(self, is_ok)
     class(trans_d_model), intent(inout) :: self
     logical, intent(out) :: is_ok
-    integer :: i
+    integer :: i, k2
 
     if (self%k < self%k_max - 1) then
-       self%k = self%k + 1
        is_ok = .true.
     else
        is_ok = .false.
        return
     end if
-
+    k2 = self%k + 1
     do i = 1, self%n_rx
        if (self%rx_birth_type(i) == 1) then
-          self%rx(i, self%k) = &
+          self%rx(i, k2) = &
                & self%rx_birth_param(i, 1) + &
                & rand_u() * (self%rx_birth_param(i, 2) - &
                & self%rx_birth_param(i, 1))
+
        else if (self%rx_birth_type(i) == 2) then
-          self%rx(i, self%k) = &
+          self%rx(i, k2) = &
                & self%rx_birth_param(i, 1) + &
                & rand_g() * self%rx_birth_param(i, 2)
+       end if
+       ! check prior bounds
+       if (self%rx_prior_type(i) == 1) then
+          if(self%rx(i, k2) < self%rx_prior_param(i, 1) .or. &
+               & self%rx(i, k2) > self%rx_prior_param(i, 2)) then
+             is_ok = .false.
+             return
+          end if
        end if
     end do
     
     do i = 1, self%n_ix
        if (self%ix_birth_type(i) == 1) then
-          self%ix(i, self%k) = &
+          self%ix(i, k2) = &
                & nint(self%ix_birth_param(i, 1)) + &
                & int(rand_u() * &
                & (nint(self%ix_birth_param(i, 2)) - &
                & nint(self%ix_birth_param(i, 1)))&
                &)
        else if (self%ix_birth_type(i) == 2) then
-          self%ix(i, self%k) = &
+          self%ix(i, k2) = &
                & nint( &
                & self%ix_birth_param(i, 1) + &
                & rand_g() * self%ix_birth_param(i, 2))
        end if
+
+       if(self%rx(i, k2) < nint(self%rx_prior_param(i, 1)) .or. &
+            & self%rx(i, k2) >= nint(self%rx_prior_param(i, 2))) then
+          is_ok = .false.
+          return 
+       end if
     end do
 
+    if (is_ok) then
+       self%k = k2
+    end if
     
     return 
   end subroutine trans_d_model_birth
@@ -304,16 +347,18 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine trans_d_model_perturb(self, iparam, dev, is_ok)
+  subroutine trans_d_model_perturb(self, iparam, is_ok)
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam
-    double precision, intent(in) :: dev
+    
     logical, intent(out) :: is_ok
     
     if (iparam <= self%n_rx) then
-       call self%perturb_rx(iparam, dev, is_ok)
+       call self%perturb_rx(iparam, &
+            & self%rx_perturb_param(iparam), is_ok)
     else
-       call self%perturb_ix(iparam - self%n_rx, dev, is_ok)
+       call self%perturb_ix(iparam - self%n_rx, &
+            & self%ix_perturb_param(iparam), is_ok)
     end if
     
     return 
