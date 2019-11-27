@@ -2,59 +2,22 @@ FC = mpifort
 FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check
 
-
-
-TARGET_TEST_VMODEL = ../bin/test_vmodel
-OBJS_TEST_VMODEL   = test_vmodel.o mod_vmodel.o
-
-TARGET_TEST_RAYLEIGH = ../bin/test_rayleigh
-OBJS_TEST_RAYLEIGH   = test_rayleigh.o mod_vmodel.o mod_rayleigh.o
-
-TARGET_TEST_RANDOM = ../bin/test_random
-OBJS_TEST_RANDOM   = test_random.o mod_random.o  
-
-TARGET_TEST_TRANS_D_MODEL = ../bin/test_trans_d_model
-OBJS_TEST_TRANS_D_MODEL = test_trans_d_model.o mod_trans_d_model.o \
-                          mod_random.o
-
-TARGET_TEST_MCMC_STEP = ../bin/test_MCMC_step
-OBJS_TEST_MCMC_STEP = test_MCMC_step.o mod_MCMC_step.o mod_trans_d_model.o \
-	              mod_random.o
-
-#TARGET = $(TARGET_TEST_VMODEL) $(TARGET_TEST_RAYLEIGH)
-TARGET = $(TARGET_TEST_RAYLEIGH) $(TARGET_TEST_VMODEL) \
-         $(TARGET_TEST_RANDOM) $(TARGET_TEST_TRANS_D_MODEL) \
-	 $(TARGET_TEST_MCMC_STEP)
-
-
+OBJS   = rayleigh_inv.o mod_MCMC_step.o mod_trans_d_model.o \
+	 mod_rayleigh.o mod_vmodel.o mod_random.o mod_interpreter.o
+TARGET = ../bin/rayleigh_inv
 
 
 .PHONY: all
 all: $(TARGET)
 
-test_vmodel.o: mod_vmodel.mod
-test_rayleigh.o: mod_vmodel.mod mod_rayleigh.mod
+rayleigh_inv.o: mod_random.mod mod_trans_d_model.mod mod_MCMC_step.mod \
+	        mod_rayleigh.mod mod_interpreter.mod
 mod_rayleigh.o: mod_vmodel.mod
-test_random.o: mod_random.mod
 mod_trans_d_model.o: mod_random.mod
-test_trans_d_model.o: mod_trans_d_model.mod mod_random.mod
-test_MCMC_step.o: mod_trans_d_model.mod mod_MCMC_step.mod mod_random.mod
-mod_MCMC_step.o: mod_trans_d_model.mod mod_random.mod
+mod_MCMC_step.o: mod_random.mod mod_trans_d_model.mod 
+mod_interpreter.o: mod_trans_d_model.mod mod_vmodel.mod
 
-
-$(TARGET_TEST_VMODEL): $(OBJS_TEST_VMODEL)
-	$(FC) $(FFLAGS) $^ -o $@
-
-$(TARGET_TEST_RAYLEIGH): $(OBJS_TEST_RAYLEIGH)
-	$(FC) $(FFLAGS) $^ -o $@
-
-$(TARGET_TEST_RANDOM): $(OBJS_TEST_RANDOM)
-	$(FC) $(FFLAGS) $^ -o $@
-
-$(TARGET_TEST_TRANS_D_MODEL): $(OBJS_TEST_TRANS_D_MODEL)
-	$(FC) $(FFLAGS) $^ -o $@
-
-$(TARGET_TEST_MCMC_STEP): $(OBJS_TEST_MCMC_STEP)
+$(TARGET): $(OBJS)
 	$(FC) $(FFLAGS) $^ -o $@
 
 clean:

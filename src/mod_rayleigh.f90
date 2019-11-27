@@ -42,6 +42,7 @@ module mod_rayleigh
      procedure :: find_root => rayleigh_find_root
      procedure :: set_full_calculation => rayleigh_set_full_calculation
      procedure :: do_full_calculation => rayleigh_do_full_calculation
+     procedure :: set_vmodel => rayleigh_set_vmodel
   end type rayleigh
 
   interface rayleigh
@@ -457,5 +458,16 @@ contains
     
     return 
   end subroutine rayleigh_set_full_calculation
+
+  !---------------------------------------------------------------------
+
+  subroutine rayleigh_set_vmodel(self, vm)
+    class(rayleigh), intent(inout) :: self
+    type(vmodel), intent(in) :: vm
+    
+    self%vmodel = vm
+
+    return 
+  end subroutine rayleigh_set_vmodel
 
 end module mod_rayleigh

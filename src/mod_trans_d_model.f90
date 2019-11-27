@@ -32,6 +32,7 @@ module mod_trans_d_model
      procedure :: set_birth => trans_d_model_set_birth
      procedure :: set_prior => trans_d_model_set_prior
      procedure :: set_perturb => trans_d_model_set_perturb
+     procedure :: get_k => trans_d_model_get_k
      procedure :: get_n_x => trans_d_model_get_n_x
      procedure :: generate_model => trans_d_model_generate_model
      procedure :: birth => trans_d_model_birth
@@ -218,6 +219,17 @@ contains
     
     return 
   end subroutine trans_d_model_set_perturb
+  
+  !---------------------------------------------------------------------
+
+  integer function trans_d_model_get_k(self) result(k)
+    class(trans_d_model), intent(inout) :: self
+    
+    k = self%k
+
+    return 
+  end function trans_d_model_get_k
+
   !---------------------------------------------------------------------
 
   integer function trans_d_model_get_n_x(self) result(n_x)
@@ -350,7 +362,6 @@ contains
   subroutine trans_d_model_perturb(self, iparam, is_ok)
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam
-    
     logical, intent(out) :: is_ok
     
     if (iparam <= self%n_rx) then

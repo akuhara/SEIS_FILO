@@ -3,6 +3,8 @@ module mod_MCMC_step
   use mod_trans_d_model
   implicit none 
   
+  public propose_model
+
 contains
 
   !---------------------------------------------------------------------
