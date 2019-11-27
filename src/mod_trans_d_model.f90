@@ -34,6 +34,8 @@ module mod_trans_d_model
      procedure :: set_perturb => trans_d_model_set_perturb
      procedure :: get_k => trans_d_model_get_k
      procedure :: get_n_x => trans_d_model_get_n_x
+     procedure :: get_rx => trans_d_model_get_rx
+     procedure :: get_ix => trans_d_model_get_ix
      procedure :: generate_model => trans_d_model_generate_model
      procedure :: birth => trans_d_model_birth
      procedure :: death => trans_d_model_death
@@ -74,7 +76,7 @@ contains
     is_given = .false.
     if (present(n_rx)) then
        init_trans_d_model%n_rx = n_rx
-       allocate(init_trans_d_model%rx(n_rx, k_max))
+       allocate(init_trans_d_model%rx(k_max, n_rx))
        allocate(init_trans_d_model%rx_birth_type(n_rx))
        allocate(init_trans_d_model%rx_prior_type(n_rx))
        allocate(init_trans_d_model%rx_birth_param(n_rx, 2))
@@ -84,7 +86,7 @@ contains
     end if
     if (present(n_ix)) then
        init_trans_d_model%n_ix = n_ix
-       allocate(init_trans_d_model%ix(n_ix, k_max))
+       allocate(init_trans_d_model%ix(k_max, n_ix))
        allocate(init_trans_d_model%ix_birth_type(n_ix))
        allocate(init_trans_d_model%ix_prior_type(n_ix))
        allocate(init_trans_d_model%ix_birth_param(n_ix, 2))
@@ -241,6 +243,30 @@ contains
   end function trans_d_model_get_n_x
 
   !---------------------------------------------------------------------
+  
+  function trans_d_model_get_rx(self, iparam) result(rx)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision :: rx(self%k_max)
+    
+    rx = self%rx(1:self%k_max, iparam)
+    
+    return 
+  end function trans_d_model_get_rx
+
+  !---------------------------------------------------------------------
+
+  function trans_d_model_get_ix(self, iparam) result(ix)
+    class(trans_d_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    integer :: ix(self%k_max)
+    
+    ix = self%ix(1:self%k_max, iparam)
+    
+    return 
+  end function trans_d_model_get_ix
+
+  !---------------------------------------------------------------------
 
   subroutine trans_d_model_generate_model(self)
     class(trans_d_model), intent(inout) :: self
@@ -278,20 +304,20 @@ contains
     k2 = self%k + 1
     do i = 1, self%n_rx
        if (self%rx_birth_type(i) == 1) then
-          self%rx(i, k2) = &
+          self%rx(k2, i) = &
                & self%rx_birth_param(i, 1) + &
                & rand_u() * (self%rx_birth_param(i, 2) - &
                & self%rx_birth_param(i, 1))
 
        else if (self%rx_birth_type(i) == 2) then
-          self%rx(i, k2) = &
+          self%rx(k2, i) = &
                & self%rx_birth_param(i, 1) + &
                & rand_g() * self%rx_birth_param(i, 2)
        end if
        ! check prior bounds
        if (self%rx_prior_type(i) == 1) then
-          if(self%rx(i, k2) < self%rx_prior_param(i, 1) .or. &
-               & self%rx(i, k2) > self%rx_prior_param(i, 2)) then
+          if(self%rx(k2, i) < self%rx_prior_param(i, 1) .or. &
+               & self%rx(k2, i) > self%rx_prior_param(i, 2)) then
              is_ok = .false.
              return
           end if
@@ -300,23 +326,25 @@ contains
     
     do i = 1, self%n_ix
        if (self%ix_birth_type(i) == 1) then
-          self%ix(i, k2) = &
+          self%ix(k2, i) = &
                & nint(self%ix_birth_param(i, 1)) + &
                & int(rand_u() * &
                & (nint(self%ix_birth_param(i, 2)) - &
                & nint(self%ix_birth_param(i, 1)))&
                &)
        else if (self%ix_birth_type(i) == 2) then
-          self%ix(i, k2) = &
+          self%ix(k2, i) = &
                & nint( &
                & self%ix_birth_param(i, 1) + &
                & rand_g() * self%ix_birth_param(i, 2))
        end if
-
-       if(self%rx(i, k2) < nint(self%rx_prior_param(i, 1)) .or. &
-            & self%rx(i, k2) >= nint(self%rx_prior_param(i, 2))) then
-          is_ok = .false.
-          return 
+       ! Check prior bounds
+       if (self%ix_prior_type(i) == 1) then
+          if(self%ix(k2, i) < nint(self%ix_prior_param(i, 1)) .or. &
+               & self%ix(k2, i) >= nint(self%ix_prior_param(i, 2))) then
+             is_ok = .false.
+             return 
+          end if
        end if
     end do
 
@@ -345,15 +373,18 @@ contains
        return
     end if
     
-    do i = k_target, self%k
-       do j = 1, self%n_rx
-          self%rx(j,  i) = self%rx(j, i + 1) 
-       end do
-       do j = 1, self%n_ix
-          self%ix(j,  i) = self%ix(j, i + 1) 
+
+    do i = 1, self%n_rx
+       do j = k_target, self%k
+          self%rx(j,  i) = self%rx(j + 1, i) 
        end do
     end do
-
+    do i = 1, self%n_ix
+       do j = k_target, self%k
+          self%ix(j,  i) = self%ix(j + 1, i) 
+       end do
+    end do
+    
     return 
   end subroutine trans_d_model_death
 
@@ -386,14 +417,14 @@ contains
 
     k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
     
-    self%rx(iparam, k_target) = self%rx(iparam, k_target) + &
+    self%rx(k_target, iparam) = self%rx(k_target, iparam) + &
          & rand_g() * dev
 
     is_ok = .true.
     if (self%rx_prior_type(iparam) == 1) then
-       if (self%rx(iparam, k_target) < &
+       if (self%rx(k_target, iparam) < &
             & self%rx_prior_param(iparam, 1) .or. &
-            & self%rx(iparam, k_target) > &
+            & self%rx(k_target, iparam) > &
             & self%rx_prior_param(iparam, 2)) then
           is_ok = .false.
        end if
@@ -414,14 +445,14 @@ contains
     
     k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
     
-    self%ix(iparam, k_target) = self%ix(iparam, k_target) + &
+    self%ix(k_target, iparam) = self%ix(k_target, iparam) + &
          & nint(rand_g() * dev)
     
     is_ok = .true.
     if (self%ix_prior_type(iparam) == 1) then
-       if (self%ix(iparam, k_target) < &
+       if (self%ix(k_target, iparam) < &
             & self%ix_prior_param(iparam, 1) .or. &
-            & self%ix(iparam, k_target) > &
+            & self%ix(k_target, iparam) > &
             & self%ix_prior_param(iparam, 2)) then
           is_ok = .false.
        end if
@@ -444,7 +475,7 @@ contains
        write(*,*)"------------------------------"
        write(*,*)"Real parameter", i
        do j = 1, self%k
-          write(*,*)j, self%rx(i, j)
+          write(*,*)j, self%rx(j, i)
        end do
     end do
 
@@ -452,7 +483,7 @@ contains
        write(*,*)"------------------------------"
        write(*,*)"Integer prameter", i
        do j = 1, self%k
-          write(*,*)j, self%ix(i, j)
+          write(*,*)j, self%ix(j, i)
        end do
     end do
     write(*,*)

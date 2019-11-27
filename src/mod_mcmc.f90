@@ -1,4 +1,4 @@
-module mod_MCMC_step
+module mod_mcmc
   use mod_random
   use mod_trans_d_model
   implicit none 
@@ -9,11 +9,12 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine propose_model(tm_current, tm_proposed)
+  subroutine propose_model(tm_current, tm_proposed, is_ok)
     type(trans_d_model), intent(inout) :: tm_current
     type(trans_d_model), intent(out) :: tm_proposed
+    logical, intent(out) :: is_ok
     integer :: nparam, itype, iparam
-    logical :: is_ok
+
     
     nparam = tm_current%get_n_x()
     itype = int(rand_u() * (nparam + 2))
@@ -34,4 +35,4 @@ contains
 
   !---------------------------------------------------------------------
   
-end module mod_MCMC_step
+end module mod_mcmc

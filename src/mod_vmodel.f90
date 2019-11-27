@@ -25,6 +25,7 @@ module mod_vmodel
      procedure :: display => vmodel_display
      procedure :: vp2rho_brocher => vmodel_vp2rho_brocher
      procedure :: vp2vs_brocher => vmodel_vp2vs_brocher
+     procedure :: vs2vp_brocher => vmodel_vs2vp_brocher
 
   end type vmodel
   
@@ -77,7 +78,7 @@ contains
        stop
     end if
     if (vp < 0) then
-       write(0,*) "ERROR: invaild Vp (set_vp)"
+       write(0,*) "ERROR: invalid Vp (set_vp)"
        write(0,*) "     : Vp=", vp
        stop
     end if
@@ -99,7 +100,7 @@ contains
        stop
     end if
     if (vs < 0 .and. i /= 1) then
-       write(0,*) "ERROR: invaild Vs (set_vs)"
+       write(0,*) "ERROR: invalid Vs (set_vs)"
        write(0,*) "     : Vs=", vs
        stop
     end if
@@ -121,7 +122,7 @@ contains
        stop
     end if
     if (rho < 0) then
-       write(0,*) "ERROR: invaild density (set_rho)"
+       write(0,*) "ERROR: invalid density (set_rho)"
        write(0,*) "     : rho=", rho
        stop
     end if
@@ -143,8 +144,8 @@ contains
        write(0,*) "     : i=", i
        stop
     end if
-    if (h < 0 .and. h /= self%nlay) then
-       write(0,*) "ERROR: invaild thickness (set_h)"
+    if (h < 0 .and. i /= self%nlay) then
+       write(0,*) "ERROR: invalid thickness (set_h)"
        write(0,*) "     : h=", h
        stop
     end if
@@ -348,6 +349,31 @@ contains
     
     return 
   end subroutine vmodel_vp2vs_brocher
+    
+  !---------------------------------------------------------------------
+
+  subroutine vmodel_vs2vp_brocher(self, i)
+    class(vmodel), intent(inout) :: self
+    integer, intent(in) :: i
+    double precision :: a1, a2, a3, a4
+    
+    if(i < 1 .or. i > self%nlay) then
+       write(0,*) "ERROR: out of range (vs2rho_brocher)"
+       write(0,*) "     : i=", i
+       stop
+    end if
+    
+    a1 = self%vs(i)
+    a2 = a1 * a1
+    a3 = a2 * a1
+    a4 = a3 * a1
+
+    self%vp(i) = &
+         & 0.9409d0 + 2.0947d0 * a1 - 0.8206d0 * a2 + &
+         & 0.2683d0 * a3 - 0.0251d0 * a4
+    
+    return 
+  end subroutine vmodel_vs2vp_brocher
     
   !---------------------------------------------------------------------
 
