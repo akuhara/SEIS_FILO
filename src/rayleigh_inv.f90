@@ -19,17 +19,27 @@ program main
   double precision, parameter :: dev_vp = 0.05d0
   double precision, parameter :: dev_z  = 0.2d0
   
+  logical, parameter :: solve_vp = .true.
+  logical, parameter :: ocean_flag = .true.
+  double precision :: ocean_thick = 1.d0
+
+  double precision, parameter :: fmin = 0.1d0, fmax = 1.d0, df = 0.1d0
+  double precision, parameter :: cmin = 0.2d0, cmax = 1.8d0, dc = 0.01d0
+
+  
   integer :: i
   logical :: is_ok
   type(vmodel) :: vm
-  type(trans_d_model) :: tm, tm2
+  type(trans_d_model) :: tm, tm_tmp
   type(interpreter) :: intpr
+  type(mcmc) :: mc
+  type(rayleigh) :: ray
 
 
   
   call init_random(12345678, 23456789, 34567890, 45678901)
   
-  ! Set model parameter
+  ! Set model parameter & generate initial sample
   tm = init_trans_d_model(k_min=k_min, k_max=k_max, n_rx=n_rx)
   call tm%set_prior(id_vs, id_uni, vs_min, vs_max)
   call tm%set_prior(id_vp, id_uni, vp_min, vp_max)
@@ -44,21 +54,31 @@ program main
 
   ! Set interpreter 
   intpr = init_interpreter(nlay_max=k_max, &
-       & ocean_flag =.true., ocean_thick=1.d0, solve_vp=.false.)
-
+       & ocean_flag =ocean_flag, ocean_thick=ocean_thick, &
+       & solve_vp=solve_vp)
   vm = intpr%get_vmodel(tm)
-  call vm%display()
 
+  ! Set MCMC chain
+  mc = init_mcmc(tm)
+  
+  ! Set forward computation
+  ray = init_rayleigh(vm=vm, fmin=fmin, fmax=fmax, df=df, &
+       cmin=cmin, cmax=cmax, dc=dc)
+  
   ! Main
   do i = 1, n_iter
-     call propose_model(tm, tm2, is_ok)
+     call mc%propose_model(tm_tmp, is_ok)
+     vm = intpr%get_vmodel(tm_tmp)
+     call ray%set_vmodel(vm)
+     
      if (is_ok) then
-        tm = tm2
-
+        call mc%accept_model(tm_tmp)
+     else
+        
      end if
 
   end do
-  vm = intpr%get_vmodel(tm)
+
   call vm%display()
   
 
