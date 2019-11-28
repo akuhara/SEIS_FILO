@@ -8,18 +8,17 @@ Copyright (C) 2019 Takeshi Akuhara
 `rayleigh_fwd [parameter file]`
 ### Parameter file
 * Need to specify the following parameters in this file.
-  * fmin, fmax, df
-  * cmin, cmax, dc
-  * vmod_in
-  * ray_out
+  * fmin, fmax, df (Minimum, maximum, and interval of frequency at which dispersion curve is calculated)
+  * cmin, cmax, dc (Minimum, maximum, and interval of phase velocity used for root search)
+  * vmod_in (file name for input velocity model)
+  * ray_out (file name for output dispersion curve)
 
 ```
-# <- can be used for comment out
-# No space is allowed at both sides of "="
-fmin=0.01 fmax=1.0  df=0.1  # Minimum, maximum, and interval of frequency at which dispersion curve is calculated
-cmin=1.0  cmax=2.0  dc=0.01 # Minimum, maximum, and interval of phase velocity used for root search 
-vmod_in=vmod.in             # file name for input velocity model
-ray_out=ray.out             # file name for output dispersion curve
+# Comment out by "#"
+fmin=0.01 fmax=1.0  df=0.1  # Comment out at the end of line also works
+cmin=1.0  cmax=2.0  dc=0.01 
+vmod_in=vmod.in            
+ray_out=ray.out        
 ```
 
 ### Velocity model file (vmod_in)
