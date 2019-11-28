@@ -49,6 +49,10 @@ ray_out=ray.out             # file name for output dispersion curve
    1.0100000000000000        1.3762499999999998        1.3711196345637411     
 ```
 
+## Rayleigh wave inversion
+
+in preparation
+
 ---
 
 ## Install
