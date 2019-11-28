@@ -1,5 +1,6 @@
 # SEIS_FILO
 SEISmological tools for Flat Isotropic Layered structure in the Ocean
+Copyright (C) 2019 Takeshi Akuhara
 
 ## Rayleigh wave forward computation
 ### USAGE
