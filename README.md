@@ -24,7 +24,8 @@ ray_out=ray.out             # file name for output dispersion curve
 ### Velocity model file (vmod_in)
 
 * The first line should be the number of layers
-* Vp, Vs, density and thickness of each layer syould be listed in the successive lines
+* Vp, Vs, density and thickness of each layer should be listed in the successive lines
+* Set Vs < 0 for the oceanic layer (for now, only the topmost layer is allowed for this)
 * Any comment out does not work for this file 
 ```
 3                 
