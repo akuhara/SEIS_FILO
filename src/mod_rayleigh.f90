@@ -160,7 +160,8 @@ contains
           call self%find_root(omega, c_start, is_first, &
                & self%c(i), self%u(i), c_next)
           if (self%out_flag) then
-             write(self%io, *) omega / (2.d0 * pi), self%c(i), self%u(i)
+             write(self%io, '(3F10.4)') &
+                  & omega / (2.d0 * pi), self%c(i), self%u(i)
           end if
           is_first = .false.
           c_start = c_next
