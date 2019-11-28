@@ -1,3 +1,29 @@
+!=======================================================================
+!   SEIS_FILO: 
+!   SEISmological tools for Flat Isotropic Layered structure in the Ocean
+!   Copyright (C) 2019 Takeshi Akuhara
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!
+!
+!   Contact information
+!
+!   Email  : akuhara @ eri. u-tokyo. ac. jp 
+!   Address: Earthquake Research Institute, The Univesity of Tokyo
+!           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
+!
+!=======================================================================
 module mod_rayleigh
   use mod_vmodel
   implicit none 
@@ -257,7 +283,6 @@ contains
     call self%do_propagation(omega2, c, rslt2)
     del_omega = (rslt2 - rslt1) / (omega2 - omega1)
     
-    write(*,*)c, omega, del_omega, del_c, rslt2, rslt1
     u = c / (1.d0 + omega * del_omega / (c * del_c))
     
 

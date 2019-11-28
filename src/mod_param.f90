@@ -1,3 +1,29 @@
+!=======================================================================
+!   SEIS_FILO: 
+!   SEISmological tools for Flat Isotropic Layered structure in the Ocean
+!   Copyright (C) 2019 Takeshi Akuhara
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!
+!
+!   Contact information
+!
+!   Email  : akuhara @ eri. u-tokyo. ac. jp 
+!   Address: Earthquake Research Institute, The Univesity of Tokyo
+!           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
+!
+!=======================================================================
 module mod_param
   implicit none 
   
@@ -6,10 +32,14 @@ module mod_param
   type param
      private
      character(len=line_max) :: param_file
-     double precision :: fmin, fmax, df
-     double precision :: cmin, cmax, dc
-     character(len=line_max) :: vmod_in
-     character(len=line_max) :: ray_out
+     double precision :: fmin = -999.d0
+     double precision :: fmax = -999.d0
+     double precision :: df = -999.d0
+     double precision :: cmin = -999.d0
+     double precision :: cmax = -999.d0
+     double precision :: dc = -999.d0
+     character(len=line_max) :: vmod_in = ""
+     character(len=line_max) :: ray_out = ""
    contains
      procedure :: read_file => param_read_file
      procedure :: read_line => param_read_line
@@ -98,6 +128,8 @@ contains
        if (line(i:i) == " ") then
           i = i + 1
           cycle
+       else if (line(i:i) == "#") then
+          return
        end if
        j = index(line(i:nlen), " ")
        if (j /= 0) then
@@ -118,7 +150,7 @@ contains
     class(param), intent(inout) :: self
     character(len=*), intent(in) :: str
     character(len=line_max) :: name, var
-    integer :: nlen, j, itmp
+    integer :: nlen, j
     double precision :: rtmp
     
     
