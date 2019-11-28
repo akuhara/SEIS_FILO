@@ -8,7 +8,8 @@ module mod_param
      character(len=line_max) :: param_file
      double precision :: fmin, fmax, df
      double precision :: cmin, cmax, dc
-     character(len=line_max) :: vmodel_file
+     character(len=line_max) :: vmod_in
+     character(len=line_max) :: ray_out
    contains
      procedure :: read_file => param_read_file
      procedure :: read_line => param_read_line
@@ -19,7 +20,8 @@ module mod_param
      procedure :: get_cmin => param_get_cmin
      procedure :: get_cmax => param_get_cmax
      procedure :: get_dc => param_get_dc
-     procedure :: get_vmodel_file => param_get_vmodel_file
+     procedure :: get_vmod_in => param_get_vmod_in
+     procedure :: get_ray_out => param_get_ray_out
   end type param
   
   interface param
@@ -36,7 +38,7 @@ contains
     character(len=*), intent(in) :: param_file
  
     init_param%param_file = param_file
-    init_param%vmodel_file = ""
+    init_param%vmod_in = ""
     init_param%fmin = -999.d0
     init_param%fmax = -999.d0
     init_param%df = -999.d0
@@ -149,8 +151,10 @@ contains
     else if (name == "dc") then
        read(var, *) rtmp
        self%dc = rtmp
-    else if (name == "vmodel_file") then
-       self%vmodel_file = var
+    else if (name == "vmod_in") then
+       self%vmod_in = var
+    else if (name == "ray_out") then
+       self%ray_out = var
     else
        write(0,*)"Warnings: Invalid parameter name"
        write(0,*)"        : ", name, "  (?)"
@@ -218,13 +222,25 @@ contains
 
   !---------------------------------------------------------------------
 
-  character(len=line_max) function param_get_vmodel_file(self) &
-       & result(vmodel_file)
+  character(len=line_max) function param_get_vmod_in(self) &
+       & result(vmod_in)
     class(param), intent(inout) :: self
     
-    vmodel_file = self%vmodel_file
+    vmod_in = self%vmod_in
     
     return
-  end function param_get_vmodel_file
+  end function param_get_vmod_in
+  
+  !---------------------------------------------------------------------
+  character(len=line_max) function param_get_ray_out(self) &
+       & result(ray_out)
+    class(param), intent(inout) :: self
+    
+    ray_out = self%ray_out
+    
+    return
+  end function param_get_ray_out
+  !---------------------------------------------------------------------
+
 
 end module mod_param

@@ -7,6 +7,7 @@ program main
   character(len=200) :: param_file
   type(param) :: para
   type(vmodel) :: vm
+  type(rayleigh) :: ray
   
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
@@ -21,9 +22,22 @@ program main
   
   ! Set velocity model
   vm = init_vmodel()
-  call vm%read_file(para%get_vmodel_file())
+  call vm%read_file(para%get_vmod_in())
   
-
+  ! Calculate dispersion curve
+  ray = init_rayleigh(&
+       & vm   = vm, &
+       & fmin = para%get_fmin(), &
+       & fmax = para%get_fmax(), &
+       & df   = para%get_df(), &
+       & cmin = para%get_cmin(), &
+       & cmax = para%get_cmax(), &
+       & dc   = para%get_dc(), &
+       & ray_out = para%get_ray_out() &
+       & )
+  
+  call ray%dispersion()
+ 
   
   
   

@@ -33,6 +33,10 @@ module mod_rayleigh
      double precision, allocatable :: u(:) ! group velocity
      double precision :: y(5)
      logical :: is_ocean
+     
+     character(len=200) :: ray_out = ""
+     logical :: out_flag = .false.
+
    contains
      procedure :: dispersion => rayleigh_dispersion
      procedure :: init_propagation => rayleigh_init_propagation
@@ -54,11 +58,12 @@ contains
   !---------------------------------------------------------------------
   
   type(rayleigh) function init_rayleigh(vm, fmin, fmax, df, &
-       & cmin, cmax, dc)
+       & cmin, cmax, dc, ray_out)
     type(vmodel), intent(in) :: vm
     double precision, intent(in) :: fmin, fmax, df
     double precision, intent(in) :: cmin, cmax, dc
-    integer :: nlay
+    character(*), intent(in), optional :: ray_out
+    integer :: nlay, ierr
     
     ! velocity model
     init_rayleigh%vmodel = vm
@@ -73,6 +78,7 @@ contains
        init_rayleigh%is_ocean = .false.
     end if
     
+    ! Check parameters
     init_rayleigh%fmin = fmin
     init_rayleigh%fmax = fmax
     init_rayleigh%df = df
@@ -94,8 +100,17 @@ contains
    end if
 
    ! output file
-   open(newunit = init_rayleigh%io, status = "unknown", &
-        & file = "rayleigh.out")
+   if (present(ray_out)) then
+      init_rayleigh%ray_out = ray_out
+      open(newunit = init_rayleigh%io, status = "unknown", &
+           & file = ray_out, iostat=ierr)
+      if (ierr /= 0) then
+         write(0, *)"ERROR: cannot creat ", trim(ray_out)
+         write(0, *)"     : (init_rayleigh)"
+         stop
+      end if
+      init_rayleigh%out_flag = .true.
+   end if
    
 
 
@@ -118,7 +133,9 @@ contains
           ! find root
           call self%find_root(omega, c_start, is_first, &
                & self%c(i), self%u(i), c_next)
-          write(self%io, *) omega / (2.d0 * pi), self%c(i), self%u(i)
+          if (self%out_flag) then
+             write(self%io, *) omega / (2.d0 * pi), self%c(i), self%u(i)
+          end if
           is_first = .false.
           c_start = c_next
        else

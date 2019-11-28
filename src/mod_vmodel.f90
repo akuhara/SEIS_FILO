@@ -245,18 +245,18 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine vmodel_read_file(self, vmodel_file)
+  subroutine vmodel_read_file(self, vmod_in)
     class(vmodel), intent(inout) :: self
-    character(*), intent(in) :: vmodel_file
+    character(*), intent(in) :: vmod_in
     integer :: ierr, io, i, nlay
     double precision :: vp, vs, rho, h
     
-    write(*,*)"Reading velocity model from ", trim(vmodel_file)
+    write(*,*)"Reading velocity model from ", trim(vmod_in)
     
-    open(newunit = io, file = vmodel_file, iostat = ierr, &
+    open(newunit = io, file = vmod_in, iostat = ierr, &
          & status = 'old')
     if (ierr /= 0) then
-       write(0, *)"ERROR: cannot open ", trim(vmodel_file)
+       write(0, *)"ERROR: cannot open ", trim(vmod_in)
        write(0, *)"     : (vmodel_read_file)"
        stop
     end if
