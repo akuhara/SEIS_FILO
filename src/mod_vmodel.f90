@@ -20,6 +20,7 @@ module mod_vmodel
      procedure :: get_rho => vmodel_get_rho
      procedure :: get_h => vmodel_get_h
      ! utilities
+     procedure :: read_file => vmodel_read_file
      procedure :: set_example_ocean => vmodel_set_example_ocean
      procedure :: set_example_land => vmodel_set_example_land
      procedure :: display => vmodel_display
@@ -234,15 +235,52 @@ contains
     class(vmodel), intent(inout) :: self
     integer :: i
 
-    print *
     do i = 1, self%nlay
-       print *, i, self%vp(i), self%vs(i), self%rho(i), self%h(i)
+       write(*,'(I5, 4F8.3)') i, self%vp(i), self%vs(i), &
+            & self%rho(i), self%h(i)
     end do
-    print *
     
     return 
   end subroutine vmodel_display
   
+  !---------------------------------------------------------------------
+
+  subroutine vmodel_read_file(self, vmodel_file)
+    class(vmodel), intent(inout) :: self
+    character(*), intent(in) :: vmodel_file
+    integer :: ierr, io, i, nlay
+    double precision :: vp, vs, rho, h
+    
+    write(*,*)"Reading velocity model from ", trim(vmodel_file)
+    
+    open(newunit = io, file = vmodel_file, iostat = ierr, &
+         & status = 'old')
+    if (ierr /= 0) then
+       write(0, *)"ERROR: cannot open ", trim(vmodel_file)
+       write(0, *)"     : (vmodel_read_file)"
+       stop
+    end if
+    
+    read(io, *)nlay
+    call self%set_nlay(nlay)
+    
+    do i = 1, nlay
+       read(io, *, iostat = ierr) vp, vs, rho, h
+       call self%set_vp(i, vp)
+       call self%set_vs(i, vs)
+       call self%set_rho(i, rho)
+       call self%set_h(i, h)
+    end do
+    close(io)
+    
+    call self%display()
+    
+    write(*,*)
+
+
+    return 
+  end subroutine vmodel_read_file
+
   !---------------------------------------------------------------------
   
   subroutine vmodel_set_example_ocean(self)

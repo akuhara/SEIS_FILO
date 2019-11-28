@@ -19,6 +19,7 @@ module mod_param
      procedure :: get_cmin => param_get_cmin
      procedure :: get_cmax => param_get_cmax
      procedure :: get_dc => param_get_dc
+     procedure :: get_vmodel_file => param_get_vmodel_file
   end type param
   
   interface param
@@ -35,6 +36,13 @@ contains
     character(len=*), intent(in) :: param_file
  
     init_param%param_file = param_file
+    init_param%vmodel_file = ""
+    init_param%fmin = -999.d0
+    init_param%fmax = -999.d0
+    init_param%df = -999.d0
+    init_param%cmin = -999.d0
+    init_param%cmax = -999.d0
+    init_param%dc = -999.d0
     call init_param%read_file()
     
     return 
@@ -57,16 +65,17 @@ contains
        stop
     end if
     
-
     do 
        read(io, '(a)', iostat=ierr) line
-       call self%read_line(line)
        if (ierr /= 0) then
           exit
        end if
+       call self%read_line(line)
     end do
     close(io)
     
+    write(*,*)
+
     return 
   end subroutine param_read_file
 
@@ -208,6 +217,14 @@ contains
   end function param_get_dc
 
   !---------------------------------------------------------------------
-  
+
+  character(len=line_max) function param_get_vmodel_file(self) &
+       & result(vmodel_file)
+    class(param), intent(inout) :: self
+    
+    vmodel_file = self%vmodel_file
+    
+    return
+  end function param_get_vmodel_file
 
 end module mod_param
