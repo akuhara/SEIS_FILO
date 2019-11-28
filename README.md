@@ -5,6 +5,7 @@ SEISmological tools for Flat Isotropic Layered structure in the Ocean
 ### USAGE
 `rayleigh_fwd [parameter file]`
 ### Parameter file
+
 `
 fmin=0.01 fmax=1.0  df=0.1
 cmin=1.0  cmax=2.0  dc=0.01
