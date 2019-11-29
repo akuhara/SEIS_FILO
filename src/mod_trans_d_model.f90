@@ -301,12 +301,13 @@ contains
     
     ! select k
     k = self%k_min + int(rand_u() * (self%k_max - self%k_min))
+
     ! generate model parameters
+    self%k = 0
     do i = 1, k
        is_ok = .false.
        do 
           call self%birth(is_ok)
-          !write(*,*)is_ok
           if (is_ok) exit
        end do
     end do
@@ -321,7 +322,7 @@ contains
     logical, intent(out) :: is_ok
     integer :: i, k2
 
-    if (self%k < self%k_max - 1) then
+    if (self%k < self%k_max) then
        is_ok = .true.
     else
        is_ok = .false.

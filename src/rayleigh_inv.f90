@@ -31,26 +31,27 @@ program main
   use mod_rayleigh
   use mod_interpreter
   use mod_const
+  use mod_obs
   implicit none 
   include 'mpif.h'
 
   integer, parameter :: n_iter = 1000000
-  integer, parameter :: k_min = 1, k_max = 21
+  integer, parameter :: k_min = 1, k_max = 41
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
-  double precision, parameter :: vp_min = 4.0d0, vp_max = 9.0d0
-  double precision, parameter :: z_min = 0.d0, z_max = 50.d0
+  double precision, parameter :: vp_min = 2.0d0, vp_max = 7.0d0
+  double precision, parameter :: z_min = 0.d0, z_max = 30.d0
   double precision, parameter :: dev_vs = 0.05d0
   double precision, parameter :: dev_vp = 0.05d0
-  double precision, parameter :: dev_z  = 0.2d0
+  double precision, parameter :: dev_z  = 0.05d0
   
-  logical, parameter :: solve_vp = .true.
-  logical, parameter :: ocean_flag = .true.
+  logical, parameter :: solve_vp = .false.
+  logical, parameter :: ocean_flag = .false.
   double precision :: ocean_thick = 1.d0
 
-  double precision, parameter :: fmin = 0.1d0, fmax = 1.d0, df = 0.1d0
-  double precision, parameter :: cmin = 0.2d0, cmax = 1.8d0, dc = 0.01d0
-
+  double precision, parameter :: cmin = 0.2d0 * vs_min, &
+       &  cmax = vs_max, dc = 0.005d0
+  double precision :: fmin, fmax, df
   
   integer :: i
   logical :: is_ok
@@ -59,11 +60,17 @@ program main
   type(interpreter) :: intpr
   type(mcmc) :: mc
   type(rayleigh) :: ray
-
+  type(obs) :: ob
 
   
-  call init_random(12345678, 23456789, 34567890, 45678901)
+  call init_random(555322, 5556789, 3323147890, 45678901)
   
+  ! Read observation file
+  ob = init_obs("rayobs.in")
+  fmin = ob%get_fmin()
+  df   = ob%get_df()
+  fmax = fmin + df * ob%get_nf()
+
   ! Set model parameter & generate initial sample
   tm = init_trans_d_model(k_min=k_min, k_max=k_max, n_rx=n_rx)
   call tm%set_prior(id_vs, id_uni, vs_min, vs_max)
@@ -82,14 +89,21 @@ program main
        & ocean_flag =ocean_flag, ocean_thick=ocean_thick, &
        & solve_vp=solve_vp)
   vm = intpr%get_vmodel(tm)
-
-  ! Set MCMC chain
-  mc = init_mcmc(tm)
+  call vm%display()
   
   ! Set forward computation
-  ray = init_rayleigh(vm=vm, fmin=fmin, fmax=fmax, df=df, &
-       cmin=cmin, cmax=cmax, dc=dc)
+  ray = init_rayleigh(vm=vm, fmin=ob%fmin, fmax=fmax, df=df, &
+       cmin=cmin, cmax=cmax, dc=dc, ray_out = "test.dat")
   
+  write(*,*)cmin, cmax
+
+  call ray%dispersion()
+
+  
+  stop
+  ! Set MCMC chain
+  mc = init_mcmc(tm)
+
   ! Main
   do i = 1, n_iter
      call mc%propose_model(tm_tmp, is_ok)

@@ -49,7 +49,7 @@ module mod_rayleigh
      double precision :: dc  
      integer :: nc
 
-     integer :: niter = 7
+     integer :: niter = 10
 
      integer :: io
 
@@ -147,30 +147,24 @@ contains
 
   subroutine rayleigh_dispersion(self)
     class(rayleigh), intent(inout) :: self
-    double precision :: omega, c_next, c_start
-    logical :: is_first
+    double precision :: omega, c_start, prev_rslt
     integer :: i
     
-    is_first = .true.
+    prev_rslt = 0.d0
     c_start = self%cmin
     do i = 1, self%nf
        omega = 2.d0 * pi * (self%fmin  + (i - 1) * self%df)
        if (.not. self%full_calculation) then
           ! find root
-          call self%find_root(omega, c_start, is_first, &
-               & self%c(i), self%u(i), c_next)
+          call self%find_root(omega, c_start, self%c(i), self%u(i))
           if (self%out_flag) then
              write(self%io, '(3F10.4)') &
                   & omega / (2.d0 * pi), self%c(i), self%u(i)
           end if
-          is_first = .false.
-          c_start = c_next
        else
           ! full calculation
           call self%do_full_calculation(omega)
        end if
-
-       
     end do
 
     
@@ -198,94 +192,84 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine rayleigh_find_root(self, omega, c_start, is_first, &
-       & c, u, c_next)
+  subroutine rayleigh_find_root(self, omega, c_start, c, u)
     class(rayleigh), intent(inout) :: self
     double precision, intent(in) :: omega, c_start
-    double precision, intent(out) :: c, u, c_next
-    logical, intent(in) :: is_first
+    double precision, intent(out) :: c, u
     integer :: i
     double precision :: c_tmp, rslt, prev_rslt, cmin2, cmax2
-    double precision :: c1, c2, rslt1, rslt2, del_c
+    double precision :: c1, c2, rslt1_c, rslt2_c, del_c
     double precision :: rslt_min, rslt_max
-    double precision :: omega1, omega2, del_omega
+    double precision :: omega1, omega2, del_omega, rslt1_omg, rslt2_omg
     logical :: is_found
 
     is_found = .false.
 
-    ! First step
+    ! First step 
     prev_rslt = 0.d0
     do i = 1, self%nc
-       if (is_first) then ! increase c (phase velocity)
-          c_tmp = c_start + (i - 1) * self%dc
-       else               ! decrease in c (phase velocity)
-          c_tmp = c_start - (i - 1) * self%dc
-       end if
+       c_tmp = c_start + (i - 1) * self%dc
+       if (c_tmp > self%vmodel%get_vs(self%vmodel%get_nlay())) exit
        call self%do_propagation(omega, c_tmp, rslt)
        if (prev_rslt * rslt < 0) then
           is_found = .true.
           prev_rslt = rslt
-          if (is_first) then
-             cmin2 = c_tmp - self%dc
-             cmax2 = c_tmp
-          else
-             cmin2 = c_tmp
-             cmax2 = c_tmp + self%dc
-          end if
+          cmin2 = c_tmp - self%dc
+          cmax2 = c_tmp
           exit
        end if
        prev_rslt = rslt
     end do
     if (.not. is_found) then
        write(0,*)"Warning: root is not found (rayleigh_find_root)", &
-            & "       : omega = ", omega
-       c = -999.d0
-       u = -999.d9
+            & "       : omega = ", omega, ", c_tmp = ", c_tmp
+       c = 0.d0
+       u = 0.d0
        return
     end if
+
+    !c1 = c - 0.001d0 * self%dc 
+    !call self%do_propagation(omega, c1, rslt1_c)
+    !c2 = c + 0.001d0 * self%dc 
+    !call self%do_propagation(omega, c2, rslt2_c)
+    !del_c = (rslt2_c - rslt1_c) / (c2 - c1)
     
-       
     ! Second step
     do i = 1, self%niter
        c_tmp = 0.5d0 * (cmin2 + cmax2)
        call self%do_propagation(omega, c_tmp, rslt)
-       if (.not. is_first) then
-          if (prev_rslt * rslt > 0.d0) then
-             cmin2 = c_tmp
-             rslt_min = rslt
-          else
-             cmax2 = c_tmp
-             rslt_max = rslt
-          end if
+       if (prev_rslt * rslt > 0.d0) then
+          cmax2 = c_tmp
+          rslt_max = rslt
        else
-          if (prev_rslt * rslt > 0.d0) then
-             cmax2 = c_tmp
-             rslt_max = rslt
-          else
-             cmin2 = c_tmp
-             rslt_min = rslt
-          end if
-
+          cmin2 = c_tmp
+          rslt_min = rslt
        end if
+       !if (rslt / prev_rslt < abs(del_c * eps)) then
+       !   write(*,*)"iter: ", i
+       !   exit
+       !end if
     end do
-    c = (rslt_min * cmax2 + rslt_max * cmax2) / (rslt_min + rslt_max)
-    c_next = c 
+    
+    ! Third step 
+    c = (rslt_min * cmax2 + rslt_max * cmin2) / (rslt_min + rslt_max)
+    call self%do_propagation(omega, c, rslt)
     
     ! Group velocity
+    ! derivative by c
     c1 = c - 0.001d0 * self%dc 
-    call self%do_propagation(omega, c1, rslt1)
+    call self%do_propagation(omega, c1, rslt1_c)
     c2 = c + 0.001d0 * self%dc 
-    call self%do_propagation(omega, c2, rslt2)
-    del_c = (rslt2 - rslt1) / (c2 - c1)
-
+    call self%do_propagation(omega, c2, rslt2_c)
+    del_c = (rslt2_c - rslt1_c) / (c2 - c1)
+    ! derivative by omega
     omega1 = omega - 0.001d0 * self%df * 2.d0 * pi 
-    call self%do_propagation(omega1, c, rslt1)
+    call self%do_propagation(omega1, c, rslt1_omg)
     omega2 = omega + 0.001d0 * self%df * 2.d0 * pi 
-    call self%do_propagation(omega2, c, rslt2)
-    del_omega = (rslt2 - rslt1) / (omega2 - omega1)
-    
+    call self%do_propagation(omega2, c, rslt2_omg)
+    del_omega = (rslt2_omg - rslt1_omg) / (omega2 - omega1)
+    ! group velocity from the two derivatives
     u = c / (1.d0 + omega * del_omega / (c * del_c))
-    
 
     return
   end subroutine rayleigh_find_root
@@ -295,7 +279,6 @@ contains
     class(rayleigh), intent(inout) :: self
     double precision, intent(in) :: omega, c
     double precision, intent(out) :: rslt
-    double precision :: maxamp
     integer :: i, nlay, i0
     
     nlay = self%vmodel%get_nlay()
@@ -309,8 +292,6 @@ contains
     call self%init_propagation(c)
     do i = nlay-1, i0, -1
        self%y = matmul(self%solid_propagator(i, omega, c), self%y)
-       maxamp = maxval(abs(self%y))
-       self%y(1:5) = self%y(1:5) / maxamp
     end do
 
     if (self%is_ocean) then
@@ -355,8 +336,6 @@ contains
     self%y(i23) = -rho * rb      
     self%y(i12) = rho * (gm * self%y(i13) + 1.d0) 
     self%y(i24) = -rho * (gm * self%y(i12) + rho * (gm - 1.d0)) 
-
-    self%y(1:5) = self%y(1:5) * eps
     
     return 
   end subroutine rayleigh_init_propagation
@@ -371,7 +350,7 @@ contains
     double precision :: vp, vs, rho, h
     double precision :: k
     double precision :: ca, sa, cb, sb, ra2, rb2, fac_a, fac_b, fac, gm
-    
+
     vp = self%vmodel%get_vp(i)
     vs = self%vmodel%get_vs(i)
     rho = self%vmodel%get_rho(i)
@@ -428,6 +407,7 @@ contains
     p(i24, i23) = p(i14, i13)
     p(i24, i24) = p(i13, i13)
     
+
     return
   end function rayleigh_solid_propagator
 
@@ -462,10 +442,11 @@ contains
     real(8), intent(out) :: sh, ch, r2, fac
     real(8) :: r
     
-    !write(*,*)c, v, h, k
+    
     if (v > c) then
        r = sqrt(1.d0 - (c/v)**2)
        r2 = r * r
+       !if (r * h * k > 0.01d0) then
        ch = 1.d0
        sh = tanh(r * h * k) / r
        if (r * h * k <= huge) then
@@ -473,14 +454,23 @@ contains
        else
           fac = 0.d0
        end if
-    else 
+       !else
+       !   ch = 1.d0
+       !   sh = 0.d0
+       !   fac = 1.d0
+       !end if
+    else if (v < c) then
        ! Use cos and sin instead of cosh and sinh 
        !   to avoid complex values
        r = sqrt((c/v)**2 - 1.d0)
-       if (r == 0.d0) r = eps ! to avoid zero division
        r2 = - r * r
        ch = cos(r * h * k) 
        sh = sin(r * h * k) / r 
+       fac = 1.d0
+    else
+       r2 = 0.d0
+       ch = 1.d0
+       sh = h * k
        fac = 1.d0
     end if
     
