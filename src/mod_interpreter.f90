@@ -103,7 +103,7 @@ contains
 
     ! Set ocean layer
     if (self%ocean_flag) then
-       call vm%set_nlay(k + 1)
+       call vm%set_nlay(k + 1) ! k solid layers + 1 ocean layer
        call vm%set_vp(1, self%ocean_vp)
        call vm%set_vs(1, -999.d0)
        call vm%set_rho(1, self%ocean_rho)
@@ -138,15 +138,11 @@ contains
     end do
     ! Bottom layer
     ! Vs
-    call vm%set_vs(k+i1, self%wrk_vs(k))
+    call vm%set_vs(k+i1, 4.6d0) ! <- Fixed
     ! Vp
-    if (self%solve_vp) then
-       call vm%set_vp(k+i1, self%wrk_vp(k))
-    else
-       call vm%vs2vp_brocher(k+i1)
-    end if
+    call vm%vs2vp_brocher(k+i1)
     ! Thickness
-    call vm%set_h(k+i1,  -999.d0)
+    call vm%set_h(k+i1,  -99.d0) ! <- half space
     ! Density
     call vm%vp2rho_brocher(k+i1)
     

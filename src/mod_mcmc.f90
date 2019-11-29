@@ -91,5 +91,18 @@ contains
 
     return 
   end subroutine mcmc_accept_model
+
+  !---------------------------------------------------------------------
+
+  subroutine mcmc_judge_model(self, tm, rslt)
+    class(mcmc), intent(inout) :: self
+    logical, intent(out) :: rslt
+    type(trans_d_model), intent(in) :: tm
+
+
+    return 
+  end subroutine mcmc_judge_model
   
+  !---------------------------------------------------------------------
+
 end module mod_mcmc

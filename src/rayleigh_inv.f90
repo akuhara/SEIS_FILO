@@ -31,21 +31,21 @@ program main
   use mod_rayleigh
   use mod_interpreter
   use mod_const
-  use mod_obs
+  use mod_observation
   implicit none 
   include 'mpif.h'
 
-  integer, parameter :: n_iter = 1000000
-  integer, parameter :: k_min = 1, k_max = 41
+  integer, parameter :: n_iter = 1000
+  integer, parameter :: k_min = 1, k_max = 31
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
-  double precision, parameter :: vp_min = 2.0d0, vp_max = 7.0d0
+  double precision, parameter :: vp_min = 5.0d0, vp_max = 8.5d0
   double precision, parameter :: z_min = 0.d0, z_max = 30.d0
   double precision, parameter :: dev_vs = 0.05d0
   double precision, parameter :: dev_vp = 0.05d0
   double precision, parameter :: dev_z  = 0.05d0
   
-  logical, parameter :: solve_vp = .false.
+  logical, parameter :: solve_vp = .true.
   logical, parameter :: ocean_flag = .false.
   double precision :: ocean_thick = 1.d0
 
@@ -53,23 +53,29 @@ program main
        &  cmax = vs_max, dc = 0.005d0
   double precision :: fmin, fmax, df
   
-  integer :: i
+  integer :: i, ierr, nproc, rank, j
   logical :: is_ok
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
   type(interpreter) :: intpr
   type(mcmc) :: mc
   type(rayleigh) :: ray
-  type(obs) :: ob
+  type(observation) :: obs
 
-  
-  call init_random(555322, 5556789, 3323147890, 45678901)
+  ! MPI 
+
+  call mpi_init(ierr)
+  call mpi_comm_size(MPI_COMM_WORLD, nproc, ierr)
+  call mpi_comm_rank(MPI_COMM_WORLD, rank, ierr)
+
+  call init_random(555322, 5556789, 3323147890, 45678901, rank)
   
   ! Read observation file
-  ob = init_obs("rayobs.in")
-  fmin = ob%get_fmin()
-  df   = ob%get_df()
-  fmax = fmin + df * ob%get_nf()
+  obs = init_observation("rayobs.in")
+  fmin = obs%get_fmin()
+  df   = obs%get_df()
+  fmax = fmin + df * (obs%get_nf() - 1)
+
 
   ! Set model parameter & generate initial sample
   tm = init_trans_d_model(k_min=k_min, k_max=k_max, n_rx=n_rx)
@@ -92,23 +98,24 @@ program main
   call vm%display()
   
   ! Set forward computation
-  ray = init_rayleigh(vm=vm, fmin=ob%fmin, fmax=fmax, df=df, &
-       cmin=cmin, cmax=cmax, dc=dc, ray_out = "test.dat")
+  ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
+       cmin=cmin, cmax=cmax, dc=dc)
   
-  write(*,*)cmin, cmax
-
-  call ray%dispersion()
-
-  
-  stop
   ! Set MCMC chain
   mc = init_mcmc(tm)
 
   ! Main
   do i = 1, n_iter
+     write(*,*)i
      call mc%propose_model(tm_tmp, is_ok)
      vm = intpr%get_vmodel(tm_tmp)
      call ray%set_vmodel(vm)
+     call ray%dispersion()
+     
+     do j = 1, obs%get_nf()
+        write(*,*) obs%get_fmin() + (j - 1) * obs%get_df(), &
+             & obs%get_c(j), ray%get_c(j)
+     end do
      
      if (is_ok) then
         call mc%accept_model(tm_tmp)
@@ -123,3 +130,8 @@ program main
 
   stop
 end program main
+
+
+!-----------------------------------------------------------------------
+
+

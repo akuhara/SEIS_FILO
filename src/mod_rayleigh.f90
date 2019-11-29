@@ -73,6 +73,8 @@ module mod_rayleigh
      procedure :: set_full_calculation => rayleigh_set_full_calculation
      procedure :: do_full_calculation => rayleigh_do_full_calculation
      procedure :: set_vmodel => rayleigh_set_vmodel
+     procedure :: get_c => rayleigh_get_c
+     procedure :: get_u => rayleigh_get_u
   end type rayleigh
 
   interface rayleigh
@@ -503,4 +505,28 @@ contains
     return 
   end subroutine rayleigh_set_vmodel
 
+  !---------------------------------------------------------------------
+
+  double precision function rayleigh_get_c(self, i) result(c)
+    class(rayleigh), intent(inout) :: self
+    integer, intent(in) :: i
+    
+    c = self%c(i)
+
+    return 
+  end function rayleigh_get_c
+    
+  !---------------------------------------------------------------------
+  
+  double precision function rayleigh_get_u(self, i) result(u)
+    class(rayleigh), intent(inout) :: self
+    integer, intent(in) :: i
+    
+    u = self%u(i)
+
+    return 
+  end function rayleigh_get_u
+
+  !---------------------------------------------------------------------
+  
 end module mod_rayleigh
