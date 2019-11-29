@@ -117,6 +117,7 @@ program main
              & obs%get_c(j), ray%get_c(j)
      end do
      
+     stop
      if (is_ok) then
         call mc%accept_model(tm_tmp)
      else

@@ -43,6 +43,8 @@ module mod_mcmc
      module procedure init_mcmc
   end interface mcmc
 
+  public l2_misfit
+
 contains
 
   !---------------------------------------------------------------------
@@ -104,5 +106,19 @@ contains
   end subroutine mcmc_judge_model
   
   !---------------------------------------------------------------------
+
+  double precision function l2_misfit(n, x1, x2, sig) result(m)
+    integer, intent(in) :: n
+    double precision, intent(in) :: x1(n), x2(n), sig(n)
+    integer :: i
+    
+    m = 0.d0
+    do concurrent (i = 1:n)
+       m = m + (x1(i) - x2(i)) * (x1(i) - x2(i)) * sig(i) * sig(i)
+    end do
+    
+    return 
+  end function l2_misfit
+    
 
 end module mod_mcmc
