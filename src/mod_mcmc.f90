@@ -49,6 +49,8 @@ module mod_mcmc
      procedure :: accept_model  => mcmc_accept_model
      procedure :: judge_model   => mcmc_judge_model
      procedure :: one_step_summary => mcmc_one_step_summary
+     procedure :: get_n_mod     => mcmc_get_n_mod
+     procedure :: get_tm_saved  => mcmc_get_tm_saved
   end type mcmc
   
   interface mcmc
@@ -70,7 +72,7 @@ contains
     init_mcmc%n_iter = n_iter
     init_mcmc%i_iter = 0
     init_mcmc%i_mod = 0
-   
+    init_mcmc%log_likelihood = -1.0d300
 
     if (present(n_burn)) then
        init_mcmc%n_burn = n_burn
@@ -86,7 +88,7 @@ contains
          & init_mcmc%n_corr)
     allocate(init_mcmc%tm_saved(init_mcmc%n_mod))
     
-    init_mcmc%log_likelihood = 0.d0
+
     
     return 
   end function init_mcmc
@@ -110,6 +112,7 @@ contains
        ! Death
        call tm_proposed%death(is_ok)
     else
+       ! Perturbation
        iparam = self%i_proposal_type - 1
        call tm_proposed%perturb(iparam, is_ok)
     end if
@@ -142,6 +145,7 @@ contains
     self%is_accepted = .false.
 
     ratio = (log_likelihood - self%log_likelihood)
+    write(*,*)log_likelihood, self%log_likelihood
     r = log(rand_u())
     if (r <= ratio) then
        self%is_accepted = .true.
@@ -154,6 +158,12 @@ contains
 
     self%i_iter = self%i_iter + 1
     self%likelihood_saved(self%i_iter) = self%log_likelihood
+    if (self%i_iter > self%n_burn .and. &
+         & mod(self%i_iter, self%n_corr) == 0) then
+       self%i_mod = self%i_mod + 1
+       self%tm_saved(self%i_mod) = self%tm
+    end if
+
 
 
     return 
@@ -170,6 +180,32 @@ contains
     write(*,*)
   end subroutine mcmc_one_step_summary
 
+  !---------------------------------------------------------------------
+
+  integer function mcmc_get_n_mod(self) result(n_mod)
+    class(mcmc), intent(in) :: self
+
+    n_mod = self%n_mod
+    
+    return 
+  end function mcmc_get_n_mod
+  
+  !---------------------------------------------------------------------
+  
+  type(trans_d_model) function mcmc_get_tm_saved(self, i) result(tm)
+    class(mcmc), intent(in) :: self
+    integer, intent(in) :: i
+
+    if (i < 0 .or. i > self%n_mod) then
+       write(0,*)"ERROR: invalid input i (mcmc_get_tm_saved)"
+       stop
+    end if
+    
+    tm = self%tm_saved(i)
+
+    return 
+  end function mcmc_get_tm_saved
+  
   !---------------------------------------------------------------------
 
 end module mod_mcmc

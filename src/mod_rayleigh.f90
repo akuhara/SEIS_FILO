@@ -153,7 +153,8 @@ contains
 
   subroutine rayleigh_dispersion(self)
     class(rayleigh), intent(inout) :: self
-    double precision :: omega, c_start, prev_rslt
+    double precision :: omega, c_start, prev_rslt, grad, fac
+    double precision :: c, u
     integer :: i
     
     prev_rslt = 0.d0
@@ -162,7 +163,21 @@ contains
        omega = 2.d0 * pi * (self%fmin  + (i - 1) * self%df)
        if (.not. self%full_calculation) then
           ! find root
-          call self%find_root(omega, c_start, self%c(i), self%u(i))
+          if (i /= 1) then
+             grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
+                  & self%c(i-1) / (omega - 2.d0 * pi * self%df)
+             if (grad < -0.1d0) then
+                c_start = self%c(i-1) + 2.d0 * grad * 2.d0 * pi * self%df
+             else
+                c_start = self%c(i-1) - 0.05d0
+             end if
+             if (c_start <= self%cmin) then
+                c_start = self%cmin
+             end if
+          end if 
+          call self%find_root(omega, c_start, c, u)
+          self%c(i) = c
+          self%u(i) = u
           if (self%out_flag) then
              write(self%io, '(3F10.4)') &
                   & omega / (2.d0 * pi), self%c(i), self%u(i)
@@ -215,7 +230,9 @@ contains
     prev_rslt = 0.d0
     do i = 1, self%nc
        c_tmp = c_start + (i - 1) * self%dc
+       !write(*,*)"C_tmp=", c_tmp
        if (c_tmp > self%vmodel%get_vs(self%vmodel%get_nlay())) exit
+       !write(*,*)"First"
        call self%do_propagation(omega, c_tmp, rslt)
        if (prev_rslt * rslt < 0) then
           is_found = .true.
@@ -243,6 +260,7 @@ contains
     ! Second step
     do i = 1, self%niter
        c_tmp = 0.5d0 * (cmin2 + cmax2)
+       !write(*,*)"Second"             
        call self%do_propagation(omega, c_tmp, rslt)
        if (prev_rslt * rslt > 0.d0) then
           cmax2 = c_tmp
@@ -257,9 +275,11 @@ contains
        !end if
     end do
     
+    c = c_tmp
     ! Third step 
-    c = (rslt_min * cmax2 + rslt_max * cmin2) / (rslt_min + rslt_max)
-    call self%do_propagation(omega, c, rslt)
+    !c = (rslt_min * cmax2 + rslt_max * cmin2) / (rslt_min + rslt_max)
+    !write(*,*)"Thrid", rslt_min, rslt_max, c, cmin2, cmax2
+    !call self%do_propagation(omega, c, rslt)
     
     ! Group velocity
     ! derivative by c
@@ -276,7 +296,7 @@ contains
     del_omega = (rslt2_omg - rslt1_omg) / (omega2 - omega1)
     ! group velocity from the two derivatives
     u = c / (1.d0 + omega * del_omega / (c * del_c))
-
+    !write(*,*)"C=", c, "U=",u
     return
   end subroutine rayleigh_find_root
   !---------------------------------------------------------------------

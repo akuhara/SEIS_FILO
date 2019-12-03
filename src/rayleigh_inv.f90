@@ -35,27 +35,28 @@ program main
   implicit none 
   include 'mpif.h'
 
-  integer, parameter :: n_iter = 100
-  integer, parameter :: k_min = 1, k_max = 31
+  integer, parameter :: n_iter = 100000
+  integer, parameter :: k_min = 1, k_max = 21
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
   double precision, parameter :: vp_min = 5.0d0, vp_max = 8.5d0
   double precision, parameter :: z_min = 0.d0, z_max = 30.d0
-  double precision, parameter :: dev_vs = 0.005d0
-  double precision, parameter :: dev_vp = 0.005d0
-  double precision, parameter :: dev_z  = 0.005d0
-  
+  double precision, parameter :: dev_vs = 0.03d0
+  double precision, parameter :: dev_vp = 0.03d0
+  double precision, parameter :: dev_z  = 0.03d0
+  integer, parameter :: nbin_z = 50, nbin_vs = 50
+
   logical, parameter :: solve_vp = .true.
   logical, parameter :: ocean_flag = .false.
   double precision :: ocean_thick = 1.d0
 
   double precision, parameter :: cmin = 0.2d0 * vs_min, &
-       &  cmax = vs_max, dc = 0.005d0
+       &  cmax = 4.5d0, dc = 0.005d0
   double precision :: fmin, fmax, df
   
   integer :: i, ierr, nproc, rank
   double precision :: log_likelihood
-  logical :: is_ok, is_accepted
+  logical :: is_ok
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
   type(interpreter) :: intpr
@@ -93,6 +94,8 @@ program main
 
   ! Set interpreter 
   intpr = init_interpreter(nlay_max=k_max, &
+       & z_min=z_min, z_max=z_max, nbin_z=nbin_z, &
+       & vs_min=vs_min, vs_max=vs_max, nbin_vs=nbin_vs, &
        & ocean_flag =ocean_flag, ocean_thick=ocean_thick, &
        & solve_vp=solve_vp)
   vm = intpr%get_vmodel(tm)
@@ -103,7 +106,7 @@ program main
        cmin=cmin, cmax=cmax, dc=dc)
   
   ! Set MCMC chain
-  mc = init_mcmc(tm, n_iter)
+  mc = init_mcmc(tm, n_iter, n_corr=2000)
 
   ! Main
   do i = 1, n_iter
@@ -111,7 +114,7 @@ program main
      if (is_ok) then
         call forward_rayleigh(tm_tmp, intpr, obs, ray, log_likelihood)
      else
-        log_likelihood = 0.d0
+        log_likelihood = -1.d300
      end if
      call mc%judge_model(tm_tmp, log_likelihood)
      call mc%one_step_summary()
@@ -119,8 +122,21 @@ program main
 
   end do
 
-  call vm%display()
+  ! Output
+  do i = 1, mc%get_n_mod()
+     write(*,*)i
+     tm = mc%get_tm_saved(i)
+     vm = intpr%get_vmodel(tm)
+     call vm%display()
+  end do
+
+  call ray%set_vmodel(vm)
+  call ray%dispersion()
   
+  do i = 1, obs%get_nf()
+     write(111,*)obs%get_fmin() + (i-1) * obs%get_df(), &
+          & ray%get_c(i), obs%get_c(i), ray%get_u(i), obs%get_u(i)
+  end do
 
   stop
 end program main
@@ -152,9 +168,16 @@ subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
   log_likelihood = 0.d0
   do i = 1, obs%get_nf()
      log_likelihood = &
-          & log_likelihood + (ray%get_c(i) - obs%get_c(i)) ** 2 / &
+          & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
           & (obs%get_sig_c(i) ** 2)
+     log_likelihood = &
+          & log_likelihood - (ray%get_u(i) - obs%get_u(i)) ** 2 / &
+          & (obs%get_sig_u(i) ** 2)
+
   end do
+  !do i = 1, obs%get_nf()
+  !   write(*,*)i, ray%get_c(i), obs%get_c(i)
+  !end do
   log_likelihood = 0.5d0 * log_likelihood
 
   return 

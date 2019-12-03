@@ -40,11 +40,24 @@ module mod_interpreter
      double precision :: ocean_vp    = 1.5d0
      double precision :: ocean_rho   = 1.d0
 
+     integer :: nbin_z
+     integer :: nbin_vs
+     double precision :: z_min
+     double precision :: z_max
+     double precision :: dz
+     double precision :: vs_min
+     double precision :: vs_max
+     double precision  :: dvs
+     double precision, allocatable :: wrk_vsz(:)
+     
+     
+     
      logical :: solve_vp = .true.
 
      double precision, allocatable :: wrk_vp(:), wrk_vs(:), wrk_z(:) 
    contains
      procedure :: get_vmodel => interpreter_get_vmodel
+     procedure :: make_vz => interpreter_make_vz
   end type interpreter
   
   interface interpreter
@@ -54,37 +67,55 @@ module mod_interpreter
 contains
 
   !---------------------------------------------------------------------
-  type(interpreter) function init_interpreter(nlay_max, &
-       & ocean_flag, ocean_thick, ocean_vp, ocean_rho, solve_vp)
+  type(interpreter) function init_interpreter(nlay_max, z_min, z_max, &
+       & nbin_z, vs_min, vs_max, nbin_vs, &
+       & ocean_flag, ocean_thick, ocean_vp, ocean_rho, solve_vp) &
+       & result(self)
     integer, intent(in) :: nlay_max
+    integer, intent(in) :: nbin_z, nbin_vs
+    double precision, intent(in) :: z_min, z_max, vs_min, vs_max
+    
     logical, intent(in), optional :: ocean_flag
     double precision, intent(in), optional :: ocean_thick, &
          ocean_vp, ocean_rho
     logical, intent(in), optional :: solve_vp
 
-    init_interpreter%nlay_max = nlay_max
-    allocate(init_interpreter%wrk_vp(nlay_max))
-    allocate(init_interpreter%wrk_vs(nlay_max))
-    allocate(init_interpreter%wrk_z(nlay_max))
+    self%nlay_max = nlay_max
+    allocate(self%wrk_vp(nlay_max))
+    allocate(self%wrk_vs(nlay_max))
+    allocate(self%wrk_z(nlay_max))
+    
+    self%z_min   = z_min
+    self%z_max   = z_max
+    self%nbin_z  = nbin_z
+    self%vs_min  = vs_min
+    self%vs_max  = vs_max
+    self%nbin_vs = nbin_vs
+    
+    self%dz  = (z_max - z_min) / dble(nbin_z)
+    self%dvs = (vs_max - vs_min) / dble(nbin_vs)
+    
+    allocate(self%wrk_vsz(self%nbin_z))
+    
 
     if (present(ocean_flag)) then
-       init_interpreter%ocean_flag = ocean_flag
+       self%ocean_flag = ocean_flag
     end if
 
     if (present(ocean_thick)) then
-       init_interpreter%ocean_thick = ocean_thick
+       self%ocean_thick = ocean_thick
     end if
 
     if (present(ocean_vp)) then
-       init_interpreter%ocean_vp = ocean_vp
+       self%ocean_vp = ocean_vp
     end if
     
     if (present(ocean_rho)) then
-       init_interpreter%ocean_rho = ocean_rho
+       self%ocean_rho = ocean_rho
     end if
 
     if (present(solve_vp)) then
-       init_interpreter%solve_vp = solve_vp
+       self%solve_vp = solve_vp
     end if
 
     return 
@@ -150,6 +181,33 @@ contains
   end function interpreter_get_vmodel
   
   !---------------------------------------------------------------------
+
+  subroutine interpreter_make_vz(self, tm)
+    class(interpreter), intent(inout) :: self
+    type(trans_d_model), intent(in) :: tm
+    type(vmodel) :: vm
+    integer :: nlay
+    integer :: ilay, iz, iz1, iz2
+    double precision :: tmpz
+    
+    vm = self%get_vmodel(tm)
+    nlay = vm%get_nlay()
+    
+    tmpz = 0.d0
+    do ilay = 1, nlay
+       iz1 = int(tmpz / self%dz) + 1
+       if (ilay < nlay) then
+          iz2 = int((tmpz + vm%get_h(ilay)) / self%dz) + 1
+       else
+          iz2 = self%nbin_z + 1
+       end if
+       do iz = iz1, iz2 - 1
+          self%wrk_vsz(iz) = vm%get_vs(ilay)
+       end do
+       tmpz = tmpz + vm%get_h(ilay) 
+    end do
+    
+  end subroutine interpreter_make_vz
   
 end module mod_interpreter
 
