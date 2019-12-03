@@ -94,7 +94,7 @@ contains
   
   type(vmodel) function interpreter_get_vmodel(self, tm) result(vm)
     class(interpreter), intent(inout) :: self
-    type(trans_d_model), intent(inout) :: tm
+    type(trans_d_model), intent(in) :: tm
     integer :: i, i1, k
 
     

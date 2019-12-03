@@ -146,7 +146,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function observation_get_u(self, i) result(u)
-    class(observation), intent(inout) :: self
+    class(observation), intent(in) :: self
     integer, intent(in) :: i
     
     u = self%u(i)
@@ -168,7 +168,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function observation_get_sig_c(self, i) result(sig_c)
-    class(observation), intent(inout) :: self
+    class(observation), intent(in) :: self
     integer, intent(in) :: i
     
     sig_c = self%sig_c(i)
@@ -190,7 +190,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function observation_get_sig_u(self, i) result(sig_u)
-    class(observation), intent(inout) :: self
+    class(observation), intent(in) :: self
     integer, intent(in) :: i
     
     sig_u = self%sig_u(i)

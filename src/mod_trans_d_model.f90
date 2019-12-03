@@ -251,7 +251,7 @@ contains
   !---------------------------------------------------------------------
 
   integer function trans_d_model_get_k(self) result(k)
-    class(trans_d_model), intent(inout) :: self
+    class(trans_d_model), intent(in) :: self
     
     k = self%k
 
@@ -261,7 +261,7 @@ contains
   !---------------------------------------------------------------------
 
   integer function trans_d_model_get_n_x(self) result(n_x)
-    class(trans_d_model), intent(inout) :: self
+    class(trans_d_model), intent(in) :: self
     
     n_x = self%n_x
 
@@ -271,7 +271,7 @@ contains
   !---------------------------------------------------------------------
   
   function trans_d_model_get_rx(self, iparam) result(rx)
-    class(trans_d_model), intent(inout) :: self
+    class(trans_d_model), intent(in) :: self
     integer, intent(in) :: iparam
     double precision :: rx(self%k_max)
     
@@ -283,7 +283,7 @@ contains
   !---------------------------------------------------------------------
 
   function trans_d_model_get_ix(self, iparam) result(ix)
-    class(trans_d_model), intent(inout) :: self
+    class(trans_d_model), intent(in) :: self
     integer, intent(in) :: iparam
     integer :: ix(self%k_max)
     

@@ -35,15 +35,15 @@ program main
   implicit none 
   include 'mpif.h'
 
-  integer, parameter :: n_iter = 1000
+  integer, parameter :: n_iter = 100
   integer, parameter :: k_min = 1, k_max = 31
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
   double precision, parameter :: vp_min = 5.0d0, vp_max = 8.5d0
   double precision, parameter :: z_min = 0.d0, z_max = 30.d0
-  double precision, parameter :: dev_vs = 0.05d0
-  double precision, parameter :: dev_vp = 0.05d0
-  double precision, parameter :: dev_z  = 0.05d0
+  double precision, parameter :: dev_vs = 0.005d0
+  double precision, parameter :: dev_vp = 0.005d0
+  double precision, parameter :: dev_z  = 0.005d0
   
   logical, parameter :: solve_vp = .true.
   logical, parameter :: ocean_flag = .false.
@@ -53,8 +53,9 @@ program main
        &  cmax = vs_max, dc = 0.005d0
   double precision :: fmin, fmax, df
   
-  integer :: i, ierr, nproc, rank, j
-  logical :: is_ok
+  integer :: i, ierr, nproc, rank
+  double precision :: log_likelihood
+  logical :: is_ok, is_accepted
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
   type(interpreter) :: intpr
@@ -68,7 +69,7 @@ program main
   call mpi_comm_size(MPI_COMM_WORLD, nproc, ierr)
   call mpi_comm_rank(MPI_COMM_WORLD, rank, ierr)
 
-  call init_random(555322, 5556789, 3323147890, 45678901, rank)
+  call init_random(22222322, 2246789, 123147890, 65678901, rank)
   
   ! Read observation file
   obs = init_observation("rayobs.in")
@@ -102,23 +103,19 @@ program main
        cmin=cmin, cmax=cmax, dc=dc)
   
   ! Set MCMC chain
-  mc = init_mcmc(tm)
+  mc = init_mcmc(tm, n_iter)
 
   ! Main
   do i = 1, n_iter
-     write(*,*)i
      call mc%propose_model(tm_tmp, is_ok)
-     vm = intpr%get_vmodel(tm_tmp)
-     call ray%set_vmodel(vm)
-     call ray%dispersion()
-     
-     call l2_misfit()
-
      if (is_ok) then
-        call mc%accept_model(tm_tmp)
+        call forward_rayleigh(tm_tmp, intpr, obs, ray, log_likelihood)
      else
-        
+        log_likelihood = 0.d0
      end if
+     call mc%judge_model(tm_tmp, log_likelihood)
+     call mc%one_step_summary()
+
 
   end do
 
@@ -131,4 +128,34 @@ end program main
 
 !-----------------------------------------------------------------------
 
+subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
+  use mod_trans_d_model
+  use mod_interpreter
+  use mod_observation
+  use mod_rayleigh
+  use mod_vmodel
+  implicit none 
+  type(trans_d_model), intent(in) :: tm
+  type(interpreter), intent(inout) :: intpr
+  type(observation), intent(in) :: obs
+  type(rayleigh), intent(inout) :: ray
+  double precision, intent(out) :: log_likelihood
+  type(vmodel) :: vm
+  integer :: i
+  
+  ! calculate synthetic dispersion curves
+  vm = intpr%get_vmodel(tm)
+  call ray%set_vmodel(vm)
+  call ray%dispersion()
+  
+  ! calc misfit
+  log_likelihood = 0.d0
+  do i = 1, obs%get_nf()
+     log_likelihood = &
+          & log_likelihood + (ray%get_c(i) - obs%get_c(i)) ** 2 / &
+          & (obs%get_sig_c(i) ** 2)
+  end do
+  log_likelihood = 0.5d0 * log_likelihood
 
+  return 
+end subroutine forward_rayleigh
