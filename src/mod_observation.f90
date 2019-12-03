@@ -37,13 +37,17 @@ module mod_observation
      double precision, allocatable :: sig_u(:) ! uncertainties in u
      
    contains
-     procedure :: get_nf => observation_get_nf
-     procedure :: get_fmin => observation_get_fmin
-     procedure :: get_df   => observation_get_df
-     procedure :: get_c    => observation_get_c
-     procedure :: get_u    => observation_get_u
-     procedure :: get_sig_c    => observation_get_sig_c
-     procedure :: get_sig_u    => observation_get_sig_u
+     procedure :: get_nf             => observation_get_nf
+     procedure :: get_fmin           => observation_get_fmin
+     procedure :: get_df             => observation_get_df
+     procedure :: get_c              => observation_get_c
+     procedure :: get_c_array        => observation_get_c_array
+     procedure :: get_u              => observation_get_u
+     procedure :: get_u_array        => observation_get_u_array
+     procedure :: get_sig_c          => observation_get_sig_c
+     procedure :: get_sig_c_array    => observation_get_sig_c_array
+     procedure :: get_sig_u          => observation_get_sig_u
+     procedure :: get_sig_u_array    => observation_get_sig_u_array
      
   end type observation
   
@@ -90,7 +94,7 @@ contains
   !---------------------------------------------------------------------
 
   integer function observation_get_nf(self) result(nf)
-    class(observation), intent(inout) :: self
+    class(observation), intent(in) :: self
     
     nf = self%nf
 
@@ -100,7 +104,7 @@ contains
   !---------------------------------------------------------------------
   
   double precision function observation_get_fmin(self) result(fmin)
-    class(observation), intent(inout) :: self
+    class(observation), intent(in) :: self
     
     fmin = self%fmin
 
@@ -110,7 +114,7 @@ contains
   !---------------------------------------------------------------------
   
   double precision function observation_get_df(self) result(df)
-    class(observation), intent(inout) :: self
+    class(observation), intent(in) :: self
     
     df = self%df
 
@@ -120,13 +124,24 @@ contains
   !---------------------------------------------------------------------
 
   double precision function observation_get_c(self, i) result(c)
-    class(observation), intent(inout) :: self
+    class(observation), intent(in) :: self
     integer, intent(in) :: i
     
     c = self%c(i)
     
     return 
   end function observation_get_c
+  
+  !---------------------------------------------------------------------
+  
+  function observation_get_c_array(self) result(c)
+    class(observation), intent(in) :: self
+    double precision :: c(self%nf)
+    
+    c(:) = self%c(:)
+    
+    return 
+  end function observation_get_c_array
 
   !---------------------------------------------------------------------
 
@@ -141,6 +156,17 @@ contains
 
   !---------------------------------------------------------------------
   
+  function observation_get_u_array(self) result(u)
+    class(observation), intent(in) :: self
+    double precision :: u(self%nf)
+
+    u(:) = self%u(:)
+    
+    return 
+  end function observation_get_u_array
+  
+  !---------------------------------------------------------------------
+
   double precision function observation_get_sig_c(self, i) result(sig_c)
     class(observation), intent(inout) :: self
     integer, intent(in) :: i
@@ -149,6 +175,17 @@ contains
     
     return 
   end function observation_get_sig_c
+
+  !---------------------------------------------------------------------
+  
+  function observation_get_sig_c_array(self) result(sig_c)
+    class(observation), intent(in) :: self
+    double precision :: sig_c(self%nf)
+
+    sig_c(:) = self%sig_c(:)
+    
+    return 
+  end function observation_get_sig_c_array
 
   !---------------------------------------------------------------------
 
@@ -163,6 +200,16 @@ contains
 
   !---------------------------------------------------------------------
 
+  function observation_get_sig_u_array(self) result(sig_u)
+    class(observation), intent(in) :: self
+    double precision :: sig_u(self%nf)
+
+    sig_u(:) = self%sig_u(:)
+    
+    return 
+  end function observation_get_sig_u_array
+
+  !---------------------------------------------------------------------
 
   
 end module mod_observation

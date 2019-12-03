@@ -112,12 +112,8 @@ program main
      call ray%set_vmodel(vm)
      call ray%dispersion()
      
-     do j = 1, obs%get_nf()
-        write(*,*) obs%get_fmin() + (j - 1) * obs%get_df(), &
-             & obs%get_c(j), ray%get_c(j)
-     end do
-     
-     stop
+     call l2_misfit()
+
      if (is_ok) then
         call mc%accept_model(tm_tmp)
      else

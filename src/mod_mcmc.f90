@@ -28,7 +28,8 @@ module mod_mcmc
   use mod_random
   use mod_trans_d_model
   implicit none 
-  
+
+
   type mcmc 
      private
      

@@ -73,14 +73,18 @@ module mod_rayleigh
      procedure :: set_full_calculation => rayleigh_set_full_calculation
      procedure :: do_full_calculation => rayleigh_do_full_calculation
      procedure :: set_vmodel => rayleigh_set_vmodel
+     procedure :: get_nc => rayleigh_get_nc
      procedure :: get_c => rayleigh_get_c
+     procedure :: get_c_array => rayleigh_get_c_array
      procedure :: get_u => rayleigh_get_u
+     procedure :: get_u_array => rayleigh_get_u_array
+     
   end type rayleigh
 
   interface rayleigh
      module procedure init_rayleigh
   end interface rayleigh
-     
+  
 contains
   
   !---------------------------------------------------------------------
@@ -507,25 +511,57 @@ contains
 
   !---------------------------------------------------------------------
 
+  integer function rayleigh_get_nc(self) result(nc)
+    class(rayleigh), intent(in) :: self
+
+    nc = self%nc
+    
+    return 
+  end function rayleigh_get_nc
+
+  !---------------------------------------------------------------------
+
   double precision function rayleigh_get_c(self, i) result(c)
-    class(rayleigh), intent(inout) :: self
+    class(rayleigh), intent(in) :: self
     integer, intent(in) :: i
     
     c = self%c(i)
 
     return 
   end function rayleigh_get_c
-    
+
+  !---------------------------------------------------------------------
+  
+  function rayleigh_get_c_array(self) result(c)
+    class(rayleigh), intent(in) :: self
+    double precision :: c(self%nf)
+  
+    c(:) = self%c(:)
+
+    return 
+  end function rayleigh_get_c_array
+
   !---------------------------------------------------------------------
   
   double precision function rayleigh_get_u(self, i) result(u)
-    class(rayleigh), intent(inout) :: self
+    class(rayleigh), intent(in) :: self
     integer, intent(in) :: i
     
     u = self%u(i)
 
     return 
   end function rayleigh_get_u
+
+  !---------------------------------------------------------------------
+
+    function rayleigh_get_u_array(self) result(u)
+    class(rayleigh), intent(in) :: self
+    double precision :: u(self%nf)
+  
+    u(:) = self%u(:)
+
+    return 
+  end function rayleigh_get_u_array
 
   !---------------------------------------------------------------------
   
