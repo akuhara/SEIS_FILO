@@ -25,6 +25,7 @@
 !
 !=======================================================================
 program main
+  use mod_parallel
   use mod_random
   use mod_trans_d_model
   use mod_mcmc
@@ -36,6 +37,8 @@ program main
   include 'mpif.h'
 
   integer, parameter :: n_chain = 5
+  integer, parameter :: n_cool  = 1
+  double precision, parameter :: temp_high = 5000000.d0
 
   integer, parameter :: n_iter = 1000
   integer, parameter :: k_min = 1, k_max = 21
@@ -57,24 +60,26 @@ program main
        &  cmax = 4.5d0, dc = 0.005d0
   double precision :: fmin, fmax, df
   
-  integer :: i, j, ierr, nproc, rank
-  double precision :: log_likelihood
+  integer :: i, j, ierr, n_proc, rank
+
+  double precision :: log_likelihood, temp
   logical :: is_ok
   type(vmodel) :: vm
-  type(trans_d_model), allocatable :: tm(:)
+  type(trans_d_model) :: tm
   type(trans_d_model) ::  tm_tmp
   type(interpreter) :: intpr
   type(mcmc), allocatable :: mc(:)
   type(rayleigh) :: ray
   type(observation) :: obs
-  
+  type(parallel) :: pt
   character(200) :: filename
 
   ! MPI 
   call mpi_init(ierr)
-  call mpi_comm_size(MPI_COMM_WORLD, nproc, ierr)
+  call mpi_comm_size(MPI_COMM_WORLD, n_proc, ierr)
   call mpi_comm_rank(MPI_COMM_WORLD, rank, ierr)
-
+  pt = init_parallel(n_proc=n_proc, rank=rank, n_chain = n_chain)
+    
   ! Initialize random number sequence
   call init_random(22222322, 2246789, 123147890, 65678901, rank)
   
@@ -85,19 +90,20 @@ program main
   fmax = fmin + df * (obs%get_nf() - 1)
 
   ! Set model parameter & generate initial sample
-  allocate(tm(n_chain))
   do i = 1, n_chain
-     tm(i) = init_trans_d_model(k_min=k_min, k_max=k_max, n_rx=n_rx)
-     call tm(i)%set_prior(id_vs, id_uni, vs_min, vs_max)
-     call tm(i)%set_prior(id_vp, id_uni, vp_min, vp_max)
-     call tm(i)%set_prior(id_z,  id_uni, z_min,  z_max )
-     call tm(i)%set_birth(id_vs, id_uni, vs_min, vs_max)
-     call tm(i)%set_birth(id_vp, id_uni, vp_min, vp_max)
-     call tm(i)%set_birth(id_z,  id_uni, z_min,  z_max )
-     call tm(i)%set_perturb(id_vs, dev_vs)
-     call tm(i)%set_perturb(id_vp, dev_vp)
-     call tm(i)%set_perturb(id_z,  dev_z)
-     call tm(i)%generate_model()
+     tm = init_trans_d_model(k_min=k_min, k_max=k_max, n_rx=n_rx)
+     call tm%set_prior(id_vs, id_uni, vs_min, vs_max)
+     call tm%set_prior(id_vp, id_uni, vp_min, vp_max)
+     call tm%set_prior(id_z,  id_uni, z_min,  z_max )
+     call tm%set_birth(id_vs, id_uni, vs_min, vs_max)
+     call tm%set_birth(id_vp, id_uni, vp_min, vp_max)
+     call tm%set_birth(id_z,  id_uni, z_min,  z_max )
+     call tm%set_perturb(id_vs, dev_vs)
+     call tm%set_perturb(id_vp, dev_vp)
+     call tm%set_perturb(id_z,  dev_z)
+     call tm%generate_model()
+     call pt%set_tm(i, tm)
+     call tm%finish()
   end do
 
   ! Set interpreter 
@@ -106,19 +112,33 @@ program main
        & vs_min=vs_min, vs_max=vs_max, nbin_vs=nbin_vs, &
        & ocean_flag =ocean_flag, ocean_thick=ocean_thick, &
        & solve_vp=solve_vp)
-  vm = intpr%get_vmodel(tm(1))
-  call vm%display()
+  do i = 1, n_chain
+     vm = intpr%get_vmodel(pt%get_tm(i))
+     call vm%display()
+     write(*,*)
+  end do
   
+  stop
   ! Set forward computation
   ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
        cmin=cmin, cmax=cmax, dc=dc)
   
   ! Set MCMC chain
   allocate(mc(n_chain))
+  ! Set transdimensional model
   do i = 1, n_chain
-     mc(i) = init_mcmc(tm(i), n_iter, n_corr=2000)
+     mc(i) = init_mcmc(pt%get_tm(i), n_iter, n_corr=2000)
   end do
-
+  ! Set temperatures
+  do i = 1, n_cool
+     call mc(i)%set_temp(1.d0)
+  end do
+  do i = n_cool + 1, n_chain
+     temp = exp(rand_u() * log(temp_high))
+     write(*,*)temp
+     call mc(i)%set_temp(temp)
+  end do
+  
   ! Main
   do i = 1, n_iter
      do j = 1, n_chain
@@ -128,7 +148,7 @@ program main
         else
            log_likelihood = -1.d300
         end if
-        call mc(j)%judge_model(tm_tmp, log_likelihood)
+        call mc(j)%judge_model(tm_tmp, log_likelihood, mc(j)%get_temp())
         call mc(j)%one_step_summary()
      end do
   end do
@@ -185,3 +205,7 @@ subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
 
   return 
 end subroutine forward_rayleigh
+
+
+!-----------------------------------------------------------------------
+  

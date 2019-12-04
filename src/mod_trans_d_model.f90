@@ -34,9 +34,9 @@ module mod_trans_d_model
      integer :: k_min
      integer :: k_max
      
-     integer :: n_rx ! Number of real parameter 
-     integer :: n_ix ! Number of integer parameter
-     integer :: n_x   ! Number of all parameter
+     integer :: n_rx = 0! Number of real parameter 
+     integer :: n_ix = 0! Number of integer parameter
+     integer :: n_x  = 0 ! Number of all parameter
      
      integer, allocatable :: rx_birth_type(:) ! 1: Uniform, 2: Gaussian
      integer, allocatable :: ix_birth_type(:) ! 1: Uniform, 2: Gaussian
@@ -69,6 +69,7 @@ module mod_trans_d_model
      procedure :: perturb_rx => trans_d_model_perturb_rx
      procedure :: perturb_ix => trans_d_model_perturb_ix
      procedure :: display => trans_d_model_display
+     procedure :: finish  => trans_d_model_finish
      
   end type trans_d_model
   
@@ -517,6 +518,35 @@ contains
     
     return 
   end subroutine trans_d_model_display
+
+  !---------------------------------------------------------------------
+
+  subroutine trans_d_model_finish(self)
+    class(trans_d_model), intent(inout) :: self
+    
+    self%k = 0
+    self%k_min = 0
+    self%k_max = 0
+    
+    if (self%n_rx > 0) then
+       deallocate(self%rx)
+       deallocate(self%rx_birth_type)
+       deallocate(self%rx_prior_type)
+       deallocate(self%rx_birth_param)
+       deallocate(self%rx_prior_param)
+       deallocate(self%rx_perturb_param)
+    end if
+    if (self%n_ix > 0) then
+       deallocate(self%ix)
+       deallocate(self%ix_birth_type)
+       deallocate(self%ix_prior_type)
+       deallocate(self%ix_birth_param)
+       deallocate(self%ix_prior_param)
+       deallocate(self%ix_perturb_param)
+    end if
+    
+    return
+  end subroutine trans_d_model_finish
 
 end module mod_trans_d_model
   

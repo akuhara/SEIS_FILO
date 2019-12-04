@@ -44,6 +44,7 @@ module mod_mcmc
      integer, allocatable :: k_saved(:)
      double precision :: log_likelihood
      double precision, allocatable :: likelihood_saved(:)
+     double precision :: temp = 1.d0
      logical :: is_accepted
    contains
      procedure :: propose_model => mcmc_propose_model
@@ -54,6 +55,9 @@ module mod_mcmc
      procedure :: output_k_history => mcmc_output_k_history
      procedure :: output_likelihood_history => &
           & mcmc_output_likelihood_history
+     procedure :: set_temp => mcmc_set_temp
+     procedure :: get_temp => mcmc_get_temp
+     procedure :: get_log_likelihood => mcmc_get_log_likelihood
   end type mcmc
   
   interface mcmc
@@ -123,16 +127,23 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc_judge_model(self, tm, log_likelihood)
+  subroutine mcmc_judge_model(self, tm, log_likelihood, temp)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
     double precision, intent(in) :: log_likelihood
+    double precision, intent(in), optional :: temp
     double precision :: ratio
-    double precision :: r
+    double precision :: r, t
+
+    if (present(temp)) then
+       t = temp
+    else
+       t = 1.d0
+    end if
     
     self%is_accepted = .false.
 
-    ratio = (log_likelihood - self%log_likelihood)
+    ratio = (log_likelihood - self%log_likelihood) / t
     write(*,*)log_likelihood, self%log_likelihood
     r = log(rand_u())
     if (r <= ratio) then
@@ -241,5 +252,38 @@ contains
     
     return 
   end subroutine mcmc_output_likelihood_history
+
+  !---------------------------------------------------------------------
+  
+  subroutine mcmc_set_temp(self, temp)
+    class(mcmc), intent(inout) :: self
+    double precision, intent(in) :: temp
+
+    self%temp = temp
+
+    return 
+  end subroutine mcmc_set_temp
+
+  !---------------------------------------------------------------------
+
+  double precision function mcmc_get_temp(self) result(temp)
+    class(mcmc), intent(in) :: self
+
+    temp = self%temp
+    
+    return 
+  end function mcmc_get_temp
+
+  !---------------------------------------------------------------------
+
+  double precision function mcmc_get_log_likelihood(self) result(l)
+    class(mcmc), intent(in) :: self
+    
+    l = self%log_likelihood
+    
+    return 
+  end function mcmc_get_log_likelihood
+  
+  !---------------------------------------------------------------------
 
 end module mod_mcmc

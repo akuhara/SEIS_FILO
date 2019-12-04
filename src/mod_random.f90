@@ -34,7 +34,7 @@ module mod_random
   double precision, parameter, private :: r = 3.6541528853610088d0
   double precision, parameter, private :: v = 0.00492867323399d0
   double precision, private :: xg(0:n)
-  double precision, parameter :: pi2 = 2.d0 * acos(-1.d0)
+  double precision, parameter, private :: pi2 = 2.d0 * acos(-1.d0)
 
 contains
 
