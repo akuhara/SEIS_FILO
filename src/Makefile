@@ -27,6 +27,7 @@ mod_trans_d_model.o: mod_random.mod
 mod_mcmc.o: mod_random.mod mod_trans_d_model.mod 
 mod_interpreter.o: mod_trans_d_model.mod mod_vmodel.mod mod_sort.mod \
                    mod_const.mod
+mod_parallel.o: mod_mcmc.mod mod_trans_d_model.mod
 
 $(RAY_FWD): $(OBJS_RAY_FWD)
 	$(FC) $(FFLAGS) $^ -o $@

@@ -58,6 +58,7 @@ module mod_mcmc
      procedure :: set_temp => mcmc_set_temp
      procedure :: get_temp => mcmc_get_temp
      procedure :: get_log_likelihood => mcmc_get_log_likelihood
+     procedure :: finish => mcmc_finish
   end type mcmc
   
   interface mcmc
@@ -284,6 +285,23 @@ contains
     return 
   end function mcmc_get_log_likelihood
   
+  !---------------------------------------------------------------------
+
+  subroutine mcmc_finish(self)
+    class(mcmc), intent(inout) :: self
+
+    self%i_iter = 0
+    self%i_mod  = 0
+    self%temp = 1.d0
+    self%n_burn = 0
+    self%n_corr = 1
+    
+    deallocate(self%k_saved)
+    deallocate(self%likelihood_saved)
+
+    return 
+  end subroutine mcmc_finish
+
   !---------------------------------------------------------------------
 
 end module mod_mcmc

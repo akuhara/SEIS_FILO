@@ -40,7 +40,7 @@ program main
   integer, parameter :: n_cool  = 1
   double precision, parameter :: temp_high = 5000000.d0
 
-  integer, parameter :: n_iter = 1000
+  integer, parameter :: n_iter = 100
   integer, parameter :: k_min = 1, k_max = 21
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
@@ -68,7 +68,7 @@ program main
   type(trans_d_model) :: tm
   type(trans_d_model) ::  tm_tmp
   type(interpreter) :: intpr
-  type(mcmc), allocatable :: mc(:)
+  type(mcmc) :: mc
   type(rayleigh) :: ray
   type(observation) :: obs
   type(parallel) :: pt
@@ -118,50 +118,54 @@ program main
      write(*,*)
   end do
   
-  stop
+
   ! Set forward computation
   ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
        cmin=cmin, cmax=cmax, dc=dc)
   
   ! Set MCMC chain
-  allocate(mc(n_chain))
-  ! Set transdimensional model
+
   do i = 1, n_chain
-     mc(i) = init_mcmc(pt%get_tm(i), n_iter, n_corr=2000)
-  end do
-  ! Set temperatures
-  do i = 1, n_cool
-     call mc(i)%set_temp(1.d0)
-  end do
-  do i = n_cool + 1, n_chain
-     temp = exp(rand_u() * log(temp_high))
-     write(*,*)temp
-     call mc(i)%set_temp(temp)
+     ! Set transdimensional model
+     mc = init_mcmc(pt%get_tm(i), n_iter, n_corr=2000)
+     ! Set temperatures
+     if (i <= n_cool) then
+        call mc%set_temp(1.d0)
+     else
+        temp = exp(rand_u() * log(temp_high))
+        call mc%set_temp(temp)
+     end if
+     call pt%set_mc(i, mc)
   end do
   
   ! Main
   do i = 1, n_iter
      do j = 1, n_chain
-        call mc(j)%propose_model(tm_tmp, is_ok)
+        mc = pt%get_mc(j)
+        call mc%propose_model(tm_tmp, is_ok)
         if (is_ok) then
            call forward_rayleigh(tm_tmp, intpr, obs, ray, log_likelihood)
         else
            log_likelihood = -1.d300
         end if
-        call mc(j)%judge_model(tm_tmp, log_likelihood, mc(j)%get_temp())
-        call mc(j)%one_step_summary()
+        call mc%judge_model(tm_tmp, log_likelihood, mc%get_temp())
+        call mc%one_step_summary()
+        call pt%set_mc(j, mc)
      end do
+     
   end do
 
   ! Output (First chain only)
   do i = 1, n_chain
+     mc = pt%get_mc(i)
+
      ! K history
      write(filename, '(A10,I3.3)')'k_history.', i
-     call mc(i)%output_k_history(filename)
+     call mc%output_k_history(filename)
      
      ! Likelihood history
      write(filename, '(A20,I3.3)')'likelihood_history_.', i
-     call mc(i)%output_likelihood_history(filename)
+     call mc%output_likelihood_history(filename)
   end do
 
   stop
