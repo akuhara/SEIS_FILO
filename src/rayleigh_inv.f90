@@ -35,7 +35,9 @@ program main
   implicit none 
   include 'mpif.h'
 
-  integer, parameter :: n_iter = 100000
+  integer, parameter :: n_chain = 5
+
+  integer, parameter :: n_iter = 1000
   integer, parameter :: k_min = 1, k_max = 21
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
@@ -45,6 +47,7 @@ program main
   double precision, parameter :: dev_vp = 0.03d0
   double precision, parameter :: dev_z  = 0.03d0
   integer, parameter :: nbin_z = 50, nbin_vs = 50
+  
 
   logical, parameter :: solve_vp = .true.
   logical, parameter :: ocean_flag = .false.
@@ -54,22 +57,25 @@ program main
        &  cmax = 4.5d0, dc = 0.005d0
   double precision :: fmin, fmax, df
   
-  integer :: i, ierr, nproc, rank
+  integer :: i, j, ierr, nproc, rank
   double precision :: log_likelihood
   logical :: is_ok
   type(vmodel) :: vm
-  type(trans_d_model) :: tm, tm_tmp
+  type(trans_d_model), allocatable :: tm(:)
+  type(trans_d_model) ::  tm_tmp
   type(interpreter) :: intpr
-  type(mcmc) :: mc
+  type(mcmc), allocatable :: mc(:)
   type(rayleigh) :: ray
   type(observation) :: obs
+  
+  character(200) :: filename
 
   ! MPI 
-
   call mpi_init(ierr)
   call mpi_comm_size(MPI_COMM_WORLD, nproc, ierr)
   call mpi_comm_rank(MPI_COMM_WORLD, rank, ierr)
 
+  ! Initialize random number sequence
   call init_random(22222322, 2246789, 123147890, 65678901, rank)
   
   ! Read observation file
@@ -78,19 +84,21 @@ program main
   df   = obs%get_df()
   fmax = fmin + df * (obs%get_nf() - 1)
 
-
   ! Set model parameter & generate initial sample
-  tm = init_trans_d_model(k_min=k_min, k_max=k_max, n_rx=n_rx)
-  call tm%set_prior(id_vs, id_uni, vs_min, vs_max)
-  call tm%set_prior(id_vp, id_uni, vp_min, vp_max)
-  call tm%set_prior(id_z,  id_uni, z_min,  z_max )
-  call tm%set_birth(id_vs, id_uni, vs_min, vs_max)
-  call tm%set_birth(id_vp, id_uni, vp_min, vp_max)
-  call tm%set_birth(id_z,  id_uni, z_min,  z_max )
-  call tm%set_perturb(id_vs, dev_vs)
-  call tm%set_perturb(id_vp, dev_vp)
-  call tm%set_perturb(id_z,  dev_z)
-  call tm%generate_model()
+  allocate(tm(n_chain))
+  do i = 1, n_chain
+     tm(i) = init_trans_d_model(k_min=k_min, k_max=k_max, n_rx=n_rx)
+     call tm(i)%set_prior(id_vs, id_uni, vs_min, vs_max)
+     call tm(i)%set_prior(id_vp, id_uni, vp_min, vp_max)
+     call tm(i)%set_prior(id_z,  id_uni, z_min,  z_max )
+     call tm(i)%set_birth(id_vs, id_uni, vs_min, vs_max)
+     call tm(i)%set_birth(id_vp, id_uni, vp_min, vp_max)
+     call tm(i)%set_birth(id_z,  id_uni, z_min,  z_max )
+     call tm(i)%set_perturb(id_vs, dev_vs)
+     call tm(i)%set_perturb(id_vp, dev_vp)
+     call tm(i)%set_perturb(id_z,  dev_z)
+     call tm(i)%generate_model()
+  end do
 
   ! Set interpreter 
   intpr = init_interpreter(nlay_max=k_max, &
@@ -98,7 +106,7 @@ program main
        & vs_min=vs_min, vs_max=vs_max, nbin_vs=nbin_vs, &
        & ocean_flag =ocean_flag, ocean_thick=ocean_thick, &
        & solve_vp=solve_vp)
-  vm = intpr%get_vmodel(tm)
+  vm = intpr%get_vmodel(tm(1))
   call vm%display()
   
   ! Set forward computation
@@ -106,36 +114,34 @@ program main
        cmin=cmin, cmax=cmax, dc=dc)
   
   ! Set MCMC chain
-  mc = init_mcmc(tm, n_iter, n_corr=2000)
+  allocate(mc(n_chain))
+  do i = 1, n_chain
+     mc(i) = init_mcmc(tm(i), n_iter, n_corr=2000)
+  end do
 
   ! Main
   do i = 1, n_iter
-     call mc%propose_model(tm_tmp, is_ok)
-     if (is_ok) then
-        call forward_rayleigh(tm_tmp, intpr, obs, ray, log_likelihood)
-     else
-        log_likelihood = -1.d300
-     end if
-     call mc%judge_model(tm_tmp, log_likelihood)
-     call mc%one_step_summary()
-
-
+     do j = 1, n_chain
+        call mc(j)%propose_model(tm_tmp, is_ok)
+        if (is_ok) then
+           call forward_rayleigh(tm_tmp, intpr, obs, ray, log_likelihood)
+        else
+           log_likelihood = -1.d300
+        end if
+        call mc(j)%judge_model(tm_tmp, log_likelihood)
+        call mc(j)%one_step_summary()
+     end do
   end do
 
-  ! Output
-  do i = 1, mc%get_n_mod()
-     write(*,*)i
-     tm = mc%get_tm_saved(i)
-     vm = intpr%get_vmodel(tm)
-     call vm%display()
-  end do
-
-  call ray%set_vmodel(vm)
-  call ray%dispersion()
-  
-  do i = 1, obs%get_nf()
-     write(111,*)obs%get_fmin() + (i-1) * obs%get_df(), &
-          & ray%get_c(i), obs%get_c(i), ray%get_u(i), obs%get_u(i)
+  ! Output (First chain only)
+  do i = 1, n_chain
+     ! K history
+     write(filename, '(A10,I3.3)')'k_history.', i
+     call mc(i)%output_k_history(filename)
+     
+     ! Likelihood history
+     write(filename, '(A20,I3.3)')'likelihood_history_.', i
+     call mc(i)%output_likelihood_history(filename)
   end do
 
   stop
@@ -175,9 +181,6 @@ subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
           & (obs%get_sig_u(i) ** 2)
 
   end do
-  !do i = 1, obs%get_nf()
-  !   write(*,*)i, ray%get_c(i), obs%get_c(i)
-  !end do
   log_likelihood = 0.5d0 * log_likelihood
 
   return 

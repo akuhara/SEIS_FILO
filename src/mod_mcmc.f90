@@ -41,16 +41,19 @@ module mod_mcmc
      integer :: i_mod
      integer :: i_iter
      integer :: i_proposal_type
+     integer, allocatable :: k_saved(:)
      double precision :: log_likelihood
      double precision, allocatable :: likelihood_saved(:)
      logical :: is_accepted
    contains
      procedure :: propose_model => mcmc_propose_model
-     procedure :: accept_model  => mcmc_accept_model
      procedure :: judge_model   => mcmc_judge_model
      procedure :: one_step_summary => mcmc_one_step_summary
      procedure :: get_n_mod     => mcmc_get_n_mod
      procedure :: get_tm_saved  => mcmc_get_tm_saved
+     procedure :: output_k_history => mcmc_output_k_history
+     procedure :: output_likelihood_history => &
+          & mcmc_output_likelihood_history
   end type mcmc
   
   interface mcmc
@@ -62,33 +65,32 @@ contains
 
   !---------------------------------------------------------------------
   
-  type(mcmc) function init_mcmc(tm, n_iter, n_corr, n_burn)
+  type(mcmc) function init_mcmc(tm, n_iter, n_corr, n_burn) result(self)
     type(trans_d_model), intent(in) :: tm
     integer, intent(in) :: n_iter
     integer, intent(in), optional :: n_corr
     integer, intent(in), optional :: n_burn
 
-    init_mcmc%tm = tm
-    init_mcmc%n_iter = n_iter
-    init_mcmc%i_iter = 0
-    init_mcmc%i_mod = 0
-    init_mcmc%log_likelihood = -1.0d300
+    self%tm = tm
+    self%n_iter = n_iter
+    self%i_iter = 0
+    self%i_mod = 0
+    self%log_likelihood = -1.0d300
 
     if (present(n_burn)) then
-       init_mcmc%n_burn = n_burn
+       self%n_burn = n_burn
     end if
 
     if (present(n_corr)) then
-       init_mcmc%n_corr = n_corr
+       self%n_corr = n_corr
     end if
-
-    allocate(init_mcmc%likelihood_saved(n_iter))
-
-    init_mcmc%n_mod = int((init_mcmc%n_iter - init_mcmc%n_burn) / &
-         & init_mcmc%n_corr)
-    allocate(init_mcmc%tm_saved(init_mcmc%n_mod))
     
+    allocate(self%likelihood_saved(n_iter))
+    allocate(self%k_saved(n_iter))
 
+    self%n_mod = int((self%n_iter - self%n_burn) / &
+         & self%n_corr)
+    allocate(self%tm_saved(self%n_mod))
     
     return 
   end function init_mcmc
@@ -101,7 +103,6 @@ contains
     logical, intent(out) :: is_ok
     integer :: nparam, iparam
 
-    
     nparam = self%tm%get_n_x()
     self%i_proposal_type = int(rand_u() * (nparam + 2))
     tm_proposed = self%tm
@@ -122,19 +123,6 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc_accept_model(self, tm, log_likelihood)
-    class(mcmc), intent(inout) :: self
-    type(trans_d_model), intent(in) :: tm
-    double precision, intent(in) :: log_likelihood
-        
-    self%tm = tm
-    self%log_likelihood = log_likelihood
-    
-    return 
-  end subroutine mcmc_accept_model
-
-  !---------------------------------------------------------------------
-
   subroutine mcmc_judge_model(self, tm, log_likelihood)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
@@ -152,19 +140,22 @@ contains
     end if
 
     if (self%is_accepted) then
-       call self%accept_model(tm, log_likelihood)
+       ! Accept model
+       self%tm = tm
+       self%log_likelihood = log_likelihood
     end if
 
-
+    ! Adds iteration counter
     self%i_iter = self%i_iter + 1
+
+    ! Save models etc.
     self%likelihood_saved(self%i_iter) = self%log_likelihood
+    self%k_saved(self%i_iter) = self%tm%get_k()
     if (self%i_iter > self%n_burn .and. &
          & mod(self%i_iter, self%n_corr) == 0) then
        self%i_mod = self%i_mod + 1
        self%tm_saved(self%i_mod) = self%tm
     end if
-
-
 
     return 
   end subroutine mcmc_judge_model
@@ -207,5 +198,48 @@ contains
   end function mcmc_get_tm_saved
   
   !---------------------------------------------------------------------
+  
+  subroutine mcmc_output_k_history(self, filename)
+    class(mcmc), intent(in) :: self
+    character(*), intent(in) :: filename
+    integer :: io, ierr, i
+    
+    open(newunit = io, file = filename, status = 'unknown', &
+         & iostat = ierr)
+    if (ierr /= 0) then
+       write(0,*)"ERROR: cannot create ", trim(filename)
+       stop
+    end if
+    
+    do i = 1, self%n_iter
+       write(io,*)self%k_saved(i)
+    end do
+    close(io)
+
+
+    return 
+  end subroutine mcmc_output_k_history
+
+  !---------------------------------------------------------------------
+
+  subroutine mcmc_output_likelihood_history(self, filename)
+    class(mcmc), intent(in) :: self
+    character(*), intent(in) :: filename
+    integer :: io, ierr, i
+
+    open(newunit = io, file = filename, status = 'unknown', &
+         & iostat = ierr)
+    if (ierr /= 0) then
+       write(0,*)"ERROR: cannot create ", trim(filename)
+       stop
+    end if
+    
+    do i = 1, self%n_iter
+       write(io,*)self%likelihood_saved(i)
+    end do
+    close(io)
+    
+    return 
+  end subroutine mcmc_output_likelihood_history
 
 end module mod_mcmc
