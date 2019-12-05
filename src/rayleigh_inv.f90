@@ -34,13 +34,13 @@ program main
   use mod_const
   use mod_observation
   implicit none 
-  include 'mpif.h'
+  !include 'mpif.h'
 
   integer, parameter :: n_chain = 5
   integer, parameter :: n_cool  = 1
-  double precision, parameter :: temp_high = 5000000.d0
+  double precision, parameter :: temp_high = 30.d0
 
-  integer, parameter :: n_iter = 100
+  integer, parameter :: n_iter = 10000
   integer, parameter :: k_min = 1, k_max = 21
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
@@ -124,10 +124,9 @@ program main
        cmin=cmin, cmax=cmax, dc=dc)
   
   ! Set MCMC chain
-
   do i = 1, n_chain
      ! Set transdimensional model
-     mc = init_mcmc(pt%get_tm(i), n_iter, n_corr=2000)
+     mc = init_mcmc(pt%get_tm(i), n_iter, n_corr=100)
      ! Set temperatures
      if (i <= n_cool) then
         call mc%set_temp(1.d0)
@@ -140,6 +139,8 @@ program main
   
   ! Main
   do i = 1, n_iter
+
+     ! MCMC step
      do j = 1, n_chain
         mc = pt%get_mc(j)
         call mc%propose_model(tm_tmp, is_ok)
@@ -149,24 +150,37 @@ program main
            log_likelihood = -1.d300
         end if
         call mc%judge_model(tm_tmp, log_likelihood, mc%get_temp())
-        call mc%one_step_summary()
+        if (pt%get_rank() == 0) then
+           call mc%one_step_summary()
+        end if
         call pt%set_mc(j, mc)
      end do
+
+     ! Swap temperture
+     call pt%swap_temperature(verb=.true.)
      
+  end do
+
+  do i = 1, n_chain
+     mc = pt%get_mc(i)
+     write(*,*)"Temp = ", mc%get_temp()
   end do
 
   ! Output (First chain only)
-  do i = 1, n_chain
-     mc = pt%get_mc(i)
-
-     ! K history
-     write(filename, '(A10,I3.3)')'k_history.', i
-     call mc%output_k_history(filename)
-     
-     ! Likelihood history
-     write(filename, '(A20,I3.3)')'likelihood_history_.', i
-     call mc%output_likelihood_history(filename)
-  end do
+  if (pt%get_rank() == 0) then
+     do i = 1, n_chain
+        mc = pt%get_mc(i)
+        
+        ! K history
+        write(filename, '(A10,I3.3)')'k_history.', i
+        call mc%output_k_history(filename)
+        
+        ! Likelihood history
+        write(filename, '(A20,I3.3)')'likelihood_history_.', i
+        call mc%output_likelihood_history(filename)
+     end do
+  end if
+  call mpi_finalize(ierr)
 
   stop
 end program main

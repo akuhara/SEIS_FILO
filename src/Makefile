@@ -1,7 +1,7 @@
 FC = mpifort
-FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
+#FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check
-#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 RAY_FWD = ../bin/rayleigh_fwd
 OBJS_RAY_FWD = rayleigh_fwd.o mod_vmodel.o mod_rayleigh.o mod_param.o

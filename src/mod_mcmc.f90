@@ -145,7 +145,7 @@ contains
     self%is_accepted = .false.
 
     ratio = (log_likelihood - self%log_likelihood) / t
-    write(*,*)log_likelihood, self%log_likelihood
+    !write(*,*)log_likelihood, self%log_likelihood
     r = log(rand_u())
     if (r <= ratio) then
        self%is_accepted = .true.
