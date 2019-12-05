@@ -128,23 +128,17 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc_judge_model(self, tm, log_likelihood, temp)
+  subroutine mcmc_judge_model(self, tm, log_likelihood)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
     double precision, intent(in) :: log_likelihood
-    double precision, intent(in), optional :: temp
     double precision :: ratio
     double precision :: r, t
 
-    if (present(temp)) then
-       t = temp
-    else
-       t = 1.d0
-    end if
     
     self%is_accepted = .false.
 
-    ratio = (log_likelihood - self%log_likelihood) / t
+    ratio = (log_likelihood - self%log_likelihood) / self%temp
     !write(*,*)log_likelihood, self%log_likelihood
     r = log(rand_u())
     if (r <= ratio) then
@@ -164,7 +158,8 @@ contains
     self%likelihood_saved(self%i_iter) = self%log_likelihood
     self%k_saved(self%i_iter) = self%tm%get_k()
     if (self%i_iter > self%n_burn .and. &
-         & mod(self%i_iter, self%n_corr) == 0) then
+         & mod(self%i_iter, self%n_corr) == 0 .and. &
+         & self%temp < 1.0d-8) then
        self%i_mod = self%i_mod + 1
        self%tm_saved(self%i_mod) = self%tm
     end if

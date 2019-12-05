@@ -59,7 +59,10 @@ module mod_trans_d_model
      procedure :: set_prior => trans_d_model_set_prior
      procedure :: set_perturb => trans_d_model_set_perturb
      procedure :: get_k => trans_d_model_get_k
+     procedure :: get_k_max => trans_d_model_get_k_max
      procedure :: get_n_x => trans_d_model_get_n_x
+     procedure :: get_n_rx => trans_d_model_get_n_rx
+     procedure :: get_n_ix => trans_d_model_get_n_ix
      procedure :: get_rx => trans_d_model_get_rx
      procedure :: get_ix => trans_d_model_get_ix
      procedure :: generate_model => trans_d_model_generate_model
@@ -260,6 +263,16 @@ contains
   end function trans_d_model_get_k
 
   !---------------------------------------------------------------------
+  
+  integer function trans_d_model_get_k_max(self) result(k_max)
+    class(trans_d_model), intent(in) :: self
+    
+    k_max = self%k_max
+
+    return 
+  end function trans_d_model_get_k_max
+
+  !---------------------------------------------------------------------
 
   integer function trans_d_model_get_n_x(self) result(n_x)
     class(trans_d_model), intent(in) :: self
@@ -269,6 +282,26 @@ contains
     return 
   end function trans_d_model_get_n_x
 
+  !---------------------------------------------------------------------
+
+  integer function trans_d_model_get_n_rx(self) result(n_rx)
+    class(trans_d_model), intent(in) :: self
+    
+    n_rx = self%n_rx
+    
+    return 
+  end function trans_d_model_get_n_rx
+
+  !---------------------------------------------------------------------
+
+  integer function trans_d_model_get_n_ix(self) result(n_ix)
+    class(trans_d_model), intent(in) :: self
+    
+    n_ix = self%n_ix
+
+    return 
+  end function trans_d_model_get_n_ix
+  
   !---------------------------------------------------------------------
   
   function trans_d_model_get_rx(self, iparam) result(rx)

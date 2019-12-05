@@ -149,7 +149,7 @@ program main
         else
            log_likelihood = -1.d300
         end if
-        call mc%judge_model(tm_tmp, log_likelihood, mc%get_temp())
+        call mc%judge_model(tm_tmp, log_likelihood)
         if (pt%get_rank() == 0) then
            call mc%one_step_summary()
         end if
@@ -160,7 +160,7 @@ program main
      call pt%swap_temperature(verb=.true.)
      
   end do
-
+  
   do i = 1, n_chain
      mc = pt%get_mc(i)
      write(*,*)"Temp = ", mc%get_temp()
@@ -176,7 +176,7 @@ program main
         call mc%output_k_history(filename)
         
         ! Likelihood history
-        write(filename, '(A20,I3.3)')'likelihood_history_.', i
+        write(filename, '(A19,I3.3)')'likelihood_history.', i
         call mc%output_likelihood_history(filename)
      end do
   end if

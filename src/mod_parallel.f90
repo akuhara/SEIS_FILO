@@ -10,6 +10,7 @@ module mod_parallel
      integer :: rank
      integer :: n_chain
      type(trans_d_model), allocatable :: tm(:)
+     type(trans_d_model), allocatable :: tm_all(:)
      type(mcmc), allocatable :: mc(:)
    contains
      procedure :: set_tm => parallel_set_tm
@@ -20,6 +21,7 @@ module mod_parallel
      
      procedure :: swap_temperature => parallel_swap_temperature
      procedure :: select_pair => parallel_select_pair
+
   end type parallel
 
   interface parallel
@@ -28,7 +30,7 @@ module mod_parallel
 
   private pack_pair_info, unpack_pair_info, judge_swap
   private pack_mc_info, unpack_mc_info
-
+  
 contains
   
   !---------------------------------------------------------------------
@@ -254,9 +256,6 @@ contains
     del_s = (l2 - l1) * (1.d0 / temp1 - 1.d0 / temp2)
     is_accepted = .false.
     r = log(rand_u())
-    
-    write(*,*)l2, l1,  l2 - l1, 1.d0 / temp1 - 1.d0 / temp2
-
 
     if(r <= del_s) then
        is_accepted = .true.
@@ -318,5 +317,6 @@ contains
   end subroutine unpack_mc_info
 
   !---------------------------------------------------------------------
+
 
 end module mod_parallel
