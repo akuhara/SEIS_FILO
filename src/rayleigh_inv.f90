@@ -33,6 +33,7 @@ program main
   use mod_interpreter
   use mod_const
   use mod_observation
+  use mod_param
   implicit none 
   !include 'mpif.h'
 
@@ -40,7 +41,6 @@ program main
   integer, parameter :: n_cool  = 1
   double precision, parameter :: temp_high = 30.d0
 
-  integer, parameter :: n_iter = 10000, n_burn = 0, n_corr = 100
   integer, parameter :: k_min = 1, k_max = 21
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
@@ -53,6 +53,7 @@ program main
   
 
   logical, parameter :: solve_vp = .true.
+  logical :: verb
   logical, parameter :: ocean_flag = .false.
   double precision :: ocean_thick = 1.d0
 
@@ -60,7 +61,7 @@ program main
        &  cmax = 4.5d0, dc = 0.005d0
   double precision :: fmin, fmax, df
   
-  integer :: i, j, ierr, n_proc, rank, io_vz, io_ray
+  integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
 
   double precision :: log_likelihood, temp
   logical :: is_ok
@@ -72,14 +73,31 @@ program main
   type(rayleigh) :: ray, ray_tmp
   type(observation) :: obs
   type(parallel) :: pt
-  character(200) :: filename
-
+  type(param) :: para
+  character(200) :: filename, param_file
+  
   ! MPI 
   call mpi_init(ierr)
   call mpi_comm_size(MPI_COMM_WORLD, n_proc, ierr)
   call mpi_comm_rank(MPI_COMM_WORLD, rank, ierr)
   pt = init_parallel(n_proc=n_proc, rank=rank, n_chain = n_chain)
-    
+  if (rank == 0) then
+     verb = .true.
+  else
+     verb = .false.
+  end if
+   
+  ! Get parameter file name from command line argument
+  n_arg = command_argument_count()
+  if (n_arg /= 1) then
+     write(0, *)"USAGE: rayleigh_inv [parameter file]"
+     stop
+  end if
+  call get_command_argument(1, param_file)
+ 
+  ! Read parameter file
+  para = init_param(param_file, verb)
+
   ! Initialize random number sequence
   call init_random(22222322, 2246789, 123147890, 65678901, rank)
   
@@ -112,12 +130,7 @@ program main
        & vs_min=vs_min, vs_max=vs_max, nbin_vs=nbin_vs, &
        & ocean_flag =ocean_flag, ocean_thick=ocean_thick, &
        & solve_vp=solve_vp)
-  do i = 1, n_chain
-     vm = intpr%get_vmodel(pt%get_tm(i))
-     call vm%display()
-     write(*,*)
-  end do
-  
+  vm = intpr%get_vmodel(pt%get_tm(1))
 
   ! Set forward computation
   ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
@@ -126,7 +139,7 @@ program main
   ! Set MCMC chain
   do i = 1, n_chain
      ! Set transdimensional model
-     mc = init_mcmc(pt%get_tm(i), n_iter)
+     mc = init_mcmc(pt%get_tm(i), para%get_n_iter())
      ! Set temperatures
      if (i <= n_cool) then
         call mc%set_temp(1.d0)
@@ -154,11 +167,12 @@ program main
      stop
   end if
      
-  
-
+  call mpi_finalize(ierr)
+  stop
 
   ! Main
-  do i = 1, n_iter
+  do i = 1, para%get_n_iter()
+     write(*,*)i
      ! MCMC step
      do j = 1, n_chain
         
@@ -189,8 +203,8 @@ program main
         end if
         
         ! ** Recording
-        if (i > n_burn .and. &
-             & mod(i, n_corr) == 0 .and. &
+        if (i > para%get_n_burn() .and. &
+             & mod(i, para%get_n_corr()) == 0 .and. &
              & mc%get_temp() < 1.d0 + 1.0e-8) then
            tm = mc%get_tm()
            

@@ -32,6 +32,9 @@ module mod_param
   type param
      private
      character(len=line_max) :: param_file
+     integer :: n_iter = -999
+     integer :: n_burn = -999
+     integer :: n_corr = -999
      double precision :: fmin = -999.d0
      double precision :: fmax = -999.d0
      double precision :: df = -999.d0
@@ -40,10 +43,17 @@ module mod_param
      double precision :: dc = -999.d0
      character(len=line_max) :: vmod_in = ""
      character(len=line_max) :: ray_out = ""
+     
+     logical :: verb = .false.
+
    contains
      procedure :: read_file => param_read_file
      procedure :: read_line => param_read_line
      procedure :: read_value => param_read_value
+     procedure :: get_n_iter => param_get_n_iter
+     procedure :: get_n_burn => param_get_n_burn
+     procedure :: get_n_corr => param_get_n_corr
+     
      procedure :: get_fmin => param_get_fmin
      procedure :: get_fmax => param_get_fmax
      procedure :: get_df => param_get_df
@@ -64,9 +74,14 @@ contains
   
   !---------------------------------------------------------------------
   
-  type(param) function init_param(param_file) 
+  type(param) function init_param(param_file, verb) 
     character(len=*), intent(in) :: param_file
- 
+    logical, intent(in), optional :: verb
+
+    if (present(verb)) then
+       init_param%verb = verb
+    end if
+    
     init_param%param_file = param_file
     init_param%vmod_in = ""
     init_param%fmin = -999.d0
@@ -150,8 +165,9 @@ contains
     class(param), intent(inout) :: self
     character(len=*), intent(in) :: str
     character(len=line_max) :: name, var
-    integer :: nlen, j
+    integer :: nlen, j, itmp
     double precision :: rtmp
+
     
     
     nlen = len(str)
@@ -164,7 +180,9 @@ contains
     
     name = str(1:j-1)
     var = str(j+1:nlen)
-    write(*,*)trim(name), " <- ", trim(var)
+    if (self%verb) then
+       write(*,*)trim(name), " <- ", trim(var)
+    end if
     if (name == "fmin") then
        read(var, *) rtmp
        self%fmin = rtmp
@@ -187,6 +205,16 @@ contains
        self%vmod_in = var
     else if (name == "ray_out") then
        self%ray_out = var
+    else if (name == "n_iter") then
+       read(var, *) itmp
+       !write(*,*)"n_iter", itmp
+       self%n_iter = itmp
+    else if (name == "n_burn") then
+       read(var, *) itmp
+       self%n_burn = itmp
+    else if (name == "n_corr") then
+       read(var, *) itmp
+       self%n_corr = itmp
     else
        write(0,*)"Warnings: Invalid parameter name"
        write(0,*)"        : ", name, "  (?)"
@@ -196,8 +224,38 @@ contains
 
   !---------------------------------------------------------------------
 
+  integer function param_get_n_iter(self) result(n_iter)
+    class(param), intent(in) :: self
+    
+    n_iter = self%n_iter
+    
+    return 
+  end function param_get_n_iter
+
+  !---------------------------------------------------------------------
+  
+  integer function param_get_n_burn(self) result(n_burn)
+    class(param), intent(in) :: self
+    
+    n_burn = self%n_burn
+    
+    return 
+  end function param_get_n_burn
+
+  !---------------------------------------------------------------------
+
+  integer function param_get_n_corr(self) result(n_corr)
+    class(param), intent(in) :: self
+    
+    n_corr = self%n_corr
+    
+    return 
+  end function param_get_n_corr
+
+  !---------------------------------------------------------------------
+
   double precision function param_get_fmin(self) result(fmin)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
 
     fmin = self%fmin
 
@@ -207,7 +265,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function param_get_fmax(self) result(fmax)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
 
     fmax = self%fmax
 
@@ -216,7 +274,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function param_get_df(self) result(df)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
 
     df = self%df
 
@@ -226,7 +284,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function param_get_cmin(self) result(cmin)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
 
     cmin = self%cmin
 
@@ -236,7 +294,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function param_get_cmax(self) result(cmax)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
 
     cmax = self%cmax
 
@@ -245,7 +303,7 @@ contains
   !---------------------------------------------------------------------
 
   double precision function param_get_dc(self) result(dc)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
 
     dc = self%dc
 
@@ -256,7 +314,7 @@ contains
 
   character(len=line_max) function param_get_vmod_in(self) &
        & result(vmod_in)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
     
     vmod_in = self%vmod_in
     
@@ -266,7 +324,7 @@ contains
   !---------------------------------------------------------------------
   character(len=line_max) function param_get_ray_out(self) &
        & result(ray_out)
-    class(param), intent(inout) :: self
+    class(param), intent(in) :: self
     
     ray_out = self%ray_out
     
