@@ -49,15 +49,16 @@ module mod_interpreter
      double precision :: vs_max
      double precision  :: dvs
      double precision, allocatable :: wrk_vsz(:)
-     
-     
+     double precision, allocatable :: wrk_vpz(:)
      
      logical :: solve_vp = .true.
 
      double precision, allocatable :: wrk_vp(:), wrk_vs(:), wrk_z(:) 
+     
    contains
      procedure :: get_vmodel => interpreter_get_vmodel
-     procedure :: make_vz => interpreter_make_vz
+     procedure :: output_vz => interpreter_output_vz
+     procedure :: get_nbin_z => interpreter_get_nbin_z
   end type interpreter
   
   interface interpreter
@@ -96,7 +97,7 @@ contains
     self%dvs = (vs_max - vs_min) / dble(nbin_vs)
     
     allocate(self%wrk_vsz(self%nbin_z))
-    
+    allocate(self%wrk_vpz(self%nbin_z))
 
     if (present(ocean_flag)) then
        self%ocean_flag = ocean_flag
@@ -182,13 +183,14 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine interpreter_make_vz(self, tm)
+  subroutine interpreter_output_vz(self, tm, io)
     class(interpreter), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
+    integer, intent(in) :: io
     type(vmodel) :: vm
     integer :: nlay
     integer :: ilay, iz, iz1, iz2
-    double precision :: tmpz
+    double precision :: tmpz, z
     
     vm = self%get_vmodel(tm)
     nlay = vm%get_nlay()
@@ -202,12 +204,27 @@ contains
           iz2 = self%nbin_z + 1
        end if
        do iz = iz1, iz2 - 1
-          self%wrk_vsz(iz) = vm%get_vs(ilay)
+          z = (iz - 1) * self%dz
+          write(io,*)vm%get_vp(ilay), vm%get_vs(ilay), z
+          !self%wrk_vsz(iz) = vm%get_vs(ilay)
+          !self%wrk_vpz(iz) = vm%get_vp(ilay)
        end do
        tmpz = tmpz + vm%get_h(ilay) 
     end do
     
-  end subroutine interpreter_make_vz
+  end subroutine interpreter_output_vz
+
+  !---------------------------------------------------------------------
+
+  integer function interpreter_get_nbin_z(self) result(nbin_z)
+    class(interpreter), intent(in) ::self
+
+    nbin_z = self%nbin_z
+    
+    return 
+  end function interpreter_get_nbin_z
+  
+  !---------------------------------------------------------------------
   
 end module mod_interpreter
 

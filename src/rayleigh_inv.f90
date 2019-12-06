@@ -40,7 +40,7 @@ program main
   integer, parameter :: n_cool  = 1
   double precision, parameter :: temp_high = 30.d0
 
-  integer, parameter :: n_iter = 10000
+  integer, parameter :: n_iter = 10000, n_burn = 0, n_corr = 100
   integer, parameter :: k_min = 1, k_max = 21
   integer, parameter :: n_rx = 3
   double precision, parameter :: vs_min = 2.5d0, vs_max = 5.0d0
@@ -60,7 +60,7 @@ program main
        &  cmax = 4.5d0, dc = 0.005d0
   double precision :: fmin, fmax, df
   
-  integer :: i, j, ierr, n_proc, rank
+  integer :: i, j, ierr, n_proc, rank, io_vz, io_ray
 
   double precision :: log_likelihood, temp
   logical :: is_ok
@@ -69,7 +69,7 @@ program main
   type(trans_d_model) ::  tm_tmp
   type(interpreter) :: intpr
   type(mcmc) :: mc
-  type(rayleigh) :: ray
+  type(rayleigh) :: ray, ray_tmp
   type(observation) :: obs
   type(parallel) :: pt
   character(200) :: filename
@@ -126,7 +126,7 @@ program main
   ! Set MCMC chain
   do i = 1, n_chain
      ! Set transdimensional model
-     mc = init_mcmc(pt%get_tm(i), n_iter, n_corr=100)
+     mc = init_mcmc(pt%get_tm(i), n_iter)
      ! Set temperatures
      if (i <= n_cool) then
         call mc%set_temp(1.d0)
@@ -137,35 +137,80 @@ program main
      call pt%set_mc(i, mc)
   end do
   
+  ! Output files
+  write(filename,'(A10,I3.3)')"vz_models.", rank
+  open(newunit=io_vz, file=filename, status="unknown", iostat=ierr)
+  if (ierr /= 0) then
+     write(0,*)"ERROR: cannot create ", trim(filename)
+     call mpi_finalize(ierr)
+     stop
+  end if
+
+  write(filename,'(A8,I3.3)')"syn_ray.", rank
+  open(newunit=io_ray, file=filename, status="unknown", iostat=ierr)
+  if (ierr /= 0) then
+     write(0,*)"ERROR: cannot create ", trim(filename)
+     call mpi_finalize(ierr)
+     stop
+  end if
+     
+  
+
+
   ! Main
   do i = 1, n_iter
-
      ! MCMC step
      do j = 1, n_chain
+        
         mc = pt%get_mc(j)
+
+        ! Proposal
         call mc%propose_model(tm_tmp, is_ok)
+
+        ! Forward computation
+        ray_tmp = ray
         if (is_ok) then
-           call forward_rayleigh(tm_tmp, intpr, obs, ray, log_likelihood)
+           call forward_rayleigh(tm_tmp, intpr, obs, ray_tmp, log_likelihood)
         else
            log_likelihood = -1.d300
         end if
+
+        ! Judege
         call mc%judge_model(tm_tmp, log_likelihood)
+        if (mc%get_is_accepted()) then
+           ray = ray_tmp
+        end if
+        call pt%set_mc(j, mc)
+
+        ! Output
+        ! ** One step summary
         if (pt%get_rank() == 0) then
            call mc%one_step_summary()
         end if
-        call pt%set_mc(j, mc)
+        
+        ! ** Recording
+        if (i > n_burn .and. &
+             & mod(i, n_corr) == 0 .and. &
+             & mc%get_temp() < 1.d0 + 1.0e-8) then
+           tm = mc%get_tm()
+           
+           ! V-Z
+           call intpr%output_vz(tm, io_vz)
+
+           ! Synthetic data
+           call ray%output(io_ray)
+        end if
      end do
 
      ! Swap temperture
      call pt%swap_temperature(verb=.true.)
      
   end do
-  
-  do i = 1, n_chain
-     mc = pt%get_mc(i)
-     write(*,*)"Temp = ", mc%get_temp()
-  end do
+  close(io_vz)
+  close(io_ray)
 
+
+  
   ! Output (First chain only)
   if (pt%get_rank() == 0) then
      do i = 1, n_chain

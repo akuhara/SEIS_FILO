@@ -33,10 +33,7 @@ module mod_mcmc
      private
      
      type(trans_d_model) :: tm
-     type(trans_d_model), allocatable :: tm_saved(:)
      integer :: n_iter
-     integer :: n_corr = 1
-     integer :: n_burn = 0
      integer :: n_mod
      integer :: i_mod
      integer :: i_iter
@@ -50,8 +47,8 @@ module mod_mcmc
      procedure :: propose_model => mcmc_propose_model
      procedure :: judge_model   => mcmc_judge_model
      procedure :: one_step_summary => mcmc_one_step_summary
-     procedure :: get_n_mod     => mcmc_get_n_mod
-     procedure :: get_tm_saved  => mcmc_get_tm_saved
+     procedure :: get_tm  => mcmc_get_tm
+     procedure :: get_is_accepted => mcmc_get_is_accepted
      procedure :: output_k_history => mcmc_output_k_history
      procedure :: output_likelihood_history => &
           & mcmc_output_likelihood_history
@@ -70,32 +67,21 @@ contains
 
   !---------------------------------------------------------------------
   
-  type(mcmc) function init_mcmc(tm, n_iter, n_corr, n_burn) result(self)
+  type(mcmc) function init_mcmc(tm, n_iter) result(self)
     type(trans_d_model), intent(in) :: tm
     integer, intent(in) :: n_iter
-    integer, intent(in), optional :: n_corr
-    integer, intent(in), optional :: n_burn
-
+    
+    
     self%tm = tm
     self%n_iter = n_iter
     self%i_iter = 0
     self%i_mod = 0
     self%log_likelihood = -1.0d300
 
-    if (present(n_burn)) then
-       self%n_burn = n_burn
-    end if
-
-    if (present(n_corr)) then
-       self%n_corr = n_corr
-    end if
     
     allocate(self%likelihood_saved(n_iter))
     allocate(self%k_saved(n_iter))
 
-    self%n_mod = int((self%n_iter - self%n_burn) / &
-         & self%n_corr)
-    allocate(self%tm_saved(self%n_mod))
     
     return 
   end function init_mcmc
@@ -133,7 +119,7 @@ contains
     type(trans_d_model), intent(in) :: tm
     double precision, intent(in) :: log_likelihood
     double precision :: ratio
-    double precision :: r, t
+    double precision :: r
 
     
     self%is_accepted = .false.
@@ -157,13 +143,7 @@ contains
     ! Save models etc.
     self%likelihood_saved(self%i_iter) = self%log_likelihood
     self%k_saved(self%i_iter) = self%tm%get_k()
-    if (self%i_iter > self%n_burn .and. &
-         & mod(self%i_iter, self%n_corr) == 0 .and. &
-         & self%temp < 1.0d-8) then
-       self%i_mod = self%i_mod + 1
-       self%tm_saved(self%i_mod) = self%tm
-    end if
-
+    
     return 
   end subroutine mcmc_judge_model
   
@@ -179,31 +159,25 @@ contains
   end subroutine mcmc_one_step_summary
 
   !---------------------------------------------------------------------
-
-  integer function mcmc_get_n_mod(self) result(n_mod)
-    class(mcmc), intent(in) :: self
-
-    n_mod = self%n_mod
-    
-    return 
-  end function mcmc_get_n_mod
   
+  type(trans_d_model) function mcmc_get_tm(self) result(tm)
+    class(mcmc), intent(in) :: self
+    
+    tm = self%tm
+
+    return 
+  end function mcmc_get_tm
+
   !---------------------------------------------------------------------
-  
-  type(trans_d_model) function mcmc_get_tm_saved(self, i) result(tm)
-    class(mcmc), intent(in) :: self
-    integer, intent(in) :: i
 
-    if (i < 0 .or. i > self%n_mod) then
-       write(0,*)"ERROR: invalid input i (mcmc_get_tm_saved)"
-       stop
-    end if
+  logical function mcmc_get_is_accepted(self) result(is_accepted)
+    class(mcmc), intent(in) :: self
     
-    tm = self%tm_saved(i)
+    is_accepted = self%is_accepted
 
     return 
-  end function mcmc_get_tm_saved
-  
+  end function mcmc_get_is_accepted
+
   !---------------------------------------------------------------------
   
   subroutine mcmc_output_k_history(self, filename)
@@ -288,8 +262,6 @@ contains
     self%i_iter = 0
     self%i_mod  = 0
     self%temp = 1.d0
-    self%n_burn = 0
-    self%n_corr = 1
     
     deallocate(self%k_saved)
     deallocate(self%likelihood_saved)

@@ -78,6 +78,7 @@ module mod_rayleigh
      procedure :: get_c_array => rayleigh_get_c_array
      procedure :: get_u => rayleigh_get_u
      procedure :: get_u_array => rayleigh_get_u_array
+     procedure :: output => rayleigh_output
      
   end type rayleigh
 
@@ -153,7 +154,7 @@ contains
 
   subroutine rayleigh_dispersion(self)
     class(rayleigh), intent(inout) :: self
-    double precision :: omega, c_start, prev_rslt, grad, fac
+    double precision :: omega, c_start, prev_rslt, grad
     double precision :: c, u
     integer :: i
     
@@ -574,7 +575,7 @@ contains
 
   !---------------------------------------------------------------------
 
-    function rayleigh_get_u_array(self) result(u)
+  function rayleigh_get_u_array(self) result(u)
     class(rayleigh), intent(in) :: self
     double precision :: u(self%nf)
   
@@ -582,6 +583,20 @@ contains
 
     return 
   end function rayleigh_get_u_array
+
+  !---------------------------------------------------------------------
+  
+  subroutine rayleigh_output(self, io)
+    class(rayleigh), intent(in) :: self
+    integer, intent(in) :: io
+    integer :: i
+    
+    do i = 1, self%nf
+       write(io, *)(i - 1) * self%df + self%fmin, self%c(i), self%u(i)
+    end do
+    
+    return 
+  end subroutine rayleigh_output
 
   !---------------------------------------------------------------------
   
