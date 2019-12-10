@@ -42,14 +42,18 @@ module mod_interpreter
 
      integer :: nbin_z
      integer :: nbin_vs
+     integer :: nbin_vp
+
      double precision :: z_min
      double precision :: z_max
      double precision :: dz
      double precision :: vs_min
      double precision :: vs_max
-     double precision  :: dvs
-     double precision, allocatable :: wrk_vsz(:)
-     double precision, allocatable :: wrk_vpz(:)
+     double precision :: dvs
+     double precision :: vp_min
+     double precision :: vp_max
+     double precision :: dvp
+
      
      logical :: solve_vp = .true.
 
@@ -69,13 +73,14 @@ contains
 
   !---------------------------------------------------------------------
   type(interpreter) function init_interpreter(nlay_max, z_min, z_max, &
-       & nbin_z, vs_min, vs_max, nbin_vs, &
+       & nbin_z, vs_min, vs_max, nbin_vs, vp_min, vp_max, nbin_vp, &
        & ocean_flag, ocean_thick, ocean_vp, ocean_rho, solve_vp) &
        & result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: nbin_z, nbin_vs
+    integer, intent(in), optional :: nbin_vp
     double precision, intent(in) :: z_min, z_max, vs_min, vs_max
-    
+    double precision, intent(in), optional :: vp_min, vp_max
     logical, intent(in), optional :: ocean_flag
     double precision, intent(in), optional :: ocean_thick, &
          ocean_vp, ocean_rho
@@ -96,8 +101,6 @@ contains
     self%dz  = (z_max - z_min) / dble(nbin_z)
     self%dvs = (vs_max - vs_min) / dble(nbin_vs)
     
-    allocate(self%wrk_vsz(self%nbin_z))
-    allocate(self%wrk_vpz(self%nbin_z))
 
     if (present(ocean_flag)) then
        self%ocean_flag = ocean_flag
@@ -117,6 +120,12 @@ contains
 
     if (present(solve_vp)) then
        self%solve_vp = solve_vp
+       if (self%solve_vp) then
+          self%vp_min = vp_min
+          self%vp_max = vp_max
+          self%nbin_vp = nbin_vp
+          self%dvp = (vp_max - vp_min) / dble(nbin_vp)
+       end if
     end if
 
     return 
@@ -206,8 +215,6 @@ contains
        do iz = iz1, iz2 - 1
           z = (iz - 1) * self%dz
           write(io,*)vm%get_vp(ilay), vm%get_vs(ilay), z
-          !self%wrk_vsz(iz) = vm%get_vs(ilay)
-          !self%wrk_vpz(iz) = vm%get_vp(ilay)
        end do
        tmpz = tmpz + vm%get_h(ilay) 
     end do
