@@ -38,14 +38,10 @@ program main
   !include 'mpif.h'
 
   integer, parameter :: n_rx = 3
-  
-
   logical :: verb
-
   double precision :: fmin, fmax, df
-  
   integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
-
+  integer :: n_vs, n_z, n_vp, io_vsz, io_vpz, n_mod
   double precision :: log_likelihood, temp
   logical :: is_ok
   type(vmodel) :: vm
@@ -58,6 +54,9 @@ program main
   type(parallel) :: pt
   type(param) :: para
   character(200) :: filename, param_file
+  double precision :: eps = 1.0d-8
+  double precision :: minus_infty = -1.0d300
+  integer, allocatable :: n_vsz(:,:), n_vpz(:,:)
   
   ! Initialize MPI 
   call mpi_init(ierr)
@@ -98,6 +97,21 @@ program main
   df   = obs%get_df()
   fmax = fmin + df * (obs%get_nf() - 1)
 
+  ! Set interpreter 
+  write(*,*)"Setting interpreter"
+  intpr = init_interpreter(nlay_max= para%get_k_max(), &
+       & z_min = para%get_z_min(), z_max = para%get_z_max(), &
+       & nbin_z = para%get_nbin_z(), &
+       & vs_min = para%get_vs_min(), vs_max = para%get_vs_max(), &
+       & nbin_vs = para%get_nbin_vs(), &
+       & vp_min = para%get_vp_min(), vp_max = para%get_vp_max(), &
+       & nbin_vp = para%get_nbin_vp(), &
+       & ocean_flag = para%get_ocean_flag(), &
+       & ocean_thick = para%get_ocean_thick(), &
+       & solve_vp = para%get_solve_vp())
+
+
+
   ! Set model parameter & generate initial sample
   do i = 1, para%get_n_chain()
      tm = init_trans_d_model(&
@@ -124,18 +138,10 @@ program main
      call tm%finish()
   end do
 
-  ! Set interpreter 
-  intpr = init_interpreter(nlay_max= para%get_k_max(), &
-       & z_min = para%get_z_min(), z_max = para%get_z_max(), &
-       & nbin_z = para%get_nbin_z(), &
-       & vs_min = para%get_vs_min(), vs_max = para%get_vs_max(), &
-       & nbin_vs = para%get_nbin_vs(), &
-       & ocean_flag = para%get_ocean_flag(), &
-       & ocean_thick = para%get_ocean_thick(), &
-       & solve_vp = para%get_solve_vp())
-  vm = intpr%get_vmodel(pt%get_tm(1))
+  
 
   ! Set forward computation
+  vm = intpr%get_vmodel(pt%get_tm(1))
   ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
          & cmin=para%get_cmin(), cmax=para%get_cmax(), &
          & dc=para%get_dc())
@@ -148,7 +154,8 @@ program main
      if (i <= para%get_n_cool()) then
         call mc%set_temp(1.d0)
      else
-        temp = exp(rand_u() * log(para%get_temp_high()))
+        temp = exp((rand_u() *(1.d0 - eps) + eps) &
+             & * log(para%get_temp_high()))
         call mc%set_temp(temp)
      end if
      call pt%set_mc(i, mc)
@@ -174,7 +181,6 @@ program main
   
   ! Main
   do i = 1, para%get_n_iter()
-     write(*,*)i
      ! MCMC step
      do j = 1, para%get_n_chain()
         
@@ -186,9 +192,10 @@ program main
         ! Forward computation
         ray_tmp = ray
         if (is_ok) then
-           call forward_rayleigh(tm_tmp, intpr, obs, ray_tmp, log_likelihood)
+           call forward_rayleigh(tm_tmp, intpr, obs, &
+                & ray_tmp, log_likelihood)
         else
-           log_likelihood = -1.d300
+           log_likelihood = minus_infty
         end if
 
         ! Judege
@@ -207,7 +214,7 @@ program main
         ! ** Recording
         if (i > para%get_n_burn() .and. &
              & mod(i, para%get_n_corr()) == 0 .and. &
-             & mc%get_temp() < 1.d0 + 1.0e-8) then
+             & mc%get_temp() < 1.d0 + eps) then
            tm = mc%get_tm()
            
            ! V-Z
@@ -228,6 +235,33 @@ program main
   close(io_vz)
   close(io_ray)
 
+  ! V-Z count
+  n_vs = intpr%get_nbin_vs()
+  n_z = intpr%get_nbin_z()
+  allocate(n_vsz(n_vs, n_z))
+  call mpi_reduce(intpr%get_n_vsz(), n_vsz, n_z * n_vs, &
+       & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  filename="vs_z.ppd"
+  open(newunit=io_vsz, file=filename, status="unknown", iostat=ierr)
+  if (ierr /= 0) then
+     write(0, *)"ERROR: cannot create ", trim(filename)
+     stop
+  end if
+  if (rank == 0) then
+     write(*,*)para%get_n_cool(), n_proc
+     n_mod = para%get_n_cool() * n_proc * (para%get_n_iter() - para%get_n_burn()) / &
+          & para%get_n_corr()
+     do i = 1, n_z
+        do j = 1, n_vs
+           write(io_vsz, '(3F13.5)') &
+                & para%get_vs_min() + (j - 0.5d0) * intpr%get_dvs(), &
+                & para%get_z_min() + (i - 0.5d0) * intpr%get_dz(), &
+                & dble(n_vsz(j, i)) / n_mod
+
+        end do
+     end do
+  end if
+
 
   
   ! Output (First chain only)
@@ -244,8 +278,10 @@ program main
         call mc%output_likelihood_history(filename)
      end do
   end if
-  call mpi_finalize(ierr)
 
+  
+  call mpi_finalize(ierr)
+  
   stop
 end program main
 

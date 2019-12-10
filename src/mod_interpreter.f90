@@ -44,6 +44,9 @@ module mod_interpreter
      integer :: nbin_vs
      integer :: nbin_vp
 
+     integer, allocatable :: n_vsz(:, :)
+     integer, allocatable :: n_vpz(:, :)
+     
      double precision :: z_min
      double precision :: z_max
      double precision :: dz
@@ -63,6 +66,13 @@ module mod_interpreter
      procedure :: get_vmodel => interpreter_get_vmodel
      procedure :: output_vz => interpreter_output_vz
      procedure :: get_nbin_z => interpreter_get_nbin_z
+     procedure :: get_nbin_vs => interpreter_get_nbin_vs
+     procedure :: get_nbin_vp => interpreter_get_nbin_vp
+     procedure :: get_n_vpz => interpreter_get_n_vpz
+     procedure :: get_n_vsz => interpreter_get_n_vsz
+     procedure :: get_dvs => interpreter_get_dvs
+     procedure :: get_dvp => interpreter_get_dvp
+     procedure :: get_dz => interpreter_get_dz
   end type interpreter
   
   interface interpreter
@@ -87,9 +97,9 @@ contains
     logical, intent(in), optional :: solve_vp
 
     self%nlay_max = nlay_max
-    allocate(self%wrk_vp(nlay_max))
-    allocate(self%wrk_vs(nlay_max))
-    allocate(self%wrk_z(nlay_max))
+    allocate(self%wrk_vp(nlay_max + 1))
+    allocate(self%wrk_vs(nlay_max + 1))
+    allocate(self%wrk_z(nlay_max + 1))
     
     self%z_min   = z_min
     self%z_max   = z_max
@@ -101,6 +111,9 @@ contains
     self%dz  = (z_max - z_min) / dble(nbin_z)
     self%dvs = (vs_max - vs_min) / dble(nbin_vs)
     
+    allocate(self%n_vsz(nbin_vs, nbin_z))
+    self%n_vsz = 0
+
 
     if (present(ocean_flag)) then
        self%ocean_flag = ocean_flag
@@ -119,12 +132,27 @@ contains
     end if
 
     if (present(solve_vp)) then
+       if (.not. present(vp_min)) then
+          write(0,*)"ERROR: vp_min is not given"
+          stop
+       end if
+       if (.not. present(vp_max)) then
+          write(0,*)"ERROR: vp_max is not given"
+          stop
+       end if
+       if (.not. present(nbin_vp)) then
+          write(0,*)"ERROR: nbin_vp is not given"
+          stop
+       end if
        self%solve_vp = solve_vp
        if (self%solve_vp) then
           self%vp_min = vp_min
           self%vp_max = vp_max
           self%nbin_vp = nbin_vp
           self%dvp = (vp_max - vp_min) / dble(nbin_vp)
+          allocate(self%n_vpz(nbin_vp, nbin_z))
+          self%n_vpz = 0
+    
        end if
     end if
 
@@ -144,14 +172,15 @@ contains
 
     ! Set ocean layer
     if (self%ocean_flag) then
-       call vm%set_nlay(k + 1) ! k solid layers + 1 ocean layer
+       call vm%set_nlay(k + 2) ! k middle layers + 1 ocean layer + 
+                               ! 1 half space
        call vm%set_vp(1, self%ocean_vp)
        call vm%set_vs(1, -999.d0)
        call vm%set_rho(1, self%ocean_rho)
        call vm%set_h(1, self%ocean_thick)
        i1 = 1
     else
-       call vm%set_nlay(k)
+       call vm%set_nlay(k + 1)
        i1 = 0
     end if
     
@@ -163,7 +192,7 @@ contains
     end if
     call quick_sort(self%wrk_z, 1, k, self%wrk_vs, self%wrk_vp)
     ! Middle layers
-    do i = 1, k - 1
+    do i = 1, k
        ! Vs
        call vm%set_vs(i+i1, self%wrk_vs(i))
        ! Vp
@@ -173,22 +202,48 @@ contains
           call vm%vs2vp_brocher(i+i1)
        end if
        ! Thickness
-       call vm%set_h(i+i1,  self%wrk_z(i+1) - self%wrk_z(i))
+       if (i < k) then
+          call vm%set_h(i+i1, self%wrk_z(i+1) - self%wrk_z(i))
+       else
+          call vm%set_h(i+i1, self%z_max - self%wrk_z(i))
+       end if
        ! Density
        call vm%vp2rho_brocher(i+i1)
     end do
     ! Bottom layer
     ! Vs
-    call vm%set_vs(k+i1, 4.6d0) ! <- Fixed
+    call vm%set_vs(k+1+i1, 4.6d0) ! <- Fixed
     ! Vp
-    call vm%vs2vp_brocher(k+i1)
+    call vm%vs2vp_brocher(k+1+i1)
     ! Thickness
-    call vm%set_h(k+i1,  -99.d0) ! <- half space
+    call vm%set_h(k+1+i1,  -99.d0) ! <- half space
     ! Density
-    call vm%vp2rho_brocher(k+i1)
+    call vm%vp2rho_brocher(k+1+i1)
     
     return 
   end function interpreter_get_vmodel
+
+  !---------------------------------------------------------------------
+
+  function interpreter_get_n_vsz(self) result(n_vsz)
+    class(interpreter), intent(in) :: self
+    integer :: n_vsz(self%nbin_vs, self%nbin_z)
+
+    n_vsz = self%n_vsz
+
+    return 
+  end function interpreter_get_n_vsz
+  
+  !---------------------------------------------------------------------
+
+  function interpreter_get_n_vpz(self) result(n_vpz)
+    class(interpreter), intent(in) :: self
+    integer :: n_vpz(self%nbin_vp, self%nbin_z)
+
+    n_vpz = self%n_vpz
+
+    return 
+  end function interpreter_get_n_vpz
   
   !---------------------------------------------------------------------
 
@@ -198,8 +253,8 @@ contains
     integer, intent(in) :: io
     type(vmodel) :: vm
     integer :: nlay
-    integer :: ilay, iz, iz1, iz2
-    double precision :: tmpz, z
+    integer :: ilay, iz, iz1, iz2, iv
+    double precision :: tmpz, z, vp, vs
     
     vm = self%get_vmodel(tm)
     nlay = vm%get_nlay()
@@ -214,7 +269,17 @@ contains
        end if
        do iz = iz1, iz2 - 1
           z = (iz - 1) * self%dz
-          write(io,*)vm%get_vp(ilay), vm%get_vs(ilay), z
+          vp = vm%get_vp(ilay)
+          vs = vm%get_vs(ilay)
+          write(io,*)vp, vs, z
+          iv = int((vs - self%vs_min) / self%dvs) + 1
+          !write(*,*)vs, z, iv
+          self%n_vsz(iv, iz) = self%n_vsz(iv, iz) + 1
+          if (self%solve_vp) then
+             iv = int((vp - self%vp_min) / self%dvp) + 1
+             self%n_vpz(iv, iz) = self%n_vpz(iv, iz) + 1
+          end if
+          
        end do
        tmpz = tmpz + vm%get_h(ilay) 
     end do
@@ -232,6 +297,56 @@ contains
   end function interpreter_get_nbin_z
   
   !---------------------------------------------------------------------
+
+  integer function interpreter_get_nbin_vs(self) result(nbin_vs)
+    class(interpreter), intent(in) ::self
+
+    nbin_vs = self%nbin_vs
+    
+    return 
+  end function interpreter_get_nbin_vs
+  
+  !---------------------------------------------------------------------
+
+  integer function interpreter_get_nbin_vp(self) result(nbin_vp)
+    class(interpreter), intent(in) ::self
+
+    nbin_vp = self%nbin_vp
+    
+    return 
+  end function interpreter_get_nbin_vp
+  
+  !---------------------------------------------------------------------  
+
+  double precision function interpreter_get_dvs(self) result(dvs)
+    class(interpreter), intent(in) ::self
+
+    dvs = self%dvs
+    
+    return 
+  end function interpreter_get_dvs
+  
+  !---------------------------------------------------------------------  
+  
+  double precision function interpreter_get_dvp(self) result(dvp)
+    class(interpreter), intent(in) ::self
+
+    dvp = self%dvp
+    
+    return 
+  end function interpreter_get_dvp
+  
+  !---------------------------------------------------------------------  
+
+  double precision function interpreter_get_dz(self) result(dz)
+    class(interpreter), intent(in) ::self
+    
+    dz = self%dz
+    
+    return 
+  end function interpreter_get_dz
+  
+  !---------------------------------------------------------------------  
   
 end module mod_interpreter
 

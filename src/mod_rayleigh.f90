@@ -165,17 +165,21 @@ contains
        if (.not. self%full_calculation) then
           ! find root
           if (i /= 1) then
-             grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
-                  & self%c(i-1) / (omega - 2.d0 * pi * self%df)
-             if (grad < -0.1d0) then
-                c_start = self%c(i-1) + 2.d0 * grad * 2.d0 * pi * self%df
-             else
-                c_start = self%c(i-1) - 0.05d0
+             if (self%u(i-1) /= 0.d0) then
+                grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
+                     & self%c(i-1) / (omega - 2.d0 * pi * self%df)
+                if (grad < -0.1d0) then
+                   c_start = self%c(i-1) + 2.d0 * grad * 2.d0 * pi * self%df
+                else
+                   c_start = self%c(i-1) - 0.05d0
+                end if
+                if (c_start <= self%cmin) then
+                   c_start = self%cmin
+                end if
              end if
-             if (c_start <= self%cmin) then
-                c_start = self%cmin
-             end if
-          end if 
+          else
+             c_start = self%cmin
+          end if
           call self%find_root(omega, c_start, c, u)
           self%c(i) = c
           self%u(i) = u
