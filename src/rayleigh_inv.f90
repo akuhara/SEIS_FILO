@@ -112,6 +112,7 @@ program main
 
   ! Set model parameter & generate initial sample
   do i = 1, para%get_n_chain()
+
      tm = init_trans_d_model( &
           & k_min = para%get_k_min(), &
           & k_max = para%get_k_max(), &
@@ -131,7 +132,9 @@ program main
      call tm%set_perturb(id_vs, para%get_dev_vs())
      call tm%set_perturb(id_vp, para%get_dev_vp())
      call tm%set_perturb(id_z,  para%get_dev_z())
+     
      call tm%generate_model()
+     
      call pt%set_tm(i, tm)
      call tm%finish()
   end do
@@ -141,9 +144,13 @@ program main
   ! Set forward computation
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
+     
   ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
          & cmin=para%get_cmin(), cmax=para%get_cmax(), &
          & dc=para%get_dc())
+
+
+
   
   ! Set MCMC chain
   do i = 1, para%get_n_chain()

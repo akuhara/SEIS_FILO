@@ -43,8 +43,8 @@ module mod_trans_d_model
      integer, allocatable :: rx_prior_type(:) ! 1: Uniform, 2: Gaussian
      integer, allocatable :: ix_prior_type(:) ! 1: Uniform, 2: Gaussian
      
-     double precision, allocatable :: rx(:, :) ! real Gaussian param.
-     integer, allocatable          :: ix(:, :) ! int. Gaussian param.
+     double precision, allocatable :: rx(:, :)
+     integer, allocatable          :: ix(:, :)
      
      double precision, allocatable :: rx_birth_param(:,:)
      double precision, allocatable :: ix_birth_param(:,:)
@@ -64,6 +64,7 @@ module mod_trans_d_model
      procedure :: get_n_rx => trans_d_model_get_n_rx
      procedure :: get_n_ix => trans_d_model_get_n_ix
      procedure :: get_rx => trans_d_model_get_rx
+     procedure :: get_rx_single => trans_d_model_get_rx_single
      procedure :: get_ix => trans_d_model_get_ix
      procedure :: generate_model => trans_d_model_generate_model
      procedure :: birth => trans_d_model_birth
@@ -313,6 +314,18 @@ contains
     
     return 
   end function trans_d_model_get_rx
+
+  !---------------------------------------------------------------------
+  
+  double precision function trans_d_model_get_rx_single(self, k, &
+       & iparam) result(rx)
+    class(trans_d_model), intent(in) :: self
+    integer, intent(in) :: k, iparam
+    
+    rx = self%rx(k, iparam)
+
+    return 
+  end function trans_d_model_get_rx_single
 
   !---------------------------------------------------------------------
 

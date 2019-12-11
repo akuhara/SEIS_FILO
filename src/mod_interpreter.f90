@@ -202,10 +202,12 @@ contains
           call vm%vs2vp_brocher(i+i1)
        end if
        ! Thickness
-       if (i < k) then
-          call vm%set_h(i+i1, self%wrk_z(i+1) - self%wrk_z(i))
-       else
-          call vm%set_h(i+i1, self%z_max - self%wrk_z(i))
+       if (i == 1) then
+          call vm%set_h(i+i1, self%wrk_z(i))
+       else if (i == k) then
+          call vm%set_h(i+i1, self%z_max - self%wrk_z(i-1))
+       else 
+          call vm%set_h(i+i1, self%wrk_z(i) - self%wrk_z(i-1))
        end if
        ! Density
        call vm%vp2rho_brocher(i+i1)
@@ -213,8 +215,13 @@ contains
     ! Bottom layer
     ! Vs
     call vm%set_vs(k+1+i1, 4.6d0) ! <- Fixed
+    !call vm%set_vs(k+i1, self%wrk_vs(k))
     ! Vp
-    call vm%vs2vp_brocher(k+1+i1)
+    !if (self%solve_vp) then
+       !call vm%set_vp(k+i1, self%wrk_vp(k))
+    !else 
+       call vm%vs2vp_brocher(k+1+i1)
+    !end if
     ! Thickness
     call vm%set_h(k+1+i1,  -99.d0) ! <- half space
     ! Density
@@ -271,9 +278,10 @@ contains
           z = (iz - 1) * self%dz
           vp = vm%get_vp(ilay)
           vs = vm%get_vs(ilay)
+          
           write(io,*)vp, vs, z
+          
           iv = int((vs - self%vs_min) / self%dvs) + 1
-          !write(*,*)vs, z, iv
           self%n_vsz(iv, iz) = self%n_vsz(iv, iz) + 1
           if (self%solve_vp) then
              iv = int((vp - self%vp_min) / self%dvp) + 1

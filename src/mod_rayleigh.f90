@@ -48,7 +48,7 @@ module mod_rayleigh
      double precision :: cmax
      double precision :: dc  
      integer :: nc
-     integer :: niter = 10
+     integer :: niter = 8
      integer :: io
      integer, allocatable :: n_fc(:,:)
      integer, allocatable :: n_fu(:,:)
@@ -176,7 +176,8 @@ contains
                 grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
                      & self%c(i-1) / (omega - 2.d0 * pi * self%df)
                 if (grad < -0.1d0) then
-                   c_start = self%c(i-1) + 2.d0 * grad * 2.d0 * pi * self%df
+                   c_start = self%c(i-1) + &
+                        & 2.d0 * grad * 2.d0 * pi * self%df
                 else
                    c_start = self%c(i-1) - 0.05d0
                 end if
@@ -213,12 +214,10 @@ contains
     double precision :: c_tmp, rslt
 
     do i = 1, self%nc
-      c_tmp = self%cmin + (i - 1) * self%dc 
-      call self%do_propagation(omega, c_tmp, rslt)
-      write(self%io, *) omega / (2.d0 * pi), c_tmp, rslt
-      
+       c_tmp = self%cmin + (i - 1) * self%dc 
+       call self%do_propagation(omega, c_tmp, rslt)
+       write(self%io, *) omega / (2.d0 * pi), c_tmp, rslt
     end do
-    
     
     return 
   end subroutine rayleigh_do_full_calculation
@@ -614,13 +613,12 @@ contains
     
     do i = 1, self%nf
        write(io, *)(i - 1) * self%df + self%fmin, self%c(i), self%u(i)
-       
        j = int((self%c(i) - self%cmin) / self%dc) + 1
-       if (j < 0 .or. j > self%nc) cycle
+       if (j < 1 .or. j > self%nc) cycle
        self%n_fc(i, j) = self%n_fc(i, j) + 1
        
        j = int((self%u(i) - self%cmin) / self%dc) + 1
-       if (j < 0 .or. j > self%nc) cycle
+       if (j < 1 .or. j > self%nc) cycle
        self%n_fu(i, j) = self%n_fu(i, j) + 1
     end do
     
