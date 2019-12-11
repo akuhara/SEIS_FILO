@@ -41,12 +41,11 @@ program main
   logical :: verb
   double precision :: fmin, fmax, df
   integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
-  integer :: n_vs, n_z, n_vp, io_vsz, io_vpz, n_mod
+  integer :: n_mod
   double precision :: log_likelihood, temp
   logical :: is_ok
   type(vmodel) :: vm
-  type(trans_d_model) :: tm
-  type(trans_d_model) ::  tm_tmp
+  type(trans_d_model) :: tm, tm_tmp
   type(interpreter) :: intpr
   type(mcmc) :: mc
   type(rayleigh) :: ray, ray_tmp
@@ -54,9 +53,8 @@ program main
   type(parallel) :: pt
   type(param) :: para
   character(200) :: filename, param_file
-  double precision :: eps = 1.0d-8
-  double precision :: minus_infty = -1.0d300
-  integer, allocatable :: n_vsz(:,:), n_vpz(:,:)
+  double precision, parameter :: eps = 1.0d-8
+  double precision, parameter :: minus_infty = -1.0d300
   
   ! Initialize MPI 
   call mpi_init(ierr)
@@ -114,7 +112,7 @@ program main
 
   ! Set model parameter & generate initial sample
   do i = 1, para%get_n_chain()
-     tm = init_trans_d_model(&
+     tm = init_trans_d_model( &
           & k_min = para%get_k_min(), &
           & k_max = para%get_k_max(), &
           & n_rx=n_rx)
@@ -137,10 +135,11 @@ program main
      call pt%set_tm(i, tm)
      call tm%finish()
   end do
-
+  
   
 
   ! Set forward computation
+  tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
   ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
          & cmin=para%get_cmin(), cmax=para%get_cmax(), &
@@ -205,13 +204,12 @@ program main
         end if
         call pt%set_mc(j, mc)
 
-        ! Output
-        ! ** One step summary
+        ! One step summary
         if (pt%get_rank() == 0) then
            call mc%one_step_summary()
         end if
         
-        ! ** Recording
+        ! Recording
         if (i > para%get_n_burn() .and. &
              & mod(i, para%get_n_corr()) == 0 .and. &
              & mc%get_temp() < 1.d0 + eps) then
@@ -222,8 +220,6 @@ program main
 
            ! Synthetic data
            call ray%output(io_ray)
-
-           ! Bin counts
            
         end if
      end do
@@ -235,35 +231,44 @@ program main
   close(io_vz)
   close(io_ray)
 
-  ! V-Z count
-  n_vs = intpr%get_nbin_vs()
-  n_z = intpr%get_nbin_z()
-  allocate(n_vsz(n_vs, n_z))
-  call mpi_reduce(intpr%get_n_vsz(), n_vsz, n_z * n_vs, &
-       & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
-  filename="vs_z.ppd"
-  open(newunit=io_vsz, file=filename, status="unknown", iostat=ierr)
-  if (ierr /= 0) then
-     write(0, *)"ERROR: cannot create ", trim(filename)
-     stop
-  end if
-  if (rank == 0) then
-     write(*,*)para%get_n_cool(), n_proc
-     n_mod = para%get_n_cool() * n_proc * (para%get_n_iter() - para%get_n_burn()) / &
-          & para%get_n_corr()
-     do i = 1, n_z
-        do j = 1, n_vs
-           write(io_vsz, '(3F13.5)') &
-                & para%get_vs_min() + (j - 0.5d0) * intpr%get_dvs(), &
-                & para%get_z_min() + (i - 0.5d0) * intpr%get_dz(), &
-                & dble(n_vsz(j, i)) / n_mod
-
-        end do
-     end do
-  end if
-
-
+  ! Post processing following the main loop
   
+  ! Total model number
+  n_mod = para%get_n_cool() * n_proc * &
+       & (para%get_n_iter() - para%get_n_burn()) / &
+       & para%get_n_corr()
+
+  ! Vs-Z
+  filename = "vs_z.ppd"
+  call output_ppd(filename, rank, para%get_nbin_vs(), &
+       & para%get_nbin_z(), intpr%get_n_vsz(), &
+       & n_mod, para%get_vs_min(), intpr%get_dvs(), &
+       & para%get_z_min(), intpr%get_dz())
+  
+  ! Vp-Z
+  if (para%get_solve_vp()) then
+     filename = "vp_z.ppd"
+     call output_ppd(filename, rank, para%get_nbin_vp(), &
+          & para%get_nbin_z(), intpr%get_n_vpz(), &
+          & n_mod, para%get_vp_min(), intpr%get_dvp(), &
+          & para%get_z_min(), intpr%get_dz())
+  end if
+
+  ! Frequency-phase velocity
+  filename = "f_c.ppd"
+  call output_ppd(filename, rank, ray%get_nf(), &
+       & ray%get_nc(), ray%get_n_fc(), &
+       & n_mod, obs%get_fmin(), obs%get_df(), &
+       & para%get_cmin(), para%get_dc())
+
+  ! Frequency-group velocity
+  filename = "f_u.ppd"
+  call output_ppd(filename, rank, ray%get_nf(), &
+       & ray%get_nc(), ray%get_n_fu(), &
+       & n_mod, obs%get_fmin(), obs%get_df(), &
+       & para%get_cmin(), para%get_dc())
+
+
   ! Output (First chain only)
   if (pt%get_rank() == 0) then
      do i = 1, para%get_n_chain()
@@ -285,6 +290,45 @@ program main
   stop
 end program main
 
+
+!-----------------------------------------------------------------------
+
+subroutine output_ppd(filename, rank, n_x, n_y, n_xy, n_mod, x_min, dx, &
+     & y_min, dy)
+  include 'mpif.h'
+  character(*), intent(in) :: filename
+  integer, intent(in) :: rank, n_x, n_y, n_mod
+  integer, intent(in) :: n_xy(n_x, n_y)
+  double precision, intent(in) :: x_min, dx, y_min, dy
+  double precision :: x, y
+  integer :: io_xy, ierr, i, j
+  integer :: n_xy_all(n_x, n_y)
+  
+  call mpi_reduce(n_xy, n_xy_all, n_x * n_y, MPI_INTEGER4, MPI_SUM, 0, &
+       & MPI_COMM_WORLD, ierr)
+  
+  if (rank == 0) then
+     open(newunit = io_xy, file = filename, status = "unknown", &
+          & iostat = ierr)
+     if (ierr /= 0) then
+        write(0, *)"ERROR: cannot open ", trim(filename)
+        call mpi_finalize(ierr)
+        stop
+     end if
+     
+     do i = 1, n_y
+        y = y_min + (i - 0.5d0) * dy
+        do j = 1, n_x
+           x = x_min + (j - 0.5d0) * dx
+           write(io_xy, '(3F13.5)') x, y, &
+                & dble(n_xy_all(j, i)) / dble(n_mod)
+        end do
+     end do
+     close(io_xy)
+  end if
+  
+  return
+end subroutine output_ppd
 
 !-----------------------------------------------------------------------
 

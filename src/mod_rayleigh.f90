@@ -48,10 +48,10 @@ module mod_rayleigh
      double precision :: cmax
      double precision :: dc  
      integer :: nc
-
      integer :: niter = 10
-
      integer :: io
+     integer, allocatable :: n_fc(:,:)
+     integer, allocatable :: n_fu(:,:)
 
      logical :: full_calculation = .false.
 
@@ -73,12 +73,15 @@ module mod_rayleigh
      procedure :: set_full_calculation => rayleigh_set_full_calculation
      procedure :: do_full_calculation => rayleigh_do_full_calculation
      procedure :: set_vmodel => rayleigh_set_vmodel
+     procedure :: get_nf => rayleigh_get_nf
      procedure :: get_nc => rayleigh_get_nc
      procedure :: get_c => rayleigh_get_c
      procedure :: get_c_array => rayleigh_get_c_array
      procedure :: get_u => rayleigh_get_u
      procedure :: get_u_array => rayleigh_get_u_array
      procedure :: output => rayleigh_output
+     procedure :: get_n_fc => rayleigh_get_n_fc
+     procedure :: get_n_fu => rayleigh_get_n_fu
      
   end type rayleigh
 
@@ -91,7 +94,7 @@ contains
   !---------------------------------------------------------------------
   
   type(rayleigh) function init_rayleigh(vm, fmin, fmax, df, &
-       & cmin, cmax, dc, ray_out)
+       & cmin, cmax, dc, ray_out) result(self)
     type(vmodel), intent(in) :: vm
     double precision, intent(in) :: fmin, fmax, df
     double precision, intent(in) :: cmin, cmax, dc
@@ -99,54 +102,58 @@ contains
     integer :: nlay, ierr
     
     ! velocity model
-    init_rayleigh%vmodel = vm
-    nlay = init_rayleigh%vmodel%get_nlay()
+    self%vmodel = vm
+    nlay = self%vmodel%get_nlay()
     if (nlay < 1) then
        write(0,*)"ERROR: velocity model is not defined (mod_rayleigh)"
        stop
     end if
-    if (init_rayleigh%vmodel%get_vs(1) < 0.d0) then
-       init_rayleigh%is_ocean = .true.
+    if (self%vmodel%get_vs(1) < 0.d0) then
+       self%is_ocean = .true.
     else
-       init_rayleigh%is_ocean = .false.
+       self%is_ocean = .false.
     end if
     
     ! Check parameters
-    init_rayleigh%fmin = fmin
-    init_rayleigh%fmax = fmax
-    init_rayleigh%df = df
-    init_rayleigh%nf = nint((fmax - fmin) / df) + 1
-    if (init_rayleigh%nf < 1) then
-       write(0,*)"ERROR: fmax must be .gt. fmin (init_rayleigh)"
+    self%fmin = fmin
+    self%fmax = fmax
+    self%df = df
+    self%nf = nint((fmax - fmin) / df) + 1
+    if (self%nf < 1) then
+       write(0,*)"ERROR: fmax must be .gt. fmin (self)"
        stop
     end if
-    allocate(init_rayleigh%c(init_rayleigh%nf), &
-         &   init_rayleigh%u(init_rayleigh%nf))
+    allocate(self%c(self%nf), &
+         &   self%u(self%nf))
     
-    init_rayleigh%cmin = cmin
-    init_rayleigh%cmax = cmax
-    init_rayleigh%dc = dc
-    init_rayleigh%nc = nint((cmax - cmin) / dc) + 1
-    if (init_rayleigh%nc < 1) then
-      write(0,*)"ERROR: cmax must be .gt. cmin (init_rayleigh)"
-      stop
-   end if
-
-   ! output file
-   if (present(ray_out)) then
-      init_rayleigh%ray_out = ray_out
-      open(newunit = init_rayleigh%io, status = "unknown", &
-           & file = ray_out, iostat=ierr)
-      if (ierr /= 0) then
-         write(0, *)"ERROR: cannot creat ", trim(ray_out)
-         write(0, *)"     : (init_rayleigh)"
-         stop
-      end if
-      init_rayleigh%out_flag = .true.
-   end if
+    self%cmin = cmin
+    self%cmax = cmax
+    self%dc = dc
+    self%nc = nint((cmax - cmin) / dc) + 1
+    if (self%nc < 1) then
+       write(0,*)"ERROR: cmax must be .gt. cmin (self)"
+       stop
+    end if
+    
+    
+    ! output file
+    if (present(ray_out)) then
+       self%ray_out = ray_out
+       open(newunit = self%io, status = "unknown", &
+            & file = ray_out, iostat=ierr)
+       if (ierr /= 0) then
+          write(0, *)"ERROR: cannot creat ", trim(ray_out)
+          write(0, *)"     : (init_rayleigh)"
+          stop
+       end if
+       self%out_flag = .true.
+    end if
+    
+    ! for MCMC
+    allocate(self%n_fc(self%nf, self%nc), self%n_fu(self%nf, self%nc))
+    self%n_fc(:,:) = 0
+    self%n_fu(:,:) = 0
    
-
-
     return 
   end function init_rayleigh
     
@@ -536,6 +543,16 @@ contains
 
   !---------------------------------------------------------------------
 
+  integer function rayleigh_get_nf(self) result(nf)
+    class(rayleigh), intent(in) :: self
+
+    nf = self%nf
+    
+    return 
+  end function rayleigh_get_nf
+
+  !---------------------------------------------------------------------
+
   integer function rayleigh_get_nc(self) result(nc)
     class(rayleigh), intent(in) :: self
 
@@ -591,17 +608,47 @@ contains
   !---------------------------------------------------------------------
   
   subroutine rayleigh_output(self, io)
-    class(rayleigh), intent(in) :: self
+    class(rayleigh), intent(inout) :: self
     integer, intent(in) :: io
-    integer :: i
+    integer :: i, j
     
     do i = 1, self%nf
        write(io, *)(i - 1) * self%df + self%fmin, self%c(i), self%u(i)
+       
+       j = int((self%c(i) - self%cmin) / self%dc) + 1
+       if (j < 0 .or. j > self%nc) cycle
+       self%n_fc(i, j) = self%n_fc(i, j) + 1
+       
+       j = int((self%u(i) - self%cmin) / self%dc) + 1
+       if (j < 0 .or. j > self%nc) cycle
+       self%n_fu(i, j) = self%n_fu(i, j) + 1
     end do
     
     return 
   end subroutine rayleigh_output
 
   !---------------------------------------------------------------------
+
+  function rayleigh_get_n_fc(self) result(n_fc)
+    class(rayleigh), intent(in) :: self
+    integer :: n_fc(self%nf, self%nc)
+    
+    n_fc(:,:) = self%n_fc(:,:)
+
+    return 
+  end function rayleigh_get_n_fc
   
+  !---------------------------------------------------------------------
+
+  function rayleigh_get_n_fu(self) result(n_fu)
+    class(rayleigh), intent(in) :: self
+    integer :: n_fu(self%nf, self%nc)
+    
+    n_fu(:,:) = self%n_fu(:,:)
+
+    return 
+  end function rayleigh_get_n_fu
+  
+  !---------------------------------------------------------------------
+
 end module mod_rayleigh

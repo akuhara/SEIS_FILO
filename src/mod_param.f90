@@ -46,6 +46,7 @@ module mod_param
      integer :: nbin_z = -999
      integer :: nbin_vs = -999
      integer :: nbin_vp = -999
+     integer :: nbin_c  = -999
 
      double precision :: temp_high = -999.d0
      double precision :: fmin = -999.d0
@@ -92,7 +93,7 @@ module mod_param
      procedure :: get_nbin_z => param_get_nbin_z
      procedure :: get_nbin_vs => param_get_nbin_vs
      procedure :: get_nbin_vp => param_get_nbin_vp
-
+     procedure :: get_nbin_c => param_get_nbin_c
      
      procedure :: get_temp_high => param_get_temp_high
      procedure :: get_fmin => param_get_fmin
@@ -346,6 +347,9 @@ contains
     else if (name == "nbin_vp") then
        read(var, *) itmp
        self%nbin_vp = itmp
+    else if (name == "nbin_c") then
+       read(var, *) itmp
+       self%nbin_c = itmp
     else
        write(0,*)"Warnings: Invalid parameter name"
        write(0,*)"        : ", name, "  (?)"
@@ -494,6 +498,16 @@ contains
     
     return 
   end function param_get_nbin_vp
+
+  !---------------------------------------------------------------------
+
+  integer function param_get_nbin_c(self) result(nbin_c)
+    class(param), intent(in) :: self
+    
+    nbin_c = self%nbin_c
+    
+    return 
+  end function param_get_nbin_c
 
   !---------------------------------------------------------------------
 
