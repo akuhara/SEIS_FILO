@@ -14,7 +14,7 @@ Copyright (C) 2019 Takeshi Akuhara
   * ray_out (file name for output dispersion curve)
 * Comment out by "#" 
 ```
-# Example of parameter file
+# Parameter file example
 fmin = 0.01 # Can add comment
 fmax = 1.0  
 df = 0.1  
