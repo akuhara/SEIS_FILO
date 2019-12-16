@@ -12,13 +12,17 @@ Copyright (C) 2019 Takeshi Akuhara
   * cmin, cmax, dc (Minimum, maximum, and interval of phase velocity used for root search)
   * vmod_in (file name for input velocity model)
   * ray_out (file name for output dispersion curve)
-
+* Comment out by "#" 
 ```
-# Comment out by "#"
-fmin=0.01 fmax=1.0  df=0.1  # Comment out at the end of line also works
-cmin=1.0  cmax=2.0  dc=0.01 
-vmod_in=vmod.in            
-ray_out=ray.out        
+# Example of parameter file
+fmin = 0.01 # Can add comment
+fmax = 1.0  
+df = 0.1  
+cmin = 1.0  
+cmax = 2.0  
+dc = 0.01 
+vmod_in = vmod.in            
+ray_out = ray.out        
 ```
 
 ### Velocity model file (vmod_in)
