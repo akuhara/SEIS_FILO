@@ -78,9 +78,7 @@ program main
  
   ! Read parameter file
   para = init_param(param_file, verb)
-  !call mpi_finalize(ierr)
-  !stop
-
+  
   ! Initialize parallel chains
   pt = init_parallel(n_proc = n_proc, rank = rank, &
        & n_chain = para%get_n_chain())
@@ -228,8 +226,8 @@ program main
            tm = mc%get_tm()
            
            ! V-Z
-           call intpr%output_vz(tm, io_vz)
-
+           call intpr%save_model(tm, io_vz)
+           
            ! Synthetic data
            call ray%output(io_ray)
            
@@ -250,9 +248,15 @@ program main
        & (para%get_n_iter() - para%get_n_burn()) / &
        & para%get_n_corr()
 
+  ! K
+  filename = "n_layers.ppd"
+  call output_ppd_1d(filename, rank, para%get_k_max(), &
+       & intpr%get_n_layers(), n_mod, &
+       & dble(para%get_k_min()) - 0.5d0, 1.d0)
+
   ! Vs-Z
   filename = "vs_z.ppd"
-  call output_ppd(filename, rank, para%get_nbin_vs(), &
+  call output_ppd_2d(filename, rank, para%get_nbin_vs(), &
        & para%get_nbin_z(), intpr%get_n_vsz(), &
        & n_mod, para%get_vs_min(), intpr%get_dvs(), &
        & para%get_z_min(), intpr%get_dz())
@@ -260,7 +264,7 @@ program main
   ! Vp-Z
   if (para%get_solve_vp()) then
      filename = "vp_z.ppd"
-     call output_ppd(filename, rank, para%get_nbin_vp(), &
+     call output_ppd_2d(filename, rank, para%get_nbin_vp(), &
           & para%get_nbin_z(), intpr%get_n_vpz(), &
           & n_mod, para%get_vp_min(), intpr%get_dvp(), &
           & para%get_z_min(), intpr%get_dz())
@@ -268,14 +272,14 @@ program main
 
   ! Frequency-phase velocity
   filename = "f_c.ppd"
-  call output_ppd(filename, rank, ray%get_nf(), &
+  call output_ppd_2d(filename, rank, ray%get_nf(), &
        & ray%get_nc(), ray%get_n_fc(), &
        & n_mod, obs%get_fmin(), obs%get_df(), &
        & para%get_cmin(), para%get_dc())
 
   ! Frequency-group velocity
   filename = "f_u.ppd"
-  call output_ppd(filename, rank, ray%get_nf(), &
+  call output_ppd_2d(filename, rank, ray%get_nf(), &
        & ray%get_nc(), ray%get_n_fu(), &
        & n_mod, obs%get_fmin(), obs%get_df(), &
        & para%get_cmin(), para%get_dc())
@@ -301,23 +305,56 @@ program main
   
   stop
 end program main
+!-----------------------------------------------------------------------
 
+subroutine output_ppd_1d(filename, rank, nbin_x, n_x, n_mod, x_min, dx)
+  include 'mpif.h'
+  character(*), intent(in) :: filename
+  integer, intent(in) :: rank, nbin_x, n_mod
+  integer, intent(in) :: n_x(nbin_x)
+  double precision, intent(in) :: x_min, dx
+  double precision :: x
+  integer :: io_x, ierr, i
+  integer :: n_x_all(nbin_x)
+  
+  call mpi_reduce(n_x, n_x_all, nbin_x, MPI_INTEGER4, MPI_SUM, 0, &
+       & MPI_COMM_WORLD, ierr)
+  
+  if (rank == 0) then
+     open(newunit = io_x, file = filename, status = "unknown", &
+          & iostat = ierr)
+     if (ierr /= 0) then
+        write(0, *)"ERROR: cannot open ", trim(filename)
+        call mpi_finalize(ierr)
+        stop
+     end if
+     
+     
+     do i = 1, nbin_x
+        x = x_min + (i - 0.5d0) * dx
+        write(io_x, '(3F13.5)') x, dble(n_x_all(i)) / dble(n_mod)
+     end do
+     close(io_x)
+  end if
+  
+  return
+end subroutine output_ppd_1d
 
 !-----------------------------------------------------------------------
 
-subroutine output_ppd(filename, rank, n_x, n_y, n_xy, n_mod, x_min, dx, &
-     & y_min, dy)
+subroutine output_ppd_2d(filename, rank, nbin_x, nbin_y, n_xy, n_mod, &
+     & x_min, dx, y_min, dy)
   include 'mpif.h'
   character(*), intent(in) :: filename
-  integer, intent(in) :: rank, n_x, n_y, n_mod
-  integer, intent(in) :: n_xy(n_x, n_y)
+  integer, intent(in) :: rank, nbin_x, nbin_y, n_mod
+  integer, intent(in) :: n_xy(nbin_x, nbin_y)
   double precision, intent(in) :: x_min, dx, y_min, dy
   double precision :: x, y
   integer :: io_xy, ierr, i, j
-  integer :: n_xy_all(n_x, n_y)
+  integer :: n_xy_all(nbin_x, nbin_y)
   
-  call mpi_reduce(n_xy, n_xy_all, n_x * n_y, MPI_INTEGER4, MPI_SUM, 0, &
-       & MPI_COMM_WORLD, ierr)
+  call mpi_reduce(n_xy, n_xy_all, nbin_x * nbin_y, MPI_INTEGER4, &
+       & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
   
   if (rank == 0) then
      open(newunit = io_xy, file = filename, status = "unknown", &
@@ -328,9 +365,9 @@ subroutine output_ppd(filename, rank, n_x, n_y, n_xy, n_mod, x_min, dx, &
         stop
      end if
      
-     do i = 1, n_y
+     do i = 1, nbin_y
         y = y_min + (i - 0.5d0) * dy
-        do j = 1, n_x
+        do j = 1, nbin_x
            x = x_min + (j - 0.5d0) * dx
            write(io_xy, '(3F13.5)') x, y, &
                 & dble(n_xy_all(j, i)) / dble(n_mod)
@@ -340,7 +377,7 @@ subroutine output_ppd(filename, rank, n_x, n_y, n_xy, n_mod, x_min, dx, &
   end if
   
   return
-end subroutine output_ppd
+end subroutine output_ppd_2d
 
 !-----------------------------------------------------------------------
 

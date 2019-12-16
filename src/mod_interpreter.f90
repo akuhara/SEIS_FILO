@@ -46,6 +46,7 @@ module mod_interpreter
 
      integer, allocatable :: n_vsz(:, :)
      integer, allocatable :: n_vpz(:, :)
+     integer, allocatable :: n_layers(:)
      
      double precision :: z_min
      double precision :: z_max
@@ -64,12 +65,13 @@ module mod_interpreter
      
    contains
      procedure :: get_vmodel => interpreter_get_vmodel
-     procedure :: output_vz => interpreter_output_vz
+     procedure :: save_model => interpreter_save_model
      procedure :: get_nbin_z => interpreter_get_nbin_z
      procedure :: get_nbin_vs => interpreter_get_nbin_vs
      procedure :: get_nbin_vp => interpreter_get_nbin_vp
      procedure :: get_n_vpz => interpreter_get_n_vpz
      procedure :: get_n_vsz => interpreter_get_n_vsz
+     procedure :: get_n_layers => interpreter_get_n_layers
      procedure :: get_dvs => interpreter_get_dvs
      procedure :: get_dvp => interpreter_get_dvp
      procedure :: get_dz => interpreter_get_dz
@@ -113,7 +115,8 @@ contains
     
     allocate(self%n_vsz(nbin_vs, nbin_z))
     self%n_vsz = 0
-
+    allocate(self%n_layers(self%nlay_max))
+    self%n_layers = 0
 
     if (present(ocean_flag)) then
        self%ocean_flag = ocean_flag
@@ -215,13 +218,8 @@ contains
     ! Bottom layer
     ! Vs
     call vm%set_vs(k+1+i1, 4.6d0) ! <- Fixed
-    !call vm%set_vs(k+i1, self%wrk_vs(k))
     ! Vp
-    !if (self%solve_vp) then
-       !call vm%set_vp(k+i1, self%wrk_vp(k))
-    !else 
-       call vm%vs2vp_brocher(k+1+i1)
-    !end if
+    call vm%vs2vp_brocher(k+1+i1)
     ! Thickness
     call vm%set_h(k+1+i1,  -99.d0) ! <- half space
     ! Density
@@ -254,7 +252,18 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine interpreter_output_vz(self, tm, io)
+  function interpreter_get_n_layers(self) result(n_layers)
+    class(interpreter), intent(in) :: self
+    integer :: n_layers(self%nlay_max)
+    
+    n_layers = self%n_layers
+
+    return 
+  end function interpreter_get_n_layers
+  
+  !---------------------------------------------------------------------
+
+  subroutine interpreter_save_model(self, tm, io)
     class(interpreter), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
     integer, intent(in) :: io
@@ -266,6 +275,7 @@ contains
     vm = self%get_vmodel(tm)
     nlay = vm%get_nlay()
     
+    self%n_layers(tm%get_k()) = self%n_layers(tm%get_k()) + 1
     tmpz = 0.d0
     do ilay = 1, nlay
        iz1 = int(tmpz / self%dz) + 1
@@ -292,7 +302,7 @@ contains
        tmpz = tmpz + vm%get_h(ilay) 
     end do
     
-  end subroutine interpreter_output_vz
+  end subroutine interpreter_save_model
 
   !---------------------------------------------------------------------
 
