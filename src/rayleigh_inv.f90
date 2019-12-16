@@ -43,6 +43,7 @@ program main
   integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
   integer :: n_mod
   double precision :: log_likelihood, temp
+  double precision :: log_prior_ratio, log_proposal_ratio
   logical :: is_ok
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
@@ -77,7 +78,9 @@ program main
  
   ! Read parameter file
   para = init_param(param_file, verb)
-  
+  !call mpi_finalize(ierr)
+  !stop
+
   ! Initialize parallel chains
   pt = init_parallel(n_proc = n_proc, rank = rank, &
        & n_chain = para%get_n_chain())
@@ -193,7 +196,8 @@ program main
         mc = pt%get_mc(j)
 
         ! Proposal
-        call mc%propose_model(tm_tmp, is_ok)
+        call mc%propose_model(tm_tmp, is_ok, log_prior_ratio, &
+             & log_proposal_ratio)
 
         ! Forward computation
         ray_tmp = ray
@@ -205,7 +209,8 @@ program main
         end if
 
         ! Judege
-        call mc%judge_model(tm_tmp, log_likelihood)
+        call mc%judge_model(tm_tmp, log_likelihood, &
+              & log_prior_ratio, log_proposal_ratio)
         if (mc%get_is_accepted()) then
            ray = ray_tmp
         end if

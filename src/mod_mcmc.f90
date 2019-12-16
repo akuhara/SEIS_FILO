@@ -88,9 +88,13 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine mcmc_propose_model(self, tm_proposed, is_ok)
+  subroutine mcmc_propose_model(self, tm_proposed, is_ok, &
+      & log_prior_ratio, log_proposal_ratio)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(out) :: tm_proposed
+    double precision, intent(out) :: log_prior_ratio
+    double precision, intent(out) :: log_proposal_ratio
+    
     logical, intent(out) :: is_ok
     integer :: nparam, iparam
 
@@ -100,13 +104,20 @@ contains
     if (self%i_proposal_type == 0) then
        ! Birth
        call tm_proposed%birth(is_ok)
+       ! prior & proposal ratio 
+       ! (can be ignored if birth prorposal from prior distribution)
+       log_prior_ratio = 0.d0
+       log_proposal_ratio = 0.d0
     else if (self%i_proposal_type == 1) then
        ! Death
        call tm_proposed%death(is_ok)
+       log_prior_ratio = 0.d0
+       log_proposal_ratio = 0.0
     else
        ! Perturbation
        iparam = self%i_proposal_type - 1
-       call tm_proposed%perturb(iparam, is_ok)
+       call tm_proposed%perturb(iparam, is_ok, log_prior_ratio)
+       log_proposal_ratio = 0.d0
     end if
     return
     
@@ -114,10 +125,12 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc_judge_model(self, tm, log_likelihood)
+  subroutine mcmc_judge_model(self, tm, log_likelihood, &
+       & log_prior_ratio, log_proposal_ratio)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
-    double precision, intent(in) :: log_likelihood
+    double precision, intent(in) :: log_likelihood, log_prior_ratio, &
+         & log_proposal_ratio
     double precision :: ratio
     double precision :: r
 
@@ -125,6 +138,7 @@ contains
     self%is_accepted = .false.
 
     ratio = (log_likelihood - self%log_likelihood) / self%temp
+    ratio = ratio + log_prior_ratio + log_proposal_ratio
     !write(*,*)log_likelihood, self%log_likelihood
     r = log(rand_u())
     if (r <= ratio) then

@@ -70,8 +70,8 @@ module mod_trans_d_model
      procedure :: birth => trans_d_model_birth
      procedure :: death => trans_d_model_death
      procedure :: perturb => trans_d_model_perturb
-     procedure :: perturb_rx => trans_d_model_perturb_rx
-     procedure :: perturb_ix => trans_d_model_perturb_ix
+     procedure, private :: perturb_rx => trans_d_model_perturb_rx
+     procedure, private :: perturb_ix => trans_d_model_perturb_ix
      procedure :: display => trans_d_model_display
      procedure :: finish  => trans_d_model_finish
      
@@ -464,17 +464,18 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine trans_d_model_perturb(self, iparam, is_ok)
+  subroutine trans_d_model_perturb(self, iparam, is_ok, log_prior_ratio)
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam
     logical, intent(out) :: is_ok
+    double precision, intent(out) :: log_prior_ratio
     
     if (iparam <= self%n_rx) then
        call self%perturb_rx(iparam, &
-            & self%rx_perturb_param(iparam), is_ok)
+            & self%rx_perturb_param(iparam), is_ok, log_prior_ratio)
     else
        call self%perturb_ix(iparam - self%n_rx, &
-            & self%ix_perturb_param(iparam), is_ok)
+            & self%ix_perturb_param(iparam), is_ok, log_prior_ratio)
     end if
     
     return 
@@ -482,18 +483,22 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine trans_d_model_perturb_rx(self, iparam, dev, is_ok)
+  subroutine trans_d_model_perturb_rx(self, iparam, dev, is_ok, &
+       & log_prior_ratio)
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam
     double precision, intent(in) :: dev
     logical, intent(out) :: is_ok
+    double precision, intent(out) :: log_prior_ratio
     integer :: k_target
+    double precision :: x_new, x_old, mu, sig
 
     k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
-    
-    self%rx(k_target, iparam) = self%rx(k_target, iparam) + &
-         & rand_g() * dev
 
+    x_old = self%rx(k_target, iparam)
+    x_new = x_old + rand_g() * dev
+    self%rx(k_target, iparam) = x_new
+    
     is_ok = .true.
     if (self%rx_prior_type(iparam) == 1) then
        if (self%rx(k_target, iparam) < &
@@ -502,6 +507,12 @@ contains
             & self%rx_prior_param(iparam, 2)) then
           is_ok = .false.
        end if
+       log_prior_ratio = 0.d0
+    else if (self%rx_prior_type(iparam) == 2) then
+       mu = self%rx_prior_param(iparam, 1)
+       sig = self%rx_prior_param(iparam, 2)
+       log_prior_ratio = -((x_new - mu)**2 - (x_old - mu)**2) / &
+            & (2.d0 * sig * sig)
     end if
     
     
@@ -510,17 +521,21 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine trans_d_model_perturb_ix(self, iparam, dev, is_ok)
+  subroutine trans_d_model_perturb_ix(self, iparam, dev, is_ok, &
+       & log_prior_ratio)
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam
     double precision, intent(in) :: dev
     logical, intent(out) :: is_ok
+    double precision, intent(out) :: log_prior_ratio
     integer :: k_target
+    double precision :: x_new, x_old, mu, sig
     
     k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
     
-    self%ix(k_target, iparam) = self%ix(k_target, iparam) + &
-         & nint(rand_g() * dev)
+    x_old = self%ix(k_target, iparam)
+    x_new = x_old + nint(rand_g() * dev)
+    self%ix(k_target, iparam) = x_new
     
     is_ok = .true.
     if (self%ix_prior_type(iparam) == 1) then
@@ -530,6 +545,12 @@ contains
             & self%ix_prior_param(iparam, 2)) then
           is_ok = .false.
        end if
+       log_prior_ratio = 0.d0
+    else if (self%ix_prior_type(iparam) == 2) then
+       mu = self%ix_prior_param(iparam, 1)
+       sig = self%ix_prior_param(iparam, 2)
+       log_prior_ratio = -((x_new - mu)**2 - (x_old - mu)**2) / &
+            & (2.d0 * sig * sig)
     end if
     
     return 

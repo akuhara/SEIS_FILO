@@ -25,9 +25,9 @@
 !
 !=======================================================================
 module mod_param
+  use mod_line_text
   implicit none 
   
-  integer, parameter, private :: line_max = 200
   
   type param
      private
@@ -77,8 +77,7 @@ module mod_param
 
    contains
      procedure :: read_file => param_read_file
-     procedure :: read_line => param_read_line
-     procedure :: read_value => param_read_value
+     procedure :: set_value  => param_set_value
      procedure :: get_n_iter => param_get_n_iter
      procedure :: get_n_burn => param_get_n_burn
      procedure :: get_n_corr => param_get_n_corr
@@ -157,8 +156,10 @@ contains
     
   subroutine param_read_file(self)
     class(param), intent(inout) :: self
-    character(len=line_max) :: line
+    character(len=line_max) :: line, name, val
     integer :: ierr, io
+    type(line_text) :: lt
+    logical :: is_ok
 
     write(*,*)"Reading parameters from ", trim(self%param_file)
 
@@ -175,187 +176,146 @@ contains
        if (ierr /= 0) then
           exit
        end if
-       call self%read_line(line)
+       lt = init_line_text(line)
+       call lt%read_value(name, val, is_ok)
+       if (is_ok) then
+          call self%set_value(name, val)
+       end if
     end do
     close(io)
     
+
     write(*,*)
 
     return 
   end subroutine param_read_file
 
   !---------------------------------------------------------------------
-
-  subroutine param_read_line(self, line)
+  
+  subroutine param_set_value(self, name, val)
     class(param), intent(inout) :: self
-    character(len=line_max), intent(in) :: line
-    integer :: i, nlen, j
-
-    nlen = len_trim(line)
-    i = 1
-    j = index(line(i:nlen), "=")
-    if (j == 0) then
-       return
-    end if
-    do while (i <= nlen)
-       if (line(i:i) == " ") then
-          i = i + 1
-          cycle
-       else if (line(i:i) == "#") then
-          return
-       end if
-       j = index(line(i:nlen), " ")
-       if (j /= 0) then
-          call self%read_value(line(i:i+j-2))
-          i = i + j - 1
-       else
-          call self%read_value(line(i:nlen))
-          return
-       end if
-    end do
-
-    return 
-  end subroutine param_read_line
-
-  !---------------------------------------------------------------------
-
-  subroutine param_read_value(self, str)
-    class(param), intent(inout) :: self
-    character(len=*), intent(in) :: str
-    character(len=line_max) :: name, var
+    character(len=*), intent(in) :: name, val
     integer :: nlen, j, itmp
     double precision :: rtmp
     logical :: ltmp
 
-    
-    
-    nlen = len(str)
-    j = index(str, "=")
-    if (j == 0 .or. j == 1 .or. j == nlen) then
-       write(0,*)"ERROR: invalid parameter in ", trim(self%param_file)
-       write(0,*)"     : ", str, "   (?)"
-       stop
-    end if
-    
-    name = str(1:j-1)
-    var = str(j+1:nlen)
     if (self%verb) then
-       write(*,*)trim(name), " <- ", trim(var)
+       write(*,*)trim(name), " <- ", trim(val)
     end if
     if (name == "fmin") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%fmin = rtmp
     else if (name == "fmax") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%fmax = rtmp
     else if (name == "df") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%df = rtmp
     else if (name == "cmin") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%cmin = rtmp
     else if (name == "cmax") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%cmax = rtmp
     else if (name == "dc") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%dc = rtmp
     else if (name == "vmod_in") then
-       self%vmod_in = var
+       self%vmod_in = val
     else if (name == "ray_out") then
-       self%ray_out = var
+       self%ray_out = val
     else if (name == "n_iter") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%n_iter = itmp
     else if (name == "n_burn") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%n_burn = itmp
     else if (name == "n_corr") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%n_corr = itmp
     else if (name == "n_chain") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%n_chain = itmp
     else if (name == "n_cool") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%n_cool = itmp
     else if (name == "temp_high") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%temp_high = rtmp
     else if (name == "i_seed1") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%i_seed1 = itmp 
     else if (name == "i_seed2") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%i_seed2 = itmp
     else if (name == "i_seed3") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%i_seed3 = itmp
     else if (name == "i_seed4") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%i_seed4 = itmp
     else if (name == "k_min") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%k_min = itmp
     else if (name == "k_max") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%k_max = itmp
     else if (name == "obs_in") then
-       self%obs_in = var
+       self%obs_in = val
     else if (name == "dev_vs") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%dev_vs = rtmp
     else if (name == "dev_vp") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%dev_vp = rtmp
     else if (name == "dev_z") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%dev_z = rtmp
     else if (name == "vs_min") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%vs_min = rtmp
     else if (name == "vs_max") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%vs_max = rtmp
     else if (name == "vp_min") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%vp_min = rtmp
     else if (name == "vp_max") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%vp_max = rtmp
     else if (name == "z_min") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%z_min = rtmp
     else if (name == "z_max") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%z_max = rtmp
     else if (name == "ocean_thick") then
-       read(var, *) rtmp
+       read(val, *) rtmp
        self%ocean_thick = rtmp
     else if (name == "solve_vp") then
-       read(var, *) ltmp
+       read(val, *) ltmp
        self%solve_vp = ltmp
     else if (name == "ocean_flag") then
-       read(var, *) ltmp
+       read(val, *) ltmp
        self%ocean_flag = ltmp
     else if (name == "nbin_z") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%nbin_z = itmp
     else if (name == "nbin_vs") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%nbin_vs = itmp
     else if (name == "nbin_vp") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%nbin_vp = itmp
     else if (name == "nbin_c") then
-       read(var, *) itmp
+       read(val, *) itmp
        self%nbin_c = itmp
     else
        write(0,*)"Warnings: Invalid parameter name"
        write(0,*)"        : ", name, "  (?)"
     end if
     return 
-  end subroutine param_read_value
+  end subroutine param_set_value
 
   !---------------------------------------------------------------------
 
@@ -734,5 +694,7 @@ contains
   
   !---------------------------------------------------------------------
 
+
+  
 
 end module mod_param
