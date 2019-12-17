@@ -75,9 +75,9 @@ ray_out = ray.out
 
 ### Parameter file
 * Need to specify the following parameters in this file.
- * __n_iter__, __n_corr__, __n_burn__ (# of total iterations, iterations for sampling interval, and iterations in burn-in phase)
- * __dev_vs__, __dev_vp__, __dev_vz__ (Standard deviation for random walk along Vs, Vp and Z axes)
- * __vs_min__, __vs_max__, __vp_min__, __vp_max__, __z_min__, __z_max__ (Prior bounds, where uniform distribution is assumed)
+  * __n_iter__, __n_corr__, __n_burn__ (# of total iterations, iterations for sampling interval, and iterations in burn-in phase)
+  * __dev_vs__, __dev_vp__, __dev_vz__ (Standard deviation for random walk along Vs, Vp and Z axes)
+  * __vs_min__, __vs_max__, __vp_min__, __vp_max__, __z_min__, __z_max__ (Prior bounds, where uniform distribution is assumed)
 
 * Comment out by "#" works fine.
 
