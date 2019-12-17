@@ -6,8 +6,8 @@ Copyright (C) 2019 Takeshi Akuhara
 ---
 
 ## Programs included in this package
-* Rayleigh wave forward computation (rayleigh_fwd)
-* Rayleigh wave transdimensional inversion by RJMCMC (rayleigh_inv)
+* __rayleigh_fwd__: Rayleigh wave forward computation
+* __rayleigh_inv__: Rayleigh wave transdimensional inversion by RJMCMC
 
 ## Install
 Type `make` in the `src` directory.
@@ -19,10 +19,10 @@ Type `make` in the `src` directory.
 `rayleigh_fwd [parameter file]`
 ### Parameter file
 * Need to specify the following parameters in this file.
-  * fmin, fmax, df (Minimum, maximum, and interval of frequency at which dispersion curve is calculated)
-  * cmin, cmax, dc (Minimum, maximum, and interval of phase velocity used for root search)
-  * vmod_in (file name for input velocity model)
-  * ray_out (file name for output dispersion curve)
+  * __fmin__, __fmax__, __df__ (Minimum, maximum, and interval of frequency at which dispersion curve is calculated)
+  * __cmin__, __cmax__, __dc__ (Minimum, maximum, and interval of phase velocity used for root search)
+  * __vmod_in__ (file name for input velocity model)
+  * __ray_out__ (file name for output dispersion curve)
 * Comment out by "#" works fine.
 ```
 # Parameter file example
@@ -75,6 +75,9 @@ ray_out = ray.out
 
 ### Parameter file
 * Need to specify the following parameters in this file.
+ * __n_iter__, __n_corr__, __n_burn__ (# of total iterations, iterations for sampling interval, and iterations in burn-in phase)
+ * __dev_vs__, __dev_vp__, __dev_vz__ (Standard deviation for random walk along Vs, Vp and Z axes)
+ * __vs_min__, __vs_max__, __vp_min__, __vp_max__, __z_min__, __z_max__ (Prior bounds, where uniform distribution is assumed)
 
 * Comment out by "#" works fine.
 
