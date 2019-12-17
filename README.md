@@ -65,6 +65,7 @@ ray_out = ray.out
     0.9100    1.3770    1.3674
     1.0100    1.3762    1.3711
 ```
+---
 
 ## Rayleigh wave inversion
 
@@ -76,6 +77,63 @@ ray_out = ray.out
 * Need to specify the following parameters in this file.
 
 * Comment out by "#" works fine.
+
+
+```
+# Parameter file example
+
+# MCMC iteration
+n_iter=30000
+n_corr=100
+n_burn=10000
+
+# MCMC proposal
+dev_vs=0.1
+dev_vp=0.1
+dev_z=0.1
+
+# MCMC prior
+vs_min=2.5
+vs_max=5.0
+vp_min=5.0
+vp_max=8.5
+z_min=0.0
+z_max=30.0
+
+# Parallel temerping
+n_chain=5
+n_cool=1
+temp_high=10.0
+
+# Transdiensional model space
+k_min=1
+k_max=21 
+
+# Random number seeds
+i_seed1=14222  
+i_seed2=144444 
+i_seed3=98767889 
+i_seed4=22405559
+
+# Observation file
+obs_in=obs.in
+
+# Rayleigh dispersion computation
+cmin=2.5
+cmax=4.5
+dc=0.01
+
+# Inversion setting
+solve_vp=.true.
+ocean_flag=.false.
+ocean_thick=1.d0
+
+# Output binning
+nbin_z =50
+nbin_vp = 25 
+nbin_vs = 25 
+
+```
 ---
 
 
