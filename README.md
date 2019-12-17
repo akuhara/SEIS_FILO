@@ -1,5 +1,5 @@
 # SEIS_FILO
-SEISmological tools for Flat Isotropic Layered structure in the Ocean
+SEISmological tools for Flat Isotropic Layered structure in the Ocean; forward computation & transdimensional inversion
 
 Copyright (C) 2019 Takeshi Akuhara
 
