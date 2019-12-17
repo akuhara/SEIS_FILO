@@ -7,7 +7,7 @@ Copyright (C) 2019 Takeshi Akuhara
 
 ## Programs included in this package
 * Rayleigh wave forward computation (rayleigh_fwd)
-* Rayleigh wave transdiemsnional inversion (rayleigh_inv)
+* Rayleigh wave transdimensional inversion by RJMCMC (rayleigh_inv)
 
 ## Install
 Type `make` in the `src` directory.
