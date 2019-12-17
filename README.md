@@ -3,6 +3,13 @@ SEISmological tools for Flat Isotropic Layered structure in the Ocean
 
 Copyright (C) 2019 Takeshi Akuhara
 
+---
+
+## Contents
+* Rayleigh wave forward computation
+* Rayleigh wave transdiemsnional inversion 
+---
+
 ## Rayleigh wave forward computation
 ### USAGE
 `rayleigh_fwd [parameter file]`
