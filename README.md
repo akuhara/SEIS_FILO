@@ -23,7 +23,7 @@ Type `make` in the `src` directory.
   * cmin, cmax, dc (Minimum, maximum, and interval of phase velocity used for root search)
   * vmod_in (file name for input velocity model)
   * ray_out (file name for output dispersion curve)
-* Comment out by "#" 
+* Comment out by "#" works fine.
 ```
 # Parameter file example
 fmin = 0.01 # Can add comment
@@ -68,8 +68,14 @@ ray_out = ray.out
 
 ## Rayleigh wave inversion
 
-in preparation
+### USAGE
+`mpirun -np 20 rayleigh_inv [parameter file]`
+* The numeric following '-np' indicates the number of processes for parallel computing.
 
+### Parameter file
+* Need to specify the following parameters in this file.
+
+* Comment out by "#" works fine.
 ---
 
 
