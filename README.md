@@ -5,9 +5,13 @@ Copyright (C) 2019 Takeshi Akuhara
 
 ---
 
-## Contents
-* Rayleigh wave forward computation
-* Rayleigh wave transdiemsnional inversion 
+## Programs included in this package
+* Rayleigh wave forward computation (rayleigh_fwd)
+* Rayleigh wave transdiemsnional inversion (rayleigh_inv)
+
+## Install
+Type `make` in the `src` directory.
+
 ---
 
 ## Rayleigh wave forward computation
@@ -68,5 +72,4 @@ in preparation
 
 ---
 
-## Install
-Type `make` in the `src` directory.
+
