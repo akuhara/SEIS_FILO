@@ -121,7 +121,7 @@ program main
      call tm%set_prior(id_vs, id_uni, &
           & para%get_vs_min(), para%get_vs_max())
      call tm%set_prior(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max())
+          & para%get_vp_min(), para%get_vp_max()) 
      call tm%set_prior(id_z,  id_uni, &
           & para%get_z_min(), para%get_z_max())
      call tm%set_birth(id_vs, id_uni, &
@@ -253,21 +253,25 @@ program main
   call output_ppd_1d(filename, rank, para%get_k_max(), &
        & intpr%get_n_layers(), n_mod, &
        & dble(para%get_k_min()) - 0.5d0, 1.d0)
-
+  
   ! Vs-Z
   filename = "vs_z.ppd"
   call output_ppd_2d(filename, rank, para%get_nbin_vs(), &
-       & para%get_nbin_z(), intpr%get_n_vsz(), &
-       & n_mod, para%get_vs_min(), intpr%get_dvs(), &
-       & para%get_z_min(), intpr%get_dz())
+       & para%get_nbin_z(), intpr%get_n_vsz(), n_mod, &
+       & para%get_vs_min() + 0.5d0 * intpr%get_dvs(), &
+       & intpr%get_dvs(), &
+       & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+       & intpr%get_dz())
   
   ! Vp-Z
   if (para%get_solve_vp()) then
      filename = "vp_z.ppd"
      call output_ppd_2d(filename, rank, para%get_nbin_vp(), &
-          & para%get_nbin_z(), intpr%get_n_vpz(), &
-          & n_mod, para%get_vp_min(), intpr%get_dvp(), &
-          & para%get_z_min(), intpr%get_dz())
+          & para%get_nbin_z(), intpr%get_n_vpz(), n_mod, &
+          & para%get_vp_min() + 0.5d0 * intpr%get_dvp(), &
+          & intpr%get_dvp(), &
+          & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+          & intpr%get_dz())
   end if
 
   ! Frequency-phase velocity
@@ -331,7 +335,7 @@ subroutine output_ppd_1d(filename, rank, nbin_x, n_x, n_mod, x_min, dx)
      
      
      do i = 1, nbin_x
-        x = x_min + (i - 0.5d0) * dx
+        x = x_min + (i - 1) * dx
         write(io_x, '(3F13.5)') x, dble(n_x_all(i)) / dble(n_mod)
      end do
      close(io_x)
@@ -366,9 +370,9 @@ subroutine output_ppd_2d(filename, rank, nbin_x, nbin_y, n_xy, n_mod, &
      end if
      
      do i = 1, nbin_y
-        y = y_min + (i - 0.5d0) * dy
+        y = y_min + (i - 1) * dy
         do j = 1, nbin_x
-           x = x_min + (j - 0.5d0) * dx
+           x = x_min + (j - 1) * dx
            write(io_xy, '(3F13.5)') x, y, &
                 & dble(n_xy_all(j, i)) / dble(n_mod)
         end do
