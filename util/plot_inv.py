@@ -92,15 +92,9 @@ class InvRslt:
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          names=(vlabel, zlabel, plabel))
         
-
-
-        
         z, v = np.mgrid[slice(z_min, z_max + eps, del_z), \
                         slice(v_min, v_max + eps, del_v)]
-        if mode == "vs":
-            print(df)
-            print(z)
-            print(v)
+        
         data = df.pivot(zlabel, vlabel, plabel)
         mappable = ax.pcolormesh(v, z, data, cmap='hot_r')
         cbar = fig.colorbar(mappable, ax=ax)
@@ -159,9 +153,6 @@ class InvRslt:
         elif mode == "u":
             df.plot.scatter(flabel, ulabel, ax=ax)
             
-        print(df)
-                         
-        
     #---------------------------------------------------------------       
 
     def _read_obs_header(self):
@@ -177,15 +168,37 @@ class InvRslt:
                          
     #---------------------------------------------------------------
     
+    def _plot_likelihood_history(self, fig, ax):
+        param = self._param
+        file = "likelihood.history"
+        df = pd.read_csv(file, delim_whitespace=True, header=None)
+        df.plot(ax=ax, legend=None, linewidth=0.6)
+        ax.set_ylim([-3000,0])
+        ax.set_xlabel("Iteration #")
+        ax.set_ylabel("Log-likelihood")
+
+    #---------------------------------------------------------------
+
+    def _plot_temp_history(self, fig, ax):
+        param = self._param
+        file = "temp.history"
+        df = pd.read_csv(file, delim_whitespace=True, header=None)
+        df.plot(ax=ax, legend=None, linewidth=0.6)
+        
+        ax.set_xlabel("Iteration #")
+        ax.set_ylabel("Temperature")
+
+    #---------------------------------------------------------------
+    
     def draw_figure(self):
-        grid_geom = (5, 3)
-        fig_size = (13, 20)
+        grid_geom = (4, 4)
+        fig_size = (22, 13)
         param = self._param
         sns.set()
         sns.set_style('ticks')
         fig = plt.figure(figsize=fig_size)
         
-        fig.subplots_adjust(wspace=0.6, hspace=0.6)
+        fig.subplots_adjust(wspace=0.8, hspace=0.4)
         
         # Number of layers
         ax = plt.subplot2grid(grid_geom, (0, 0), colspan=2, fig=fig)
@@ -203,13 +216,20 @@ class InvRslt:
         ax = plt.subplot2grid(grid_geom, (2, 0), rowspan=2, fig=fig)
         self._plot_vz(fig, ax, "vs")
 
-
         # Vp-z
         if param["solve_vp"].lower() == ".true.":
             ax = plt.subplot2grid(grid_geom, (2, 1), rowspan=2, fig=fig)
             self._plot_vz(fig, ax, "vp")
+            
+        # Likelihood history
+        ax = plt.subplot2grid(grid_geom, (0, 2), colspan=2, rowspan=1, \
+                              fig=fig)
+        self._plot_likelihood_history(fig, ax)
 
-        
+        # Temperature hisotry
+        ax = plt.subplot2grid(grid_geom, (1, 2), colspan=2, rowspan=1, \
+                              fig=fig)
+        self._plot_temp_history(fig, ax)
 
         plt.show()
         

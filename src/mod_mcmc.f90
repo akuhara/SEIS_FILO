@@ -38,6 +38,8 @@ module mod_mcmc
      integer :: i_mod
      integer :: i_iter
      integer :: i_proposal_type
+     integer, allocatable :: n_propose(:)
+     integer, allocatable :: n_accept(:)
      integer, allocatable :: k_saved(:)
      double precision :: log_likelihood
      double precision, allocatable :: likelihood_saved(:)
@@ -83,8 +85,11 @@ contains
     allocate(self%likelihood_saved(n_iter))
     allocate(self%temp_saved(n_iter))
     allocate(self%k_saved(n_iter))
+    allocate(self%n_propose(self%tm%get_n_x() + 2))
+    allocate(self%n_accept(self%tm%get_n_x() + 2))
+    self%n_propose = 0
+    self%n_accept = 0
 
-    
     return 
   end function init_mcmc
 
@@ -121,8 +126,12 @@ contains
        call tm_proposed%perturb(iparam, is_ok, log_prior_ratio)
        log_proposal_ratio = 0.d0
     end if
-    return
+
+    ! Count proposal
+    self%n_propose(self%i_proposal_type + 1) = &
+         & self%n_propose(self%i_proposal_type + 1) + 1
     
+    return
   end subroutine mcmc_propose_model
 
   !---------------------------------------------------------------------
@@ -151,6 +160,8 @@ contains
        ! Accept model
        self%tm = tm
        self%log_likelihood = log_likelihood
+       self%n_accept(self%i_proposal_type + 1) = &
+         & self%n_accept(self%i_proposal_type + 1) + 1
     end if
 
     ! Adds iteration counter
