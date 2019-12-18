@@ -529,7 +529,8 @@ contains
     logical, intent(out) :: is_ok
     double precision, intent(out) :: log_prior_ratio
     integer :: k_target
-    double precision :: x_new, x_old, mu, sig
+    double precision :: mu, sig
+    integer :: x_new, x_old
     
     k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
     

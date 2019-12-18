@@ -41,6 +41,7 @@ module mod_mcmc
      integer, allocatable :: k_saved(:)
      double precision :: log_likelihood
      double precision, allocatable :: likelihood_saved(:)
+     double precision, allocatable :: temp_saved(:)
      double precision :: temp = 1.d0
      logical :: is_accepted
    contains
@@ -49,12 +50,12 @@ module mod_mcmc
      procedure :: one_step_summary => mcmc_one_step_summary
      procedure :: get_tm  => mcmc_get_tm
      procedure :: get_is_accepted => mcmc_get_is_accepted
-     procedure :: output_k_history => mcmc_output_k_history
-     procedure :: output_likelihood_history => &
-          & mcmc_output_likelihood_history
+     procedure :: get_n_iter => mcmc_get_n_iter
      procedure :: set_temp => mcmc_set_temp
      procedure :: get_temp => mcmc_get_temp
      procedure :: get_log_likelihood => mcmc_get_log_likelihood
+     procedure :: get_likelihood_saved => mcmc_get_likelihood_saved
+     procedure :: get_temp_saved => mcmc_get_temp_saved
      procedure :: finish => mcmc_finish
   end type mcmc
   
@@ -80,6 +81,7 @@ contains
 
     
     allocate(self%likelihood_saved(n_iter))
+    allocate(self%temp_saved(n_iter))
     allocate(self%k_saved(n_iter))
 
     
@@ -157,6 +159,7 @@ contains
     ! Save models etc.
     self%likelihood_saved(self%i_iter) = self%log_likelihood
     self%k_saved(self%i_iter) = self%tm%get_k()
+    self%temp_saved(self%i_iter) = self%temp
     
     return 
   end subroutine mcmc_judge_model
@@ -193,49 +196,14 @@ contains
   end function mcmc_get_is_accepted
 
   !---------------------------------------------------------------------
-  
-  subroutine mcmc_output_k_history(self, filename)
-    class(mcmc), intent(in) :: self
-    character(*), intent(in) :: filename
-    integer :: io, ierr, i
-    
-    open(newunit = io, file = filename, status = 'unknown', &
-         & iostat = ierr)
-    if (ierr /= 0) then
-       write(0,*)"ERROR: cannot create ", trim(filename)
-       stop
-    end if
-    
-    do i = 1, self%n_iter
-       write(io,*)self%k_saved(i)
-    end do
-    close(io)
 
+  integer function mcmc_get_n_iter(self) result(n_iter)
+    class(mcmc), intent(in) :: self
+    
+    n_iter = self%n_iter
 
     return 
-  end subroutine mcmc_output_k_history
-
-  !---------------------------------------------------------------------
-
-  subroutine mcmc_output_likelihood_history(self, filename)
-    class(mcmc), intent(in) :: self
-    character(*), intent(in) :: filename
-    integer :: io, ierr, i
-
-    open(newunit = io, file = filename, status = 'unknown', &
-         & iostat = ierr)
-    if (ierr /= 0) then
-       write(0,*)"ERROR: cannot create ", trim(filename)
-       stop
-    end if
-    
-    do i = 1, self%n_iter
-       write(io,*)self%likelihood_saved(i)
-    end do
-    close(io)
-    
-    return 
-  end subroutine mcmc_output_likelihood_history
+  end function mcmc_get_n_iter
 
   !---------------------------------------------------------------------
   
@@ -267,6 +235,28 @@ contains
     
     return 
   end function mcmc_get_log_likelihood
+  
+  !---------------------------------------------------------------------
+
+  function mcmc_get_likelihood_saved(self) result(l)
+    class(mcmc), intent(in) :: self
+    double precision :: l(self%n_iter)
+    
+    l = self%likelihood_saved
+    
+    return 
+  end function mcmc_get_likelihood_saved
+    
+  !---------------------------------------------------------------------
+  
+  function mcmc_get_temp_saved(self) result(t)
+    class(mcmc), intent(in) :: self
+    double precision :: t(self%n_iter)
+    
+    t = self%temp_saved
+    
+    return 
+  end function mcmc_get_temp_saved
   
   !---------------------------------------------------------------------
 

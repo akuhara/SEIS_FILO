@@ -21,6 +21,7 @@ module mod_parallel
      
      procedure :: swap_temperature => parallel_swap_temperature
      procedure :: select_pair => parallel_select_pair
+     procedure :: output_history => parallel_output_history
 
   end type parallel
 
@@ -245,6 +246,54 @@ contains
     return 
   end function parallel_select_pair
 
+  !---------------------------------------------------------------------
+
+  subroutine parallel_output_history(self, filename, mode)
+    class(parallel), intent(in) :: self
+    character(*), intent(in) :: filename
+    integer :: i, ierr, io
+    type(mcmc) :: mc
+    integer :: icol, n_all, n_iter
+    double precision, allocatable :: hist_all(:,:)
+    character(1) :: mode
+    
+    n_all = self%n_chain * self%n_proc
+    mc = self%mc(1)
+    n_iter = mc%get_n_iter()
+    allocate(hist_all(n_iter, n_all))
+
+    ! Gather information within the same node
+    do i = 1, self%n_chain
+       mc = self%mc(i)
+       if (mode == "l") then
+          hist_all(1:n_iter, i) = mc%get_likelihood_saved()
+       else if (mode == "t") then
+          hist_all(1:n_iter, i) = mc%get_temp_saved() 
+       end if
+    end do
+    
+    ! MPI gather
+    do i = 1, self%n_chain
+       icol = (i - 1) * self%n_proc + 1
+       call mpi_gather(hist_all(1:n_iter, i), n_iter, &
+            & MPI_DOUBLE_PRECISION, &
+            & hist_all(1:n_iter, icol), n_iter, &
+            & MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+    end do
+    
+    ! Output
+    if (self%rank == 0) then
+       open(newunit = io, file = filename, status = "unknown", &
+            & iostat = ierr)
+       do i = 1, n_iter
+          write(io, *)hist_all(i, 1:n_all)
+       end do
+       close(io)
+    end if
+
+    return 
+  end subroutine parallel_output_history
+  
   !---------------------------------------------------------------------
   
   subroutine judge_swap(temp1, temp2, l1, l2, is_accepted)

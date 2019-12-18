@@ -288,21 +288,12 @@ program main
        & n_mod, obs%get_fmin(), obs%get_df(), &
        & para%get_cmin(), para%get_dc())
 
-
-  ! Output (First chain only)
-  if (pt%get_rank() == 0) then
-     do i = 1, para%get_n_chain()
-        mc = pt%get_mc(i)
-        
-        ! K history
-        write(filename, '(A10,I3.3)')'k_history.', i
-        call mc%output_k_history(filename)
-        
-        ! Likelihood history
-        write(filename, '(A19,I3.3)')'likelihood_history.', i
-        call mc%output_likelihood_history(filename)
-     end do
-  end if
+  ! Likelihood history
+  filename = "likelihood.history"
+  call pt%output_history(filename, 'l')
+  filename = "temp.history"
+  call pt%output_history(filename, 't')
+  
 
   
   call mpi_finalize(ierr)
