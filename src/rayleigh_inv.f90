@@ -109,8 +109,6 @@ program main
        & ocean_thick = para%get_ocean_thick(), &
        & solve_vp = para%get_solve_vp())
 
-
-
   ! Set model parameter & generate initial sample
   do i = 1, para%get_n_chain()
 
@@ -133,26 +131,18 @@ program main
      call tm%set_perturb(id_vs, para%get_dev_vs())
      call tm%set_perturb(id_vp, para%get_dev_vp())
      call tm%set_perturb(id_z,  para%get_dev_z())
-     
      call tm%generate_model()
-     
      call pt%set_tm(i, tm)
      call tm%finish()
   end do
   
-  
-
   ! Set forward computation
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
-     
   ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
          & cmin=para%get_cmin(), cmax=para%get_cmax(), &
          & dc=para%get_dc())
 
-
-
-  
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
      ! Set transdimensional model
@@ -184,7 +174,6 @@ program main
      call mpi_finalize(ierr)
      stop
   end if
-     
   
   ! Main
   do i = 1, para%get_n_iter()
@@ -230,13 +219,10 @@ program main
            
            ! Synthetic data
            call ray%output(io_ray)
-           
         end if
      end do
-
      ! Swap temperture
      call pt%swap_temperature(verb=.true.)
-     
   end do
   close(io_vz)
   close(io_ray)
@@ -254,7 +240,7 @@ program main
        & intpr%get_n_layers(), n_mod, &
        & dble(para%get_k_min()) - 0.5d0, 1.d0)
   
-  ! Vs-Z
+  ! marginal posterior of Vs 
   filename = "vs_z.ppd"
   call output_ppd_2d(filename, rank, para%get_nbin_vs(), &
        & para%get_nbin_z(), intpr%get_n_vsz(), n_mod, &
@@ -263,13 +249,26 @@ program main
        & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
        & intpr%get_dz())
   
-  ! Vp-Z
+  ! Mean Vs
+  filename = "vs_z.mean"
+  call output_mean_model(filename, rank, para%get_nbin_z(), &
+       & intpr%get_vsz_mean(), n_mod, &
+       & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+       & intpr%get_dz())
+
   if (para%get_solve_vp()) then
+     ! marginal posterior of Vp
      filename = "vp_z.ppd"
      call output_ppd_2d(filename, rank, para%get_nbin_vp(), &
           & para%get_nbin_z(), intpr%get_n_vpz(), n_mod, &
           & para%get_vp_min() + 0.5d0 * intpr%get_dvp(), &
           & intpr%get_dvp(), &
+          & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+          & intpr%get_dz())
+     ! Mean Vp
+     filename = "vp_z.mean"
+     call output_mean_model(filename, rank, para%get_nbin_z(), &
+          & intpr%get_vpz_mean(), n_mod, &
           & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
           & intpr%get_dz())
   end if
@@ -373,6 +372,41 @@ subroutine output_ppd_2d(filename, rank, nbin_x, nbin_y, n_xy, n_mod, &
   
   return
 end subroutine output_ppd_2d
+
+!-----------------------------------------------------------------------
+
+subroutine output_mean_model(filename, rank, nbin_x, sum_x, n_mod, x_min, dx)
+  include 'mpif.h'
+  character(*), intent(in) :: filename
+  integer, intent(in) :: rank, nbin_x, n_mod
+  double precision, intent(in) :: sum_x(nbin_x)
+  double precision, intent(in) :: x_min, dx
+  double precision :: x
+  integer :: io_x, ierr, i
+  double precision :: sum_x_all(nbin_x)
+  
+  call mpi_reduce(sum_x, sum_x_all, nbin_x, MPI_DOUBLE_PRECISION, &
+       & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  
+  if (rank == 0) then
+     open(newunit = io_x, file = filename, status = "unknown", &
+          & iostat = ierr)
+     if (ierr /= 0) then
+        write(0, *)"ERROR: cannot open ", trim(filename)
+        call mpi_finalize(ierr)
+        stop
+     end if
+     
+     
+     do i = 1, nbin_x
+        x = x_min + (i - 1) * dx
+        write(io_x, '(3F13.5)') x, sum_x_all(i) / dble(n_mod)
+     end do
+     close(io_x)
+  end if
+  
+  return
+end subroutine output_mean_model
 
 !-----------------------------------------------------------------------
 

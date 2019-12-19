@@ -68,15 +68,19 @@ class InvRslt:
 
     def _plot_vz(self, fig, ax, mode):
         param = self._param
+        lines = [] # for legend
+        labels = []
         if mode == "vs":
             vlabel = "S wave velocity (km/s)"
             file = "vs_z.ppd"
+            mean_file = "vs_z.mean"
             v_min = float(param["vs_min"])
             v_max = float(param["vs_max"])
             nbin_v = int(param["nbin_vs"])
         elif mode == "vp":
             vlabel = "P wave velocity (km/s)"
             file = "vp_z.ppd"
+            mean_file = "vp_z.mean"
             v_min = float(param["vp_min"])
             v_max = float(param["vp_max"])
             nbin_v = int(param["nbin_vp"])
@@ -99,6 +103,13 @@ class InvRslt:
         mappable = ax.pcolormesh(v, z, data, cmap='hot_r')
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel)
+        
+        df = pd.read_csv(mean_file, delim_whitespace=True, \
+                         header=None, names=(zlabel, vlabel))
+        line, = ax.plot(df[vlabel], df[zlabel], color="blue")
+        lines.append(line)
+        labels.append("Mean model")
+        ax.legend(lines, labels)
         
         ax.set_xlabel(vlabel)
         ax.set_ylabel(zlabel)
@@ -149,9 +160,9 @@ class InvRslt:
                          names=(clabel, "c_err", ulabel, "u_err"))
         df[flabel] = np.arange(f_min, f_max, del_f)
         if mode == "c":
-            df.plot.scatter(flabel, clabel, ax=ax)
+            df.plot.scatter(flabel, clabel, ax=ax, s=12)
         elif mode == "u":
-            df.plot.scatter(flabel, ulabel, ax=ax)
+            df.plot.scatter(flabel, ulabel, ax=ax, s=12)
             
     #---------------------------------------------------------------       
 

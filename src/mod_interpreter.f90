@@ -47,6 +47,9 @@ module mod_interpreter
      integer, allocatable :: n_vsz(:, :)
      integer, allocatable :: n_vpz(:, :)
      integer, allocatable :: n_layers(:)
+
+     double precision, allocatable :: vsz_mean(:)
+     double precision, allocatable :: vpz_mean(:)
      
      double precision :: z_min
      double precision :: z_max
@@ -71,6 +74,8 @@ module mod_interpreter
      procedure :: get_nbin_vp => interpreter_get_nbin_vp
      procedure :: get_n_vpz => interpreter_get_n_vpz
      procedure :: get_n_vsz => interpreter_get_n_vsz
+     procedure :: get_vpz_mean => interpreter_get_vpz_mean
+     procedure :: get_vsz_mean => interpreter_get_vsz_mean
      procedure :: get_n_layers => interpreter_get_n_layers
      procedure :: get_dvs => interpreter_get_dvs
      procedure :: get_dvp => interpreter_get_dvp
@@ -102,6 +107,7 @@ contains
     allocate(self%wrk_vp(nlay_max + 1))
     allocate(self%wrk_vs(nlay_max + 1))
     allocate(self%wrk_z(nlay_max + 1))
+
     
     self%z_min   = z_min
     self%z_max   = z_max
@@ -117,6 +123,8 @@ contains
     self%n_vsz = 0
     allocate(self%n_layers(self%nlay_max))
     self%n_layers = 0
+    allocate(self%vsz_mean(nbin_z))
+    self%vsz_mean = 0.d0
 
     if (present(ocean_flag)) then
        self%ocean_flag = ocean_flag
@@ -155,7 +163,8 @@ contains
           self%dvp = (vp_max - vp_min) / dble(nbin_vp)
           allocate(self%n_vpz(nbin_vp, nbin_z))
           self%n_vpz = 0
-    
+          allocate(self%vpz_mean(nbin_z))
+          self%vpz_mean = 0.d0
        end if
     end if
 
@@ -252,6 +261,28 @@ contains
   
   !---------------------------------------------------------------------
 
+  function interpreter_get_vsz_mean(self) result(vsz_mean)
+    class(interpreter), intent(in) :: self
+    double precision :: vsz_mean(self%nbin_z)
+
+    vsz_mean = self%vsz_mean
+
+    return 
+  end function interpreter_get_vsz_mean
+
+  !---------------------------------------------------------------------
+
+  function interpreter_get_vpz_mean(self) result(vpz_mean)
+    class(interpreter), intent(in) :: self
+    double precision :: vpz_mean(self%nbin_z)
+
+    vpz_mean = self%vpz_mean
+
+    return 
+  end function interpreter_get_vpz_mean
+
+  !---------------------------------------------------------------------
+
   function interpreter_get_n_layers(self) result(n_layers)
     class(interpreter), intent(in) :: self
     integer :: n_layers(self%nlay_max)
@@ -293,9 +324,11 @@ contains
           
           iv = int((vs - self%vs_min) / self%dvs) + 1
           self%n_vsz(iv, iz) = self%n_vsz(iv, iz) + 1
+          self%vsz_mean(iz) = self%vsz_mean(iz) + vs
           if (self%solve_vp) then
              iv = int((vp - self%vp_min) / self%dvp) + 1
              self%n_vpz(iv, iz) = self%n_vpz(iv, iz) + 1
+             self%vpz_mean(iz) = self%vpz_mean(iz) + vp
           end if
           
        end do
