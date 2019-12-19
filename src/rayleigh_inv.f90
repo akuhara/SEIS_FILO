@@ -293,7 +293,9 @@ program main
   filename = "temp.history"
   call pt%output_history(filename, 't')
   
-
+  ! Proposal count
+  filename = "proposal.count"
+  call pt%output_proposal(filename)
   
   call mpi_finalize(ierr)
   

@@ -22,6 +22,7 @@ module mod_parallel
      procedure :: swap_temperature => parallel_swap_temperature
      procedure :: select_pair => parallel_select_pair
      procedure :: output_history => parallel_output_history
+     procedure :: output_proposal => parallel_output_proposal
 
   end type parallel
 
@@ -293,6 +294,50 @@ contains
 
     return 
   end subroutine parallel_output_history
+  
+  !---------------------------------------------------------------------
+
+  subroutine parallel_output_proposal(self, filename)
+    class(parallel), intent(inout) :: self
+    character(*), intent(in) :: filename
+    type(mcmc) :: mc
+    type(trans_d_model) :: tm
+    integer, allocatable :: n_accept_all(:), n_propose_all(:)
+    integer, allocatable :: n_accept_sum(:), n_propose_sum(:)
+    integer :: io, i, nparam, n, ierr
+   
+    mc = self%get_mc(1)
+    tm = mc%get_tm()
+    nparam = tm%get_n_x()
+    n = nparam + 2
+    allocate(n_accept_all(n), n_propose_all(n))
+    allocate(n_accept_sum(n), n_propose_sum(n))
+    n_accept_all = 0
+    n_propose_all = 0
+
+    ! Gather within the same node
+    do i = 1, self%n_chain
+       mc = self%get_mc(i)
+       n_accept_all = n_accept_all + mc%get_n_accept()
+       n_propose_all = n_propose_all + mc%get_n_propose()
+    end do
+    
+    call mpi_reduce(n_accept_all, n_accept_sum, n, MPI_INTEGER4, MPI_SUM, &
+         & 0, MPI_COMM_WORLD, ierr)
+    call mpi_reduce(n_propose_all, n_propose_sum, n, MPI_INTEGER4, MPI_SUM, &
+         & 0, MPI_COMM_WORLD, ierr)
+    ! Output
+    if (self%rank == 0) then
+       open(newunit = io, file = filename, status = "unknown", &
+            & iostat = ierr)
+       do i = 1, n
+          write(io, *)i, n_propose_sum(i), n_accept_sum(i)
+       end do
+       close(io)
+    end if
+    
+    return 
+  end subroutine parallel_output_proposal
   
   !---------------------------------------------------------------------
   

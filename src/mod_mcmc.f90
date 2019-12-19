@@ -38,6 +38,7 @@ module mod_mcmc
      integer :: i_mod
      integer :: i_iter
      integer :: i_proposal_type
+     integer :: n_proposal_type
      integer, allocatable :: n_propose(:)
      integer, allocatable :: n_accept(:)
      integer, allocatable :: k_saved(:)
@@ -58,6 +59,8 @@ module mod_mcmc
      procedure :: get_log_likelihood => mcmc_get_log_likelihood
      procedure :: get_likelihood_saved => mcmc_get_likelihood_saved
      procedure :: get_temp_saved => mcmc_get_temp_saved
+     procedure :: get_n_propose => mcmc_get_n_propose
+     procedure :: get_n_accept => mcmc_get_n_accept
      procedure :: finish => mcmc_finish
   end type mcmc
   
@@ -80,7 +83,7 @@ contains
     self%i_iter = 0
     self%i_mod = 0
     self%log_likelihood = -1.0d300
-
+    self%n_proposal_type = tm%get_n_x() + 2 
     
     allocate(self%likelihood_saved(n_iter))
     allocate(self%temp_saved(n_iter))
@@ -105,8 +108,7 @@ contains
     logical, intent(out) :: is_ok
     integer :: nparam, iparam
 
-    nparam = self%tm%get_n_x()
-    self%i_proposal_type = int(rand_u() * (nparam + 2))
+    self%i_proposal_type = int(rand_u() * (self%n_proposal_type))
     tm_proposed = self%tm
     if (self%i_proposal_type == 0) then
        ! Birth
@@ -271,6 +273,28 @@ contains
   
   !---------------------------------------------------------------------
 
+  function mcmc_get_n_accept(self) result(n_accept)
+    class(mcmc), intent(in) :: self
+    integer :: n_accept(self%n_proposal_type)
+
+    n_accept = self%n_accept
+
+    return 
+  end function mcmc_get_n_accept
+  
+  !---------------------------------------------------------------------
+
+  function mcmc_get_n_propose(self) result(n_propose)
+    class(mcmc), intent(in) :: self
+    integer :: n_propose(self%n_proposal_type)
+
+    n_propose = self%n_propose
+
+    return 
+  end function mcmc_get_n_propose
+  
+  !---------------------------------------------------------------------
+
   subroutine mcmc_finish(self)
     class(mcmc), intent(inout) :: self
 
@@ -280,6 +304,9 @@ contains
     
     deallocate(self%k_saved)
     deallocate(self%likelihood_saved)
+    deallocate(self%temp_saved)
+    deallocate(self%n_propose)
+    deallocate(self%n_accept)
 
     return 
   end subroutine mcmc_finish
