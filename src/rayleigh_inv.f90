@@ -35,9 +35,8 @@ program main
   use mod_observation
   use mod_param
   implicit none 
-  !include 'mpif.h'
 
-  integer, parameter :: n_rx = 3
+  integer :: n_rx
   logical :: verb
   double precision :: fmin, fmax, df
   integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
@@ -110,6 +109,11 @@ program main
        & solve_vp = para%get_solve_vp())
 
   ! Set model parameter & generate initial sample
+  if (para%get_solve_vp()) then
+     n_rx = 3
+  else 
+     n_rx = 2
+  end if
   do i = 1, para%get_n_chain()
 
      tm = init_trans_d_model( &

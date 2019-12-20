@@ -109,7 +109,7 @@ class InvRslt:
         line, = ax.plot(df[vlabel], df[zlabel], color="blue")
         lines.append(line)
         labels.append("Mean model")
-        ax.legend(lines, labels)
+        ax.legend(lines, labels, loc="lower left")
         
         ax.set_xlabel(vlabel)
         ax.set_ylabel(zlabel)
@@ -159,10 +159,10 @@ class InvRslt:
                          header=0, \
                          names=(clabel, "c_err", ulabel, "u_err"))
         df[flabel] = np.arange(f_min, f_max, del_f)
-        if mode == "c":
-            df.plot.scatter(flabel, clabel, ax=ax, s=12)
-        elif mode == "u":
-            df.plot.scatter(flabel, ulabel, ax=ax, s=12)
+
+        df.plot.scatter(flabel, vlabel, ax=ax, s=5, marker=".")
+
+
             
     #---------------------------------------------------------------       
 
@@ -198,6 +198,17 @@ class InvRslt:
         
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Temperature")
+
+    #---------------------------------------------------------------
+
+    def _plot_proposal_count(self, fix, ax):
+        param = self._param
+        file = "proposal.count"
+        df = pd.read_csv(file, delim_whitespace=True, header=None, \
+                         index_col=0)
+        df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        df.columns = ['Proposed', 'Accepted']
+        df.plot(kind='bar', ax=ax)
 
     #---------------------------------------------------------------
     
@@ -242,7 +253,13 @@ class InvRslt:
                               fig=fig)
         self._plot_temp_history(fig, ax)
 
+        # Proposal count
+        ax = plt.subplot2grid(grid_geom, (2, 2), colspan=2, rowspan=2, \
+                              fig=fig)
+        self._plot_proposal_count(fig, ax)
+
         plt.show()
+        fig.savefig("plot.png")
         
 #-----------------------------------------------------------------------
 

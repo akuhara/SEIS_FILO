@@ -88,8 +88,8 @@ contains
     allocate(self%likelihood_saved(n_iter))
     allocate(self%temp_saved(n_iter))
     allocate(self%k_saved(n_iter))
-    allocate(self%n_propose(self%tm%get_n_x() + 2))
-    allocate(self%n_accept(self%tm%get_n_x() + 2))
+    allocate(self%n_propose(self%n_proposal_type))
+    allocate(self%n_accept(self%n_proposal_type))
     self%n_propose = 0
     self%n_accept = 0
 
@@ -106,7 +106,7 @@ contains
     double precision, intent(out) :: log_proposal_ratio
     
     logical, intent(out) :: is_ok
-    integer :: nparam, iparam
+    integer :: iparam
 
     self%i_proposal_type = int(rand_u() * (self%n_proposal_type))
     tm_proposed = self%tm
