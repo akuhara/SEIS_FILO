@@ -77,8 +77,17 @@ ray_out = ray.out
 * Need to specify the following parameters in this file.
   * __n_iter__, __n_corr__, __n_burn__ (# of total iterations, iterations for sampling interval, and iterations in burn-in phase)
   * __dev_vs__, __dev_vp__, __dev_vz__ (Standard deviation for random walk along Vs, Vp and Z axes)
-  * __vs_min__, __vs_max__, __vp_min__, __vp_max__, __z_min__, __z_max__ (Prior bounds, where uniform distribution is assumed)
-
+  * __vs_min__, __vs_max__, __vp_min__, __vp_max__, __z_min__, __z_max__ (Prior bound. Note uniform distribution is assumed)
+  * __n_chain__, __n_cool__ (# of MCMC chains and non-tempered MCMC chains per process) 
+  * __temp_high__ (Maximum temperature)
+  * __k_min__, __k_max__ (Prior bounds for # of layers, excluding ocean layer and bottom half-space)
+  * __i_seed1__, __i_seed2__, __i_seed3__, __i_seed4__ (Seed numbers for random number sequence)
+  * __obs_in__ (Observation file name)
+  * __cmin__, __cmax__, __dc__ (Minimum, maximum and step interval of phase or group velocity for forward computation)
+  * __sove_vp__ (.true. -> solve Vp; .false. -> does not solve Vp)
+  * __ocean_flag__ (.true. -> ocean-bottom setting; .false. -> on-land setting)
+  * __ocean_thick__ (Ocean layer thickness (km))
+  * __nbin_z__, __nbin_vs__, __nbin_vp__ (# of bins for depth, Vs, and Vp)
 * Comment out by "#" works fine.
 
 
