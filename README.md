@@ -9,7 +9,7 @@ Copyright (C) 2019 Takeshi Akuhara
 ## Programs included in this package
 * [__rayleigh_fwd__](#Rayleigh-wave-forward-computation): Rayleigh wave forward computation
 * [__rayleigh_inv__](#Rayleigh-wave-inversion): Rayleigh wave transdimensional inversion by RJMCMC
-* [__Plot_utilities__](#Plot-utilities)
+* [__Plot utilities__](#Plot-utilities)
 
 ## Install
 Type `make` in the `src` directory.
