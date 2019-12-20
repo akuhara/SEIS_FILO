@@ -3,7 +3,6 @@ SEISmological tools for Flat Isotropic Layered structure in the Ocean; forward c
 
 Copyright (C) 2019 Takeshi Akuhara
 
-![plot](https://user-images.githubusercontent.com/31914302/71229909-c5104d80-232a-11ea-9909-b3b0e82068a8.png)
 ![plot](./img/plot.png)
 ---
 
