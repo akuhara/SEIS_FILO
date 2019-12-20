@@ -218,6 +218,6 @@ nbin_vs = 25
 ---
 
 ## Plot utilities
-* `python plot_inv.pl [parameter file]`
+* `python plot_inv.pl [parameter file]` 
 
 
