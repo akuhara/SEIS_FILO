@@ -30,8 +30,8 @@ program main
   use mod_trans_d_model
   use mod_mcmc
   use mod_rayleigh
-  use mod_interpreter
   use mod_const
+  use mod_interpreter
   use mod_observation
   use mod_param
   implicit none 
@@ -53,8 +53,7 @@ program main
   type(parallel) :: pt
   type(param) :: para
   character(200) :: filename, param_file
-  double precision, parameter :: eps = 1.0d-8
-  double precision, parameter :: minus_infty = -1.0d300
+
   
   ! Initialize MPI 
   call mpi_init(ierr)
@@ -422,6 +421,8 @@ subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
   use mod_observation
   use mod_rayleigh
   use mod_vmodel
+  use mod_const, only: minus_infty
+  
   implicit none 
   type(trans_d_model), intent(in) :: tm
   type(interpreter), intent(inout) :: intpr
@@ -439,6 +440,10 @@ subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
   ! calc misfit
   log_likelihood = 0.d0
   do i = 1, obs%get_nf()
+     if (ray%get_c(i) == 0.d0 .or. ray%get_u(i) == 0.d0) then
+        log_likelihood = minus_infty
+        exit
+     end if
      log_likelihood = &
           & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
           & (obs%get_sig_c(i) ** 2)

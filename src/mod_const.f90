@@ -30,4 +30,6 @@ module mod_const
   integer, parameter :: id_uni = 1, id_guass = 2
   character(5), parameter :: proposal_label(1:5) = &
        & (/"Birth", "Death", "Depth", "Vs   ", "Vp   "/)
+  double precision, parameter :: minus_infty = -1.d300
+  double precision, parameter :: eps = 1.0d-8
 end module mod_const
