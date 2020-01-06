@@ -1,4 +1,4 @@
-# SEIS_FILO
+# SEIS_FILO (Alpha version)
 SEISmological tools for Flat Isotropic Layered structure in the Ocean; forward computation & transdimensional inversion
 
 Copyright (C) 2019 Takeshi Akuhara
@@ -9,6 +9,7 @@ Copyright (C) 2019 Takeshi Akuhara
 ## Programs included in this package
 * [__rayleigh_fwd__](#Rayleigh-wave-forward-computation): Rayleigh wave forward computation
 * [__rayleigh_inv__](#Rayleigh-wave-inversion): Rayleigh wave transdimensional inversion by RJMCMC
+* [__Plot utilities__](#Plot-utilities)
 
 ## Install
 Type `make` in the `src` directory.
@@ -38,7 +39,7 @@ ray_out = ray.out
 ```
 
 ### Velocity model file (vmod_in)
-
+* Input to `rayleigh_fwd`
 * The first line should be the number of layers
 * Vp, Vs, density and thickness of each layer should be listed in the successive lines
 * Set Vs < 0 for the ocean layer (for now, only the topmost layer is allowed for this)
@@ -51,7 +52,7 @@ ray_out = ray.out
 ```
 
 ### Dispersion curve file (ray_out)
-
+* Output from `rayleigh_fwd`
 * Each line contains frequency, phase velocity, and group velocity.
 ```
     0.0100    2.7122    2.6735
@@ -90,7 +91,6 @@ ray_out = ray.out
   * __ocean_thick__ (Ocean layer thickness (km))
   * __nbin_z__, __nbin_vs__, __nbin_vp__ (# of bins for depth, Vs, and Vp)
 * Comment out by "#" works fine.
-
 
 ```
 # Parameter file example
@@ -149,6 +149,7 @@ nbin_vs = 25
 ```
 
 ### Observation file (obs_in)
+* Input to `rayleigh_inv`
 * In the first header line, the number of observations, minimum frequency, and frequency interval must be specified in this order.
 * The following line must contain: (1) observed phase velocity, (2) phase velocity uncertainties, (3) observed group velocity, and (4) group velocity uncertainty.
 * Comment out does not work.
@@ -188,6 +189,35 @@ nbin_vs = 25
  3.2196 0.05   3.1817   0.05
  3.2185 0.05   3.1863   0.05
 ```
+
+### Velocity-depth probability file (vs_z.ppd, vp_z.ppd)
+* Output from `rayleigh_inv`
+* Each line shows velocity in km/s, depth in km, and the marginal posterior probability.
+
+### Mean velocity model file (vs_z.mean, vp_z.mean)
+* Output from `rayleigh_inv`
+* Each line shows depth in km and mean velocity in km/s.
+
+### Layer number probability file (n_layers.ppd) 
+* Output from `rayleigh_inv`
+* Each line shows the number of layeys (excluding ocean layer and bottom half space) and its marginal posterior probability.
+
+### Synthetic dispersion curve file (f_c.ppd, f_u.ppd)
+* Output from `rayleigh_inv`
+* Each line shows frequency, phase or group velocity, and the marginal posterior probability.
+
+### Log-likelihood history file (likelihood.history)
+* Output from `rayleigh_inv`
+
+### Temperature history file (temp.history)
+* Output from `rayleigh_inv`
+
+### Proposal count file (proposal.count)
+* Output from `rayleigh_inv`
+
 ---
+
+## Plot utilities
+* `python plot_inv.pl [parameter file]` 
 
 
