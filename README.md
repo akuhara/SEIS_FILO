@@ -86,7 +86,7 @@ ray_out = ray.out
   * __i_seed1__, __i_seed2__, __i_seed3__, __i_seed4__ (Seed numbers for random number sequence)
   * __obs_in__ (Observation file name)
   * __cmin__, __cmax__, __dc__ (Minimum, maximum and step interval of phase or group velocity for forward computation)
-  * __sove_vp__ (.true. -> solve Vp; .false. -> does not solve Vp)
+  * __solve_vp__ (.true. -> solve Vp; .false. -> does not solve Vp)
   * __ocean_flag__ (.true. -> ocean-bottom setting; .false. -> on-land setting)
   * __ocean_thick__ (Ocean layer thickness (km))
   * __nbin_z__, __nbin_vs__, __nbin_vp__ (# of bins for depth, Vs, and Vp)
