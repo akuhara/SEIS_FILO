@@ -60,18 +60,17 @@ program main
     integer :: i
     double precision :: xt(n)
 
-    complex(kind(0d0)) :: xf(n)
-
     do i = 1, n
        xt(i) = 2.d0 * rand_u() - 1.d0
     end do
     
     sp = init_signal_process(n, delta)
+    call sp%set_t_data(xt)
     call sp%set_gaussian_filter(a_gauss=8.d0)
     
-    xf = sp%forward_fft(xt)
-    xf = sp%apply_filter(xf)
-    xt = sp%inverse_fft(xf)
+    call sp%forward_fft()
+    call sp%apply_filter()
+    call sp%inverse_fft()
     do i = 1, n
        write(30, *) i*delta, xt(i)
     end do

@@ -46,10 +46,10 @@ module mod_signal_process
      double precision, allocatable :: filter(:)
      
    contains
+     procedure :: set_t_data => signal_process_set_t_data
+     procedure :: set_f_data => signal_process_set_f_data
      procedure :: forward_fft => signal_process_forward_fft
      procedure :: inverse_fft  => signal_process_inverse_fft
-     procedure, private :: set_rx   => signal_process_set_rx
-     procedure, private :: set_cx   => signal_process_set_cx
      procedure :: set_gaussian_filter => signal_process_set_gaussian_filter
      procedure :: apply_filter => signal_process_apply_filter
   end type signal_process
@@ -82,68 +82,56 @@ contains
 
   !---------------------------------------------------------------------
   
-  function signal_process_forward_fft(self, rx_in) result(cx_out)
+  subroutine signal_process_set_t_data(self, t_data)
     class(signal_process), intent(inout) :: self
-    double precision, intent(in) :: rx_in(1:self%n)
-    complex(kind(0d0)) :: cx_out(self%n)
+    double precision, intent(in) :: t_data(self%n)
+    
+    self%t_data = t_data
+    
+    return 
+  end subroutine signal_process_set_t_data
 
-    call self%set_rx(rx_in)
+  !---------------------------------------------------------------------
+
+  subroutine signal_process_set_f_data(self, f_data)
+    class(signal_process), intent(inout) :: self
+    complex(kind(0d0)), intent(in) :: f_data(self%n)
+
+    self%f_data = f_data
+
+    return 
+  end subroutine signal_process_set_f_data
+
+  !---------------------------------------------------------------------
+
+
+  subroutine signal_process_forward_fft(self)
+    class(signal_process), intent(inout) :: self
+
     call dfftw_execute(self%ifft_fwd)
-    
-    cx_out = self%f_data
 
     return 
-  end function signal_process_forward_fft
-  
+  end subroutine signal_process_forward_fft
+
   !---------------------------------------------------------------------
 
-  function signal_process_inverse_fft(self, cx_in) result(rx_out)
+  subroutine signal_process_inverse_fft(self)
     class(signal_process), intent(inout) :: self
-    complex(kind(0d0)), intent(in) :: cx_in(1:self%n)
-    double precision :: rx_out(self%n)
-    
-    call self%set_cx(cx_in)
+
     call dfftw_execute(self%ifft_inv)
-    
-    rx_out = self%t_data / self%n
-    
+
     return 
-  end function signal_process_inverse_fft
+  end subroutine signal_process_inverse_fft
 
   !---------------------------------------------------------------------
 
-  subroutine signal_process_set_rx(self, rx_in)
+  subroutine signal_process_apply_filter(self)
     class(signal_process), intent(inout) :: self
-    double precision, intent(in) :: rx_in(self%n)
-    
-    self%t_data = rx_in
 
-    return 
-  end subroutine signal_process_set_rx
-    
-  !---------------------------------------------------------------------
-
-  subroutine signal_process_set_cx(self, cx_in)
-    class(signal_process), intent(inout) :: self
-    complex(kind(0d0)), intent(in) :: cx_in(self%n)
-    
-    self%f_data = cx_in
+    self%f_data = self%f_data * self%filter
     
     return 
-  end subroutine signal_process_set_cx
-  
-  !---------------------------------------------------------------------
-  
-  function signal_process_apply_filter(self, fdata) result(out)
-    class(signal_process), intent(inout) :: self
-    complex(kind(0d0)), intent(inout) :: fdata(1:self%n)
-    complex(kind(0d0)) :: out(1:self%n)
-    
-    out = fdata * self%filter
-    
-
-    return 
-  end function signal_process_apply_filter
+  end subroutine signal_process_apply_filter
 
   !---------------------------------------------------------------------
 
@@ -151,7 +139,7 @@ contains
     class(signal_process), intent(inout) :: self
     double precision, intent(in) :: a_gauss
     integer :: i
-    double precision :: omega, fac
+    double precision :: omega
     
     do i = 1, self%n / 2 + 1
        omega = (i - 1) * 2.d0 * pi * self%df
