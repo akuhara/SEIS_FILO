@@ -27,15 +27,20 @@
 program main
   use mod_param
   use mod_vmodel
-  use mod_signal_process
   use mod_random
+  use mod_recv_func
+  
   implicit none   
   integer :: n_arg
   character(len=200) :: param_file
   type(param) :: para
   type(vmodel) :: vm
-  type(signal_process) :: sp
-  
+  type(recv_func) :: rf
+  double precision :: rayp, a_gauss
+  character(len=1) :: phase
+  rayp = 0.06d0
+  a_gauss = 2.5d0
+  phase = "P"
   call init_random(100, 20000, 3000000, 43444)
   
   ! Get parameter file name from command line argument
@@ -52,31 +57,8 @@ program main
   ! Set velocity model
   call vm%read_file(para%get_vmod_in())
 
+  ! Init RF
+  rf = init_recv_func(vm, rayp, a_gauss, phase)
 
-  ! Test FFT
-  block 
-    integer, parameter :: n = 512
-    double precision, parameter :: delta = 0.05d0
-    integer :: i
-    double precision :: xt(n)
-
-    do i = 1, n
-       xt(i) = 2.d0 * rand_u() - 1.d0
-    end do
-    
-    sp = init_signal_process(n, delta)
-    call sp%set_t_data(xt)
-    call sp%set_gaussian_filter(a_gauss=8.d0)
-    
-    call sp%forward_fft()
-    call sp%apply_filter()
-    call sp%inverse_fft()
-    do i = 1, n
-       write(30, *) i*delta, xt(i)
-    end do
-    
-    
-  end block
-  
   stop
 end program main
