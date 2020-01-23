@@ -24,22 +24,42 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
+!
+! Module description
+!> Module to perform quick sort. 
+!> @author
+!> Takeshi Akuhara
+!
+
 module mod_sort
   implicit none
   
   public quick_sort
-  private swap
+  private swap 
   
 contains
   
   !---------------------------------------------------------------------
+  
+  !> @brief
+  !> Subroutine to perform quick sort. The main target array to be 
+  !> sorted is 'a', but the other input arrays, 'b' and 'c', are also
+  !> reorganized in the same order as 'a'.
 
   recursive subroutine quick_sort(a, il, ir, b, c)
     implicit none 
-    integer, intent(in) :: il, ir
-    real(8), intent(inout) :: a(:), b(:), c(:)
+    integer, intent(in) :: il !< Minimum index of input arrays
+    integer, intent(in) :: ir !< Maximum index of input arrays
+    double precision, intent(inout) :: a(:) !< Input array 
+                                            !< (Main target)
+    double precision, intent(inout) ::  b(:) !< Input array
+                                          !< (sorted in the 
+                                          !< same order as array 'a')
+    double precision, intent(inout) :: c(:) !< Input array
+                                          !< (sorted in the 
+                                          !< same order as array 'a')
     integer :: ipiv, i, j
-    real(8) :: piv
+    real(8) :: piv 
     
     if (ir - il <= 0) return
     
