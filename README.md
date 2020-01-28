@@ -9,6 +9,7 @@ Copyright (C) 2019 Takeshi Akuhara
 ## Programs included in this package
 * [__rayleigh_fwd__](#Rayleigh-wave-forward-computation): Rayleigh wave forward computation
 * [__rayleigh_inv__](#Rayleigh-wave-inversion): Rayleigh wave transdimensional inversion by RJMCMC
+* [__recv_func_fwd__](#receiver-function-forward-computation): Receiver function forward computation
 * [__Plot utilities__](#Plot-utilities)
 
 ## Install
@@ -214,6 +215,10 @@ nbin_vs = 25
 
 ### Proposal count file (proposal.count)
 * Output from `rayleigh_inv`
+
+---
+
+## Receiver function forward computation (recv_func_fwd)
 
 ---
 
