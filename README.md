@@ -226,6 +226,19 @@ nbin_vs = 25
 ### Usage
 `recv_func_fwd [parameter file]`
 
+### Parameter file
+* Need to specify the following parameters in this file.
+  * __vmod_in__ (file name for input velocity model)
+  * __rayp__ (ray parameter in s/km)
+  * __a_gauss__ (Gaussian low-pass filter parameter)
+  * __phase__ (P or S)
+  * __delta__ (sampling interval in sec.)
+  * __t_pre__ (time length before the main (i.e., direct P or S) arrival in sec.)
+  * __n_smp__ (number of elements in output receiver function)
+  * __deconv_flag__ (.true.: do water-level deconvolution (radial RF); .false.: no deconvolution (radial GF))
+  * __correct_amp__ (.true.: compensate for energy loss by filter; .false.: no correction)
+  * __recv_func_out__ (output sac file name)
+  
 ---
 
 ## Plot utilities
