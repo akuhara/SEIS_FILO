@@ -21,7 +21,7 @@ Type `make` in the `src` directory.
 ---
 
 ## Rayleigh wave forward computation
-### USAGE
+### Usage
 `rayleigh_fwd [parameter file]`
 ### Parameter file
 * Need to specify the following parameters in this file.
@@ -222,7 +222,8 @@ nbin_vs = 25
 ---
 
 ## Receiver function forward computation (recv_func_fwd)
-
+### Usage
+`recv_func_fwd [parameter file]`
 ---
 
 ## Plot utilities
