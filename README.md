@@ -15,6 +15,9 @@ Copyright (C) 2019 Takeshi Akuhara
 ## Install
 Type `make` in the `src` directory.
 
+## Requirements
+* [FFTW library](http://fftw.org/)
+* [Open MPI](https://www.open-mpi.org/)
 ---
 
 ## Rayleigh wave forward computation
