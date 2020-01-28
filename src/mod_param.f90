@@ -66,9 +66,20 @@ module mod_param
      double precision :: z_max = -999.d0
      double precision :: ocean_thick = -999.d0
 
+     ! Receiver function
+     integer :: n_smp 
+     double precision :: rayp
+     double precision :: a_gauss
+     double precision :: delta
+     double precision :: t_pre
+     character(len=1) :: phase
+     logical :: deconv_flag = .true.
+     logical :: correct_amp = .false.
+     
      character(len=line_max) :: vmod_in = ""
      character(len=line_max) :: ray_out = ""
      character(len=line_max) :: obs_in = ""
+     character(len=line_max) :: recv_func_out = ""
 
      logical :: solve_vp = .false.
      logical :: ocean_flag = .false.
@@ -118,6 +129,18 @@ module mod_param
      procedure :: get_vmod_in => param_get_vmod_in
      procedure :: get_ray_out => param_get_ray_out
      procedure :: get_obs_in  => param_get_obs_in
+
+     procedure :: get_n_smp => param_get_n_smp
+     procedure :: get_rayp => param_get_rayp
+     procedure :: get_a_gauss => param_get_a_gauss
+     procedure :: get_t_pre => param_get_t_pre
+     procedure :: get_phase => param_get_phase
+     procedure :: get_delta => param_get_delta
+     procedure :: get_deconv_flag => param_get_deconv_flag
+     procedure :: get_correct_amp => param_get_correct_amp
+     procedure :: get_recv_func_out => param_get_recv_func_out
+     
+     
 
   end type param
   
@@ -195,121 +218,102 @@ contains
   subroutine param_set_value(self, name, val)
     class(param), intent(inout) :: self
     character(len=*), intent(in) :: name, val
-    integer :: nlen, j, itmp
-    double precision :: rtmp
-    logical :: ltmp
 
     if (self%verb) then
        write(*,*)trim(name), " <- ", trim(val)
     end if
     if (name == "fmin") then
-       read(val, *) rtmp
-       self%fmin = rtmp
+       read(val, *) self%fmin
     else if (name == "fmax") then
-       read(val, *) rtmp
-       self%fmax = rtmp
+       read(val, *) self%fmax 
     else if (name == "df") then
-       read(val, *) rtmp
-       self%df = rtmp
+       read(val, *) self%df 
     else if (name == "cmin") then
-       read(val, *) rtmp
-       self%cmin = rtmp
+       read(val, *) self%cmin 
     else if (name == "cmax") then
-       read(val, *) rtmp
-       self%cmax = rtmp
+       read(val, *) self%cmax 
     else if (name == "dc") then
-       read(val, *) rtmp
-       self%dc = rtmp
+       read(val, *) self%dc 
     else if (name == "vmod_in") then
        self%vmod_in = val
     else if (name == "ray_out") then
        self%ray_out = val
     else if (name == "n_iter") then
-       read(val, *) itmp
-       self%n_iter = itmp
+       read(val, *) self%n_iter
     else if (name == "n_burn") then
-       read(val, *) itmp
-       self%n_burn = itmp
+       read(val, *) self%n_burn 
     else if (name == "n_corr") then
-       read(val, *) itmp
-       self%n_corr = itmp
+       read(val, *) self%n_corr 
     else if (name == "n_chain") then
-       read(val, *) itmp
-       self%n_chain = itmp
+       read(val, *) self%n_chain
     else if (name == "n_cool") then
-       read(val, *) itmp
-       self%n_cool = itmp
+       read(val, *) self%n_cool 
     else if (name == "temp_high") then
-       read(val, *) rtmp
-       self%temp_high = rtmp
+       read(val, *) self%temp_high
     else if (name == "i_seed1") then
-       read(val, *) itmp
-       self%i_seed1 = itmp 
+       read(val, *) self%i_seed1 
     else if (name == "i_seed2") then
-       read(val, *) itmp
-       self%i_seed2 = itmp
+       read(val, *) self%i_seed2 
     else if (name == "i_seed3") then
-       read(val, *) itmp
-       self%i_seed3 = itmp
+       read(val, *) self%i_seed3
     else if (name == "i_seed4") then
-       read(val, *) itmp
-       self%i_seed4 = itmp
+       read(val, *) self%i_seed4
     else if (name == "k_min") then
-       read(val, *) itmp
-       self%k_min = itmp
+       read(val, *) self%k_min 
     else if (name == "k_max") then
-       read(val, *) itmp
-       self%k_max = itmp
+       read(val, *) self%k_max
     else if (name == "obs_in") then
        self%obs_in = val
     else if (name == "dev_vs") then
-       read(val, *) rtmp
-       self%dev_vs = rtmp
+       read(val, *) self%dev_vs
     else if (name == "dev_vp") then
-       read(val, *) rtmp
-       self%dev_vp = rtmp
+       read(val, *) self%dev_vp
     else if (name == "dev_z") then
-       read(val, *) rtmp
-       self%dev_z = rtmp
+       read(val, *) self%dev_z 
     else if (name == "vs_min") then
-       read(val, *) rtmp
-       self%vs_min = rtmp
+       read(val, *) self%vs_min
     else if (name == "vs_max") then
-       read(val, *) rtmp
-       self%vs_max = rtmp
+       read(val, *) self%vs_max
     else if (name == "vp_min") then
-       read(val, *) rtmp
-       self%vp_min = rtmp
+       read(val, *) self%vp_min
     else if (name == "vp_max") then
-       read(val, *) rtmp
-       self%vp_max = rtmp
+       read(val, *) self%vp_max
     else if (name == "z_min") then
-       read(val, *) rtmp
-       self%z_min = rtmp
+       read(val, *) self%z_min 
     else if (name == "z_max") then
-       read(val, *) rtmp
-       self%z_max = rtmp
+       read(val, *) self%z_max 
     else if (name == "ocean_thick") then
-       read(val, *) rtmp
-       self%ocean_thick = rtmp
+       read(val, *) self%ocean_thick 
     else if (name == "solve_vp") then
-       read(val, *) ltmp
-       self%solve_vp = ltmp
+       read(val, *) self%solve_vp
     else if (name == "ocean_flag") then
-       read(val, *) ltmp
-       self%ocean_flag = ltmp
+       read(val, *) self%ocean_flag 
     else if (name == "nbin_z") then
-       read(val, *) itmp
-       self%nbin_z = itmp
+       read(val, *) self%nbin_z 
     else if (name == "nbin_vs") then
-       read(val, *) itmp
-       self%nbin_vs = itmp
+       read(val, *) self%nbin_vs
     else if (name == "nbin_vp") then
-       read(val, *) itmp
-       self%nbin_vp = itmp
+       read(val, *) self%nbin_vp
     else if (name == "nbin_c") then
-       read(val, *) itmp
-       self%nbin_c = itmp
+       read(val, *) self%nbin_c
+    else if (name == "n_smp") then
+       read(val, *) self%n_smp
+    else if (name == "delta") then
+       read(val, *) self%delta
+    else if (name == "rayp") then
+       read(val, *) self%rayp
+    else if (name == "a_gauss") then
+       read(val, *) self%a_gauss
+    else if (name == "t_pre") then
+       read(val, *) self%t_pre
+    else if (name == "phase") then
+       self%phase = val
+    else if (name == "deconv_flag") then
+       read(val, *) self%deconv_flag
+    else if (name == "correct_amp") then
+       read(val, *) self%correct_amp
+    else if (name == "recv_func_out") then
+       self%recv_func_out = val
     else
        write(0,*)"Warnings: Invalid parameter name"
        write(0,*)"        : ", name, "  (?)"
@@ -694,7 +698,94 @@ contains
   
   !---------------------------------------------------------------------
 
-
+  integer function param_get_n_smp(self) result(n_smp)
+    class(param), intent(in) :: self
+    
+    n_smp = self%n_smp
+    
+    return 
+  end function param_get_n_smp
   
+  !---------------------------------------------------------------------
 
+  double precision function param_get_rayp(self) result(rayp)
+    class(param), intent(in) :: self
+
+    rayp = self%rayp
+
+    return
+  end function param_get_rayp
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_a_gauss(self) result(a_gauss)
+    class(param), intent(in) :: self
+
+    a_gauss = self%a_gauss
+
+    return
+  end function param_get_a_gauss
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_delta(self) result(delta)
+    class(param), intent(in) :: self
+
+    delta = self%delta
+
+    return
+  end function param_get_delta
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_t_pre(self) result(t_pre)
+    class(param), intent(in) :: self
+
+    t_pre = self%t_pre
+
+    return
+  end function param_get_t_pre
+
+  !---------------------------------------------------------------------
+
+  character(1) function param_get_phase(self) result(phase)
+    class(param), intent(in) :: self
+
+    phase = self%phase
+
+    return
+  end function param_get_phase
+  
+  !---------------------------------------------------------------------
+  
+  logical function param_get_deconv_flag(self) result(deconv_flag)
+    class(param), intent(in) :: self
+
+    deconv_flag = self%deconv_flag
+
+    return
+  end function param_get_deconv_flag
+
+  !---------------------------------------------------------------------
+
+  logical function param_get_correct_amp(self) result(correct_amp)
+    class(param), intent(in) :: self
+
+    correct_amp = self%correct_amp
+
+    return
+  end function param_get_correct_amp
+
+  !---------------------------------------------------------------------
+  
+  character(len=line_max) function param_get_recv_func_out(self) &
+       & result(recv_func_out)
+    class(param), intent(in) :: self
+    
+    recv_func_out = self%recv_func_out
+    
+    return
+  end function param_get_recv_func_out
+  
+  !---------------------------------------------------------------------
 end module mod_param
