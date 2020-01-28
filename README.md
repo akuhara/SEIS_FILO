@@ -222,8 +222,10 @@ nbin_vs = 25
 ---
 
 ## Receiver function forward computation
+
 ### Usage
 `recv_func_fwd [parameter file]`
+
 ---
 
 ## Plot utilities
