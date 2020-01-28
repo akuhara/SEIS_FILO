@@ -29,25 +29,12 @@ program main
   use mod_vmodel
   use mod_random
   use mod_recv_func
-  
   implicit none   
-  integer :: n_arg, n
+  integer :: n_arg
   character(len=200) :: param_file
   type(param) :: para
   type(vmodel) :: vm
   type(recv_func) :: rf
-  double precision :: rayp, a_gauss, delta, t_pre
-  character(len=1) :: phase
-  logical :: deconv_flag, correct_amp
-  rayp = 0.05d0
-  a_gauss = 8.0d0
-  phase = "S"
-  deconv_flag = .true.
-  n = 1024
-  delta = 0.05d0
-  t_pre = 30.d0
-  correct_amp = .true.
-  call init_random(100, 20000, 3000000, 43444)
   
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
@@ -64,27 +51,22 @@ program main
   call vm%read_file(para%get_vmod_in())
 
   ! Init RF
-  rf = init_recv_func(vm, n, delta, rayp, a_gauss, &
-       & phase, deconv_flag, t_pre=t_pre, correct_amp = .true.)
+  rf = init_recv_func(&
+       & vm    = vm, &
+       & n     = para%get_n_smp(), &
+       & delta = para%get_delta(), &
+       & rayp  = para%get_rayp(), &
+       & a_gauss = para%get_a_gauss(), &
+       & phase = para%get_phase(), &
+       & deconv_flag = para%get_deconv_flag(), &
+       & t_pre = para%get_t_pre(), &
+       & correct_amp = para%get_correct_amp()&
+       & )
   
   ! Main
   call rf%compute()
   
-  block 
-    double precision :: rft(n), xr(n), xz(n)
-    integer :: i
-    ! Get result
-    rft(:) = rf%get_rf_data()
-    xr(:) = rf%get_t_data(1)
-    xz(:) = rf%get_t_data(2)
-    
-    do i = 1, n
-       write(111,*) (i  - 1) * delta - t_pre, rft(i)
-    end do
-    write(111,*)
-    write(111,*)
-
-  end block
+  
 
   stop
 end program main
