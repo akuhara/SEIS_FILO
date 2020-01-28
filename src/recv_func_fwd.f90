@@ -66,7 +66,8 @@ program main
   ! Main
   call rf%compute()
   
-  
+  ! Output
+  call rf%output_sac(para%get_recv_func_out())
 
   stop
 end program main

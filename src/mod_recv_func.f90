@@ -43,7 +43,7 @@ module mod_recv_func
      double precision :: rayp
      double precision :: a_gauss
      double precision :: damp = 0.001d0
-     double precision :: t_pre = 5.d0
+     double precision :: t_pre
      character(len=1) :: phase
      
      logical :: deconv_flag = .true.
@@ -67,6 +67,7 @@ module mod_recv_func
      procedure :: normalization => recv_func_normalization
      procedure :: get_t_data => recv_func_get_t_data
      procedure :: get_rf_data => recv_func_get_rf_data
+     procedure :: output_sac => recv_func_output_sac
      
 
   end type recv_func
@@ -182,16 +183,18 @@ contains
        if (self%phase == "P") then
           call sp%set_f_data(self%f_data(:, i_target))
        else
-          write(0,*)"ERROR: Deconv_mode = .ture." // &
-               & " works only for P"
-          stop
+          call sp%set_f_data(-conjg(self%f_data(:, i_target)))
        end if
        call sp%apply_filter()
        call sp%inverse_fft()
        self%rf_data(:) = sp%get_t_data() / fac
        t_arrival = self%first_arrival()
-       
-       call self%shift_rf_data(self%t_pre - t_arrival)
+
+       if (self%phase == "P") then
+          call self%shift_rf_data(self%t_pre - t_arrival)
+       else
+          call self%shift_rf_data(self%t_pre + t_arrival)
+       end if
        if (self%correct_amp) then
           call self%normalization()
        end if
@@ -427,7 +430,7 @@ contains
     double precision :: v
     
     nlay = self%vmodel%get_nlay()
-
+    
     if (self%is_ocean) then
        i0 = 2
     else
@@ -440,10 +443,10 @@ contains
       else
          v = self%vmodel%get_vs(ilay)
       end if
-       t = t + self%vmodel%get_h(ilay) * &
-            & sqrt(1.d0 / v * v - self%rayp * self%rayp)
+      t = t + self%vmodel%get_h(ilay) * &
+           & sqrt(1.d0 / (v * v) - self%rayp * self%rayp)
     end do
-    
+
     return 
   end function recv_func_first_arrival
   
@@ -461,26 +464,13 @@ contains
     tmp(:) = self%rf_data(:)
     
     n_shift = nint(t_shift / self%delta)
-    !if (self%phase == "P") then
-       do i = 1, self%n
-          j = mod(self%n - n_shift + i, self%n)
-          if (j == 0) then
-             j = self%n
-          end if
-          self%rf_data(i) = tmp(j)
-       end do
-    !else if (self%phase == "S") then
-    !   do i = 1, self%n
-    !      j = mod(self%n + n_shift - i, self%n)
-    !      if (j == 0) then
-    !         j = self%n
-    !      end if
-    !      self%rf_data(i) = -tmp(j)
-    !   end do
-    !else
-    !   write(0,*)"ERROR: invalid phase name" , self%phase 
-    !   stop
-    !end if
+    do i = 1, self%n
+       j = mod(self%n - n_shift + i, self%n)
+       if (j == 0) then
+          j = self%n
+       end if
+       self%rf_data(i) = tmp(j)
+    end do
 
     return 
   end subroutine recv_func_shift_rf_data
@@ -523,5 +513,35 @@ contains
     return 
   end function recv_func_get_rf_data
 
+  !---------------------------------------------------------------------
+
+  subroutine recv_func_output_sac(self, filename) 
+    class(recv_func), intent(in) :: self
+    character(*), intent(in) :: filename
+    integer :: io, ierr
+    integer :: i
+    integer, parameter :: nvhdr = 6, iftype = 1, leven = 1
+    open(file = filename, newunit = io, iostat = ierr, status = "unknown", &
+         & access = 'direct', recl = 4)
+    if (ierr /= 0) then
+       write(0,*)"ERROR: cannot create ", trim(filename)
+       stop
+    end if
+    write(*,*)self%delta, -self%t_pre
+    write(io, rec = 1) real(self%delta)
+    write(io, rec = 6) real(-self%t_pre)
+    write(io, rec = 77) nvhdr
+    write(io, rec = 80) self%n
+    write(io, rec = 86) iftype
+    write(io, rec = 106) leven
+    
+    do i = 1, self%n
+       write(io, rec = 158 + i) real(self%rf_data(i))
+    end do
+    close(io)
+
+    return 
+  end subroutine recv_func_output_sac
+  
   !---------------------------------------------------------------------
 end module mod_recv_func

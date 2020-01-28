@@ -79,6 +79,7 @@ module mod_param
      character(len=line_max) :: vmod_in = ""
      character(len=line_max) :: ray_out = ""
      character(len=line_max) :: obs_in = ""
+     character(len=line_max) :: recv_func_out = ""
 
      logical :: solve_vp = .false.
      logical :: ocean_flag = .false.
@@ -137,6 +138,7 @@ module mod_param
      procedure :: get_delta => param_get_delta
      procedure :: get_deconv_flag => param_get_deconv_flag
      procedure :: get_correct_amp => param_get_correct_amp
+     procedure :: get_recv_func_out => param_get_recv_func_out
      
      
 
@@ -310,6 +312,8 @@ contains
        read(val, *) self%deconv_flag
     else if (name == "correct_amp") then
        read(val, *) self%correct_amp
+    else if (name == "recv_func_out") then
+       self%recv_func_out = val
     else
        write(0,*)"Warnings: Invalid parameter name"
        write(0,*)"        : ", name, "  (?)"
@@ -773,5 +777,15 @@ contains
   end function param_get_correct_amp
 
   !---------------------------------------------------------------------
-
+  
+  character(len=line_max) function param_get_recv_func_out(self) &
+       & result(recv_func_out)
+    class(param), intent(in) :: self
+    
+    recv_func_out = self%recv_func_out
+    
+    return
+  end function param_get_recv_func_out
+  
+  !---------------------------------------------------------------------
 end module mod_param
