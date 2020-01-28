@@ -48,6 +48,8 @@ module mod_signal_process
    contains
      procedure :: set_t_data => signal_process_set_t_data
      procedure :: set_f_data => signal_process_set_f_data
+     procedure :: get_t_data => signal_process_get_t_data
+     procedure :: get_f_data => signal_process_get_f_data
      procedure :: forward_fft => signal_process_forward_fft
      procedure :: inverse_fft  => signal_process_inverse_fft
      procedure :: set_gaussian_filter => signal_process_set_gaussian_filter
@@ -103,7 +105,28 @@ contains
   end subroutine signal_process_set_f_data
 
   !---------------------------------------------------------------------
+  
+  function signal_process_get_t_data(self) result(t_data)
+    class(signal_process), intent(inout) :: self
+    double precision :: t_data(self%n)
+    
+    t_data(:) = self%t_data(:)
 
+    return 
+  end function signal_process_get_t_data
+    
+  !---------------------------------------------------------------------
+
+  function signal_process_get_f_data(self) result(f_data)
+    class(signal_process), intent(inout) :: self
+    complex(kind(0d0)) :: f_data(self%n)
+    
+    f_data(:) = self%f_data(:)
+    
+    return 
+  end function signal_process_get_f_data
+    
+  !---------------------------------------------------------------------
 
   subroutine signal_process_forward_fft(self)
     class(signal_process), intent(inout) :: self
@@ -119,6 +142,7 @@ contains
     class(signal_process), intent(inout) :: self
 
     call dfftw_execute(self%ifft_inv)
+    self%t_data(:) = self%t_data(:) / self%n
 
     return 
   end subroutine signal_process_inverse_fft
@@ -128,7 +152,7 @@ contains
   subroutine signal_process_apply_filter(self)
     class(signal_process), intent(inout) :: self
 
-    self%f_data = self%f_data * self%filter
+    self%f_data(:) = self%f_data(:) * self%filter(:)
     
     return 
   end subroutine signal_process_apply_filter
@@ -141,11 +165,16 @@ contains
     integer :: i
     double precision :: omega
     
-    do i = 1, self%n / 2 + 1
-       omega = (i - 1) * 2.d0 * pi * self%df
-       self%filter(i) = &
-            & exp(-(omega / (2.d0 * a_gauss))**2)
-    end do
+    if (a_gauss >= 0.d0) then
+       !do i = 1, self%n / 2 + 1
+       do concurrent (i=1:self%n)
+          omega = (i - 1) * 2.d0 * pi * self%df
+          self%filter(i) = &
+               & exp(-(omega / (2.d0 * a_gauss))**2)
+       end do
+    else
+       self%filter(:) = 1.d0
+    end if
     
 
     return 

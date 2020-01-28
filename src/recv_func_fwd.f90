@@ -31,16 +31,22 @@ program main
   use mod_recv_func
   
   implicit none   
-  integer :: n_arg
+  integer :: n_arg, n
   character(len=200) :: param_file
   type(param) :: para
   type(vmodel) :: vm
   type(recv_func) :: rf
-  double precision :: rayp, a_gauss
+  double precision :: rayp, a_gauss, delta, t_pre
   character(len=1) :: phase
-  rayp = 0.06d0
-  a_gauss = 2.5d0
-  phase = "P"
+  logical :: deconv_flag, correct_amp
+  rayp = 0.05d0
+  a_gauss = 8.0d0
+  phase = "S"
+  deconv_flag = .true.
+  n = 1024
+  delta = 0.05d0
+  t_pre = 30.d0
+  correct_amp = .true.
   call init_random(100, 20000, 3000000, 43444)
   
   ! Get parameter file name from command line argument
@@ -58,7 +64,27 @@ program main
   call vm%read_file(para%get_vmod_in())
 
   ! Init RF
-  rf = init_recv_func(vm, rayp, a_gauss, phase)
+  rf = init_recv_func(vm, n, delta, rayp, a_gauss, &
+       & phase, deconv_flag, t_pre=t_pre, correct_amp = .true.)
+  
+  ! Main
+  call rf%compute()
+  
+  block 
+    double precision :: rft(n), xr(n), xz(n)
+    integer :: i
+    ! Get result
+    rft(:) = rf%get_rf_data()
+    xr(:) = rf%get_t_data(1)
+    xz(:) = rf%get_t_data(2)
+    
+    do i = 1, n
+       write(111,*) (i  - 1) * delta - t_pre, rft(i)
+    end do
+    write(111,*)
+    write(111,*)
+
+  end block
 
   stop
 end program main
