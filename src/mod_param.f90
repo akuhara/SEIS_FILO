@@ -78,7 +78,7 @@ module mod_param
      
      character(len=line_max) :: vmod_in = ""
      character(len=line_max) :: ray_out = ""
-     character(len=line_max) :: obs_in = ""
+     character(len=line_max) :: disper_in = ""
      character(len=line_max) :: recv_func_out = ""
 
      logical :: solve_vp = .false.
@@ -128,7 +128,7 @@ module mod_param
      
      procedure :: get_vmod_in => param_get_vmod_in
      procedure :: get_ray_out => param_get_ray_out
-     procedure :: get_obs_in  => param_get_obs_in
+     procedure :: get_disper_in  => param_get_disper_in
 
      procedure :: get_n_smp => param_get_n_smp
      procedure :: get_rayp => param_get_rayp
@@ -262,8 +262,8 @@ contains
        read(val, *) self%k_min 
     else if (name == "k_max") then
        read(val, *) self%k_max
-    else if (name == "obs_in") then
-       self%obs_in = val
+    else if (name == "disper_in") then
+       self%disper_in = val
     else if (name == "dev_vs") then
        read(val, *) self%dev_vs
     else if (name == "dev_vp") then
@@ -687,14 +687,14 @@ contains
   
   !---------------------------------------------------------------------
 
-  character(len=line_max) function param_get_obs_in(self) &
-       & result(obs_in)
+  character(len=line_max) function param_get_disper_in(self) &
+       & result(disper_in)
     class(param), intent(in) :: self
     
-    obs_in = self%obs_in
+    disper_in = self%disper_in
     
     return
-  end function param_get_obs_in
+  end function param_get_disper_in
   
   !---------------------------------------------------------------------
 

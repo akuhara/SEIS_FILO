@@ -52,14 +52,15 @@ module mod_observation
   end type observation
   
   interface observation
-     module procedure :: init_observation
+     module procedure :: init_observation_disper
   end interface observation
      
 contains
   
   !---------------------------------------------------------------------
 
-  type(observation) function init_observation(rayobs_in)
+  type(observation) function init_observation_disper(rayobs_in) &
+       & result(self)
     character(len=*), intent(in) :: rayobs_in
     integer :: ierr, io, i
 
@@ -69,27 +70,27 @@ contains
     open(newunit = io, file = rayobs_in, status = "old", iostat = ierr)
     if (ierr /= 0) then
        write(0,*)"ERROR: cannot open ", trim(rayobs_in)
-       write(0,*)"     : (init_observation)"
+       write(0,*)"     : (init_observation_disper)"
        stop
     end if
     
     ! Read file
-    read(io, *)init_observation%nf, init_observation%fmin, &
-         & init_observation%df
-    allocate(init_observation%c(init_observation%nf))
-    allocate(init_observation%u(init_observation%nf))
-    allocate(init_observation%sig_c(init_observation%nf))
-    allocate(init_observation%sig_u(init_observation%nf))
-    do i = 1, init_observation%nf
-       read(io, *)init_observation%c(i), init_observation%sig_c(i), &
-            & init_observation%u(i), init_observation%sig_u(i)
+    read(io, *)self%nf, self%fmin, &
+         & self%df
+    allocate(self%c(self%nf))
+    allocate(self%u(self%nf))
+    allocate(self%sig_c(self%nf))
+    allocate(self%sig_u(self%nf))
+    do i = 1, self%nf
+       read(io, *)self%c(i), self%sig_c(i), &
+            & self%u(i), self%sig_u(i)
     end do
 
     close(io)
     write(*,*)
     
     return 
-  end function init_observation
+  end function init_observation_disper
   
   !---------------------------------------------------------------------
 

@@ -89,7 +89,7 @@ program main
        &           rank)
   
   ! Read observation file
-  obs = init_observation(trim(para%get_obs_in()))
+  obs = init_observation_disper(trim(para%get_disper_in()))
   fmin = obs%get_fmin()
   df   = obs%get_df()
   fmax = fmin + df * (obs%get_nf() - 1)
