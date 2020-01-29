@@ -88,7 +88,7 @@ ray_out = ray.out
   * __temp_high__ (Maximum temperature)
   * __k_min__, __k_max__ (Prior bounds for # of layers, excluding ocean layer and bottom half-space)
   * __i_seed1__, __i_seed2__, __i_seed3__, __i_seed4__ (Seed numbers for random number sequence)
-  * __obs_in__ (Observation file name)
+  * __disper_in__ (Dispersion observation file name)
   * __cmin__, __cmax__, __dc__ (Minimum, maximum and step interval of phase or group velocity for forward computation)
   * __solve_vp__ (.true. -> solve Vp; .false. -> does not solve Vp)
   * __ocean_flag__ (.true. -> ocean-bottom setting; .false. -> on-land setting)
@@ -133,7 +133,7 @@ i_seed3=98767889
 i_seed4=22405559
 
 # Observation file
-obs_in=obs.in
+disper_in = disper.in
 
 # Rayleigh dispersion computation
 cmin=2.5
@@ -152,7 +152,7 @@ nbin_vs = 25
 
 ```
 
-### Observation file (obs_in)
+### Dispersion observation file (disper_in)
 * Input to `rayleigh_inv`
 * In the first header line, the number of observations, minimum frequency, and frequency interval must be specified in this order.
 * The following line must contain: (1) observed phase velocity, (2) phase velocity uncertainties, (3) observed group velocity, and (4) group velocity uncertainty.
