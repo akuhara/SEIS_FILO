@@ -32,7 +32,7 @@ program main
   use mod_rayleigh
   use mod_const
   use mod_interpreter
-  use mod_observation
+  use mod_observation_disper
   use mod_param
   implicit none 
 
@@ -49,7 +49,7 @@ program main
   type(interpreter) :: intpr
   type(mcmc) :: mc
   type(rayleigh) :: ray, ray_tmp
-  type(observation) :: obs
+  type(observation_disper) :: obs
   type(parallel) :: pt
   type(param) :: para
   character(200) :: filename, param_file
@@ -418,7 +418,7 @@ end subroutine output_mean_model
 subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
   use mod_trans_d_model
   use mod_interpreter
-  use mod_observation
+  use mod_observation_disper
   use mod_rayleigh
   use mod_vmodel
   use mod_const, only: minus_infty
@@ -426,7 +426,7 @@ subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
   implicit none 
   type(trans_d_model), intent(in) :: tm
   type(interpreter), intent(inout) :: intpr
-  type(observation), intent(in) :: obs
+  type(observation_disper), intent(in) :: obs
   type(rayleigh), intent(inout) :: ray
   double precision, intent(out) :: log_likelihood
   type(vmodel) :: vm

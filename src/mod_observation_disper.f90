@@ -65,7 +65,6 @@ module mod_observation_disper
   
   interface observation
      module procedure :: init_observation_disper
-     module procedure :: init_observation_recv_func
   end interface observation
      
 contains
