@@ -79,6 +79,7 @@ module mod_param
      character(len=line_max) :: vmod_in = ""
      character(len=line_max) :: ray_out = ""
      character(len=line_max) :: disper_in = ""
+     character(len=line_max) :: recv_func_in = ""
      character(len=line_max) :: recv_func_out = ""
 
      logical :: solve_vp = .false.
@@ -129,6 +130,7 @@ module mod_param
      procedure :: get_vmod_in => param_get_vmod_in
      procedure :: get_ray_out => param_get_ray_out
      procedure :: get_disper_in  => param_get_disper_in
+     procedure :: get_recv_func_in => param_get_recv_func_in
 
      procedure :: get_n_smp => param_get_n_smp
      procedure :: get_rayp => param_get_rayp
@@ -695,6 +697,17 @@ contains
     
     return
   end function param_get_disper_in
+  
+  !---------------------------------------------------------------------
+
+  character(len=line_max) function param_get_recv_func_in(self) &
+       & result(recv_func_in)
+    class(param), intent(in) :: self
+    
+    recv_func_in = self%recv_func_in
+    
+    return
+  end function param_get_recv_func_in
   
   !---------------------------------------------------------------------
 
