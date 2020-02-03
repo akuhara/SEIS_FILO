@@ -38,16 +38,6 @@ module mod_observation_disper
      double precision, allocatable :: sig_c(:) ! uncertainties in c
      double precision, allocatable :: sig_u(:) ! uncertainties in u
      
-     ! receiver function
-     integer :: n_rf
-     double precision, allocatable :: a_gauss(:)
-     double precision, allocatable :: rayp(:)
-     double precision, allocatable :: delta(:)
-     double precision, allocatable :: sigma_min(:)
-     double precision, allocatable :: sigma_max(:)
-     double precision, allocatable :: rf_data(:,:)
-     character(len=1), allocatable :: phase(:)
-
    contains
      procedure :: get_nf             => observation_get_nf
      procedure :: get_fmin           => observation_get_fmin

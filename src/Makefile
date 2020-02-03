@@ -1,6 +1,5 @@
 
 FC = mpifort
-
 #-----------------------------------------------------------------------
 # For debug
 FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
@@ -8,7 +7,6 @@ FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
 # For fast computation
 #FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
-#-----------------------------------------------------------------------
 # FFTW Library
 FFTW = -I/usr/local/include -lfftw3
 
@@ -33,10 +31,18 @@ OBJS_RF_FWD = recv_func_fwd.o mod_vmodel.o mod_param.o \
 	 mod_line_text.o mod_signal_process.o mod_random.o \
 	 mod_recv_func.o
 
-TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD)
+#RF_INV = ../bin/recv_func_inv
+#OBJS_RF_INV = recv_func_inv.o mod_parallel.o mod_random.o \
+         mod_trans_d_model.o mod_mcmc.o mod_recv_func.o \
+	 mod_const.o mod_interpreter.o mod_observation_recv_func.o \
+	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
+         mod_line_text.o
+
+TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) #$(RF_INV)
 
 .PHONY: all
 all: $(TARGET)
+
 
 rayleigh_inv.o: mod_random.mod mod_trans_d_model.mod mod_mcmc.mod \
 	        mod_rayleigh.mod mod_interpreter.mod mod_const.mod \
@@ -44,7 +50,13 @@ rayleigh_inv.o: mod_random.mod mod_trans_d_model.mod mod_mcmc.mod \
                 mod_param.mod
 rayleigh_fwd.o: mod_rayleigh.mod mod_vmodel.mod mod_param.mod \
 	        mod_recv_func.mod
-recv_func_fwd.o: mod_param.mod mod_vmodel.mod mod_signal_process.mod mod_random.mod 
+recv_func_fwd.o: mod_param.mod mod_vmodel.mod mod_signal_process.mod \
+                 mod_random.mod mod_recv_func.mod
+#recv_func_inv.o: mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
+                 mod_mcmc.mod mod_const.mod mod_interpreter.mod \
+                 mod_param.mod mod_observation_recv_func.mod \
+                 mod_recv_func.mod 
+
 mod_recv_func.o: mod_vmodel.mod mod_signal_process.mod
 mod_rayleigh.o: mod_vmodel.mod
 mod_trans_d_model.o: mod_random.mod
@@ -63,6 +75,8 @@ $(RAY_INV): $(OBJS_RAY_INV)
 $(RF_FWD): $(OBJS_RF_FWD)
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
 
+#$(RF_INV): $(OBJS_RF_INV)
+#	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
 
 clean:
 	rm -f *.mod ../bin/* *.o
