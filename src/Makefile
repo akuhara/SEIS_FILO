@@ -31,8 +31,8 @@ OBJS_RF_FWD = recv_func_fwd.o mod_vmodel.o mod_param.o \
 	 mod_line_text.o mod_signal_process.o mod_random.o \
 	 mod_recv_func.o
 
-#RF_INV = ../bin/recv_func_inv
-#OBJS_RF_INV = recv_func_inv.o mod_parallel.o mod_random.o \
+RF_INV = ../bin/recv_func_inv
+OBJS_RF_INV = recv_func_inv.o mod_parallel.o mod_random.o \
          mod_trans_d_model.o mod_mcmc.o mod_recv_func.o \
 	 mod_const.o mod_interpreter.o mod_observation_recv_func.o \
 	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
@@ -52,7 +52,7 @@ rayleigh_fwd.o: mod_rayleigh.mod mod_vmodel.mod mod_param.mod \
 	        mod_recv_func.mod
 recv_func_fwd.o: mod_param.mod mod_vmodel.mod mod_signal_process.mod \
                  mod_random.mod mod_recv_func.mod
-#recv_func_inv.o: mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
+recv_func_inv.o: mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
                  mod_mcmc.mod mod_const.mod mod_interpreter.mod \
                  mod_param.mod mod_observation_recv_func.mod \
                  mod_recv_func.mod 
@@ -75,8 +75,8 @@ $(RAY_INV): $(OBJS_RAY_INV)
 $(RF_FWD): $(OBJS_RF_FWD)
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
 
-#$(RF_INV): $(OBJS_RF_INV)
-#	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
+$(RF_INV): $(OBJS_RF_INV)
+	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
 
 clean:
 	rm -f *.mod ../bin/* *.o
