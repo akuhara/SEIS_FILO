@@ -96,7 +96,6 @@ program main
      write(111,*)
   end do
   
-  stop
 
   ! Set interpreter 
   write(*,*)"Setting interpreter"
@@ -111,7 +110,10 @@ program main
        & ocean_thick = para%get_ocean_thick(), &
        & solve_vp = para%get_solve_vp())
 
+  
+
   ! Set model parameter & generate initial sample
+  write(*,*)"Seeting model parameters"
   if (para%get_solve_vp()) then
      n_rx = 3
   else 
@@ -143,9 +145,13 @@ program main
      call tm%finish()
   end do
   
+
+
   ! Set forward computation
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
+
+
   
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
@@ -171,13 +177,19 @@ program main
      stop
   end if
 
-  write(filename,'(A8,I3.3)')"syn_ray.", rank
+
+  write(filename,'(A14,I3.3)')"syn_recv_func.", rank
   open(newunit=io_ray, file=filename, status="unknown", iostat=ierr)
   if (ierr /= 0) then
      write(0,*)"ERROR: cannot create ", trim(filename)
      call mpi_finalize(ierr)
      stop
   end if
+
+
+  call mpi_finalize(i)
+  stop
+  
   
   ! Main
   do i = 1, para%get_n_iter()
