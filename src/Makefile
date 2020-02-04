@@ -38,7 +38,7 @@ OBJS_RF_INV = recv_func_inv.o mod_parallel.o mod_random.o \
 	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
          mod_line_text.o
 
-TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) #$(RF_INV)
+TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) $(RF_INV)
 
 .PHONY: all
 all: $(TARGET)
@@ -65,6 +65,7 @@ mod_interpreter.o: mod_trans_d_model.mod mod_vmodel.mod mod_sort.mod \
                    mod_const.mod
 mod_parallel.o: mod_mcmc.mod mod_trans_d_model.mod
 mod_param.o: mod_line_text.mod
+mod_observation_recv_func.o: mod_line_text.mod
 
 $(RAY_FWD): $(OBJS_RAY_FWD)
 	$(FC) $(FFLAGS) $^ -o $@

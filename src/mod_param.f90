@@ -316,6 +316,8 @@ contains
        read(val, *) self%correct_amp
     else if (name == "recv_func_out") then
        self%recv_func_out = val
+    else if (name == "recv_func_in") then
+       self%recv_func_in = val
     else
        write(0,*)"Warnings: Invalid parameter name"
        write(0,*)"        : ", name, "  (?)"

@@ -38,7 +38,6 @@ program main
 
   integer :: n_rx
   logical :: verb
-  double precision :: fmin, fmax, df
   integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
   integer :: n_mod
   double precision :: log_likelihood, temp
@@ -89,7 +88,15 @@ program main
   
   ! Read observation file
   obs = init_observation_recv_func(trim(para%get_recv_func_in()))
+  do i = 1, obs%get_n_rf()
+     do j = 1, obs%get_n_smp(i)
+        write(111, *)obs%get_t_start(i) + (j - 1) * &
+             & obs%get_delta(i), obs%get_rf_data(j, i)
+     end do
+     write(111,*)
+  end do
   
+  stop
 
   ! Set interpreter 
   write(*,*)"Setting interpreter"
