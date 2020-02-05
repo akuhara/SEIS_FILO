@@ -208,7 +208,6 @@ program main
         if (is_ok) then
            call forward_recv_func(tm_tmp, intpr, obs, &
                 & rf_tmp, log_likelihood)
-           log_likelihood = 0.d0
         else
            log_likelihood = minus_infty
         end if
@@ -442,8 +441,10 @@ subroutine forward_recv_func(tm, intpr, obs, rf, log_likelihood)
   type(observation_recv_func), intent(in) :: obs
   type(recv_func), intent(inout) :: rf(*)
   double precision, intent(out) :: log_likelihood
+  double precision :: misfit
   type(vmodel) :: vm
-  integer :: i
+  integer :: i,j 
+  
   
   ! calculate synthetic dispersion curves
   vm = intpr%get_vmodel(tm)
@@ -454,19 +455,15 @@ subroutine forward_recv_func(tm, intpr, obs, rf, log_likelihood)
   
   ! calc misfit
   log_likelihood = 0.d0
-  !do i = 1, obs%get_nf()
-  !   if (ray%get_c(i) == 0.d0 .or. ray%get_u(i) == 0.d0) then
-  !      log_likelihood = minus_infty
-  !      exit
-  !  end if
-  !   log_likelihood = &
-  !        & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
-  !        & (obs%get_sig_c(i) ** 2)
-  !   log_likelihood = &
-  !        & log_likelihood - (ray%get_u(i) - obs%get_u(i)) ** 2 / &
-  !        & (obs%get_sig_u(i) ** 2)
-  !end do
-  !log_likelihood = 0.5d0 * log_likelihood
+  do i = 1, obs%get_n_rf()
+     misfit = 0.d0
+     do j = 1, obs%get_n_smp(i)
+        misfit = misfit + &
+             & (obs%get_rf_data(j, i) - rf(i)%get_rf_data(j)) ** 2
+     end do
+     log_likelihood = -0.5d0 * obs%get_n_smp(i) * log(misfit)
+  end do
+  
 
   return 
 end subroutine forward_recv_func

@@ -529,11 +529,12 @@ contains
 
   !---------------------------------------------------------------------
 
-  function recv_func_get_rf_data(self) result(rf_data)
+  double precision function recv_func_get_rf_data(self, i) &
+       & result(rf_data)
     class(recv_func), intent(in) :: self
-    double precision :: rf_data(self%n)
+    integer, intent(in) :: i
     
-    rf_data(1:self%n) = self%rf_data(1:self%n)
+    rf_data = self%rf_data(i)
     
     return 
   end function recv_func_get_rf_data
