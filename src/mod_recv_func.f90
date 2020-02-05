@@ -54,6 +54,12 @@ module mod_recv_func
      double precision, allocatable :: t_data(:,:)
      double precision, allocatable :: rf_data(:)
      
+     ! for MCMC
+     integer, allocatable :: n_syn_rf(:, :)
+     integer :: n_bin_amp = 100
+     double precision :: amp_min = -1.d0
+     double precision :: amp_max = 1.d0
+
    contains
      procedure :: set_vmodel => recv_func_set_vmodel
      procedure :: compute => recv_func_compute
@@ -68,8 +74,11 @@ module mod_recv_func
      procedure :: get_t_data => recv_func_get_t_data
      procedure :: get_rf_data => recv_func_get_rf_data
      procedure :: output_sac => recv_func_output_sac
-     
-
+     procedure :: get_n_bin_amp => recv_func_get_n_bin_amp
+     procedure :: get_amp_min => recv_func_get_amp_min
+     procedure :: get_amp_max => recv_func_get_amp_max
+     procedure :: save_syn => recv_func_save_syn
+     procedure :: get_n_syn_rf => recv_func_get_n_syn_rf
   end type recv_func
   
   interface recv_func
@@ -81,7 +90,8 @@ contains
   !---------------------------------------------------------------------
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
-       & phase, deconv_flag, t_pre, correct_amp) result(self)
+       & phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
+       & amp_min, amp_max) result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
@@ -91,6 +101,10 @@ contains
     logical, intent(in), optional :: deconv_flag
     logical, intent(in), optional :: correct_amp
     double precision, intent(in), optional :: t_pre
+    integer, intent(in), optional :: n_bin_amp
+    double precision, intent(in), optional :: amp_min
+    double precision, intent(in), optional :: amp_max
+    
     
     self%vmodel = vm
     self%n = n
@@ -113,16 +127,27 @@ contains
     else
        self%is_ocean = .false.
     end if
+    if (present(n_bin_amp)) then
+       self%n_bin_amp = n_bin_amp
+    end if
+    if (present(amp_min)) then
+       self%amp_min = amp_min
+    end if
+    if (present(amp_max)) then
+       self%amp_max = amp_max
+    end if
     
     
 
     allocate(self%rf_data(self%n))
     allocate(self%f_data(self%n, 2))
     allocate(self%t_data(self%n, 2))
+    allocate(self%n_syn_rf(self%n, self%n_bin_amp))
 
     self%f_data(1:self%n,1:2) = (0.d0, 0.d0)
     self%t_data(1:self%n,1:2) = 0.d0
     self%rf_data(1:self%n) = 0.d0
+    self%n_syn_rf(:,:) = 0
 
     return 
   end function init_recv_func
@@ -543,5 +568,61 @@ contains
     return 
   end subroutine recv_func_output_sac
   
+  !---------------------------------------------------------------------
+
+  integer function recv_func_get_n_bin_amp(self) result(n_bin_amp)
+    class(recv_func), intent(in) :: self
+    
+    n_bin_amp = self%n_bin_amp
+    
+    return 
+  end function recv_func_get_n_bin_amp
+
+  !---------------------------------------------------------------------
+
+  double precision function recv_func_get_amp_min(self) result(amp_min)
+    class(recv_func), intent(in) :: self
+    
+    amp_min = self%amp_min
+    
+    return 
+  end function recv_func_get_amp_min
+
+  !---------------------------------------------------------------------
+  double precision function recv_func_get_amp_max(self) result(amp_max)
+    class(recv_func), intent(in) :: self
+    
+    amp_max = self%amp_max
+    
+    return 
+  end function recv_func_get_amp_max
+
+  !---------------------------------------------------------------------
+  subroutine recv_func_save_syn(self)
+    class(recv_func), intent(inout) :: self
+    integer :: i_amp, j
+    double precision :: del_amp
+
+    del_amp = (self%amp_max - self%amp_min) / self%n_bin_amp
+    do concurrent (j = 1:self%n)
+       i_amp = int((self%rf_data(j) - self%amp_min) / del_amp) + 1
+       if (i_amp < 1 .or. i_amp > self%n_bin_amp) cycle
+       self%n_syn_rf(j, i_amp) = self%n_syn_rf(j, i_amp) + 1
+    end do
+    
+    return 
+  end subroutine recv_func_save_syn
+
+  !---------------------------------------------------------------------
+
+  function recv_func_get_n_syn_rf(self) result(n_syn_rf)
+    class(recv_func), intent(in) :: self
+    integer :: n_syn_rf(self%n, self%n_bin_amp)
+    
+    n_syn_rf(:,:) = self%n_syn_rf(:,:)
+    
+    return 
+  end function recv_func_get_n_syn_rf
+
   !---------------------------------------------------------------------
 end module mod_recv_func

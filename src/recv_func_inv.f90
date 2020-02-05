@@ -38,10 +38,11 @@ program main
 
   integer :: n_rx
   logical :: verb
-  integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
+  integer :: i, j, k, ierr, n_proc, rank, io_vz, n_arg
   integer :: n_mod
   double precision :: log_likelihood, temp
   double precision :: log_prior_ratio, log_proposal_ratio
+  double precision :: del_amp
   logical :: is_ok
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
@@ -154,7 +155,7 @@ program main
   do i = 1, obs%get_n_rf()
      rf = recv_func( &
           & vm = vm, &
-          & n = obs%get_n_smp(i), &
+          & n = obs%get_n_smp(i) * 2, &
           & delta = obs%get_delta(i), &
           & rayp = obs%get_rayp(i), &
           & a_gauss = obs%get_a_gauss(i), &
@@ -166,7 +167,6 @@ program main
      
   end do
   
-  !---------------------------------------------------------------------
   
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
@@ -191,17 +191,6 @@ program main
      call mpi_finalize(ierr)
      stop
   end if
-
-
-  write(filename,'(A14,I3.3)')"syn_recv_func.", rank
-  open(newunit=io_ray, file=filename, status="unknown", iostat=ierr)
-  if (ierr /= 0) then
-     write(0,*)"ERROR: cannot create ", trim(filename)
-     call mpi_finalize(ierr)
-     stop
-  end if
-
-
   
   ! Main
   do i = 1, para%get_n_iter()
@@ -217,8 +206,8 @@ program main
         ! Forward computation
         rf_tmp = rf
         if (is_ok) then
-        !   call forward_rayleigh(tm_tmp, intpr, obs, &
-        !        & ray_tmp, log_likelihood)
+           call forward_recv_func(tm_tmp, intpr, obs, &
+                & rf_tmp, log_likelihood)
            log_likelihood = 0.d0
         else
            log_likelihood = minus_infty
@@ -228,7 +217,7 @@ program main
         call mc%judge_model(tm_tmp, log_likelihood, &
               & log_prior_ratio, log_proposal_ratio)
         if (mc%get_is_accepted()) then
-           !ray = ray_tmp
+           rf = rf_tmp
         end if
         call pt%set_mc(j, mc)
 
@@ -247,15 +236,16 @@ program main
            call intpr%save_model(tm, io_vz)
            
            ! Synthetic data
-           !call ray%output(io_ray)
+           do k = 1, obs%get_n_rf()
+              call rf(k)%save_syn()
+           end do
         end if
      end do
      ! Swap temperture
      call pt%swap_temperature(verb=.true.)
   end do
   close(io_vz)
-  close(io_ray)
-
+  
   ! Post processing following the main loop
   
   ! Total model number
@@ -302,7 +292,17 @@ program main
           & intpr%get_dz())
   end if
   
-
+  ! Synthetic RF
+  do i = 1, obs%get_n_rf()
+     del_amp = (rf(i)%get_amp_max() - rf(i)%get_amp_min()) / &
+          & rf(i)%get_n_bin_amp()
+     write(filename, '(A6,I3.3,A4)')"syn_rf", i, ".ppd"
+     call output_ppd_2d(filename, rank, obs%get_n_smp(i) * 2, &
+          & rf(i)%get_n_bin_amp(), rf(i)%get_n_syn_rf(), &
+          & n_mod, obs%get_t_start(i), obs%get_delta(i), &
+          & rf(i)%get_amp_min(), del_amp)
+  end do
+  
   ! Likelihood history
   filename = "likelihood.history"
   call pt%output_history(filename, 'l')
@@ -428,48 +428,49 @@ end subroutine output_mean_model
 
 !-----------------------------------------------------------------------
 
-!subroutine forward_recv_func(tm, intpr, obs, , log_likelihood)
-!  use mod_trans_d_model
-!  use mod_interpreter
-!  use mod_observation
-!  use mod_rayleigh
-!  use mod_vmodel
-!  use mod_const, only: minus_infty
-!  
-!  implicit none 
-!  type(trans_d_model), intent(in) :: tm
-!  type(interpreter), intent(inout) :: intpr
-!  type(observation), intent(in) :: obs
-!  type(rayleigh), intent(inout) :: ray
-!  double precision, intent(out) :: log_likelihood
-!  type(vmodel) :: vm
-!  integer :: i
-!  
-!  ! calculate synthetic dispersion curves
-!  vm = intpr%get_vmodel(tm)
-!  call ray%set_vmodel(vm)
-!  call ray%dispersion()
-!  
-!  ! calc misfit
-!  log_likelihood = 0.d0
-!  do i = 1, obs%get_nf()
-!     if (ray%get_c(i) == 0.d0 .or. ray%get_u(i) == 0.d0) then
-!        log_likelihood = minus_infty
-!        exit
-!     end if
-!     log_likelihood = &
-!          & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
-!          & (obs%get_sig_c(i) ** 2)
-!     log_likelihood = &
-!          & log_likelihood - (ray%get_u(i) - obs%get_u(i)) ** 2 / &
-!          & (obs%get_sig_u(i) ** 2)
-!
-!  end do
-!  log_likelihood = 0.5d0 * log_likelihood
-!
-!  return 
-!end subroutine forward_rayleigh
-!
-!
+subroutine forward_recv_func(tm, intpr, obs, rf, log_likelihood)
+  use mod_trans_d_model
+  use mod_interpreter
+  use mod_observation_recv_func
+  use mod_recv_func
+  use mod_vmodel
+  use mod_const, only: minus_infty
+  
+  implicit none 
+  type(trans_d_model), intent(in) :: tm
+  type(interpreter), intent(inout) :: intpr
+  type(observation_recv_func), intent(in) :: obs
+  type(recv_func), intent(inout) :: rf(*)
+  double precision, intent(out) :: log_likelihood
+  type(vmodel) :: vm
+  integer :: i
+  
+  ! calculate synthetic dispersion curves
+  vm = intpr%get_vmodel(tm)
+  do i = 1, obs%get_n_rf()
+     call rf(i)%set_vmodel(vm)
+     call rf(i)%compute()
+  end do
+  
+  ! calc misfit
+  log_likelihood = 0.d0
+  !do i = 1, obs%get_nf()
+  !   if (ray%get_c(i) == 0.d0 .or. ray%get_u(i) == 0.d0) then
+  !      log_likelihood = minus_infty
+  !      exit
+  !  end if
+  !   log_likelihood = &
+  !        & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
+  !        & (obs%get_sig_c(i) ** 2)
+  !   log_likelihood = &
+  !        & log_likelihood - (ray%get_u(i) - obs%get_u(i)) ** 2 / &
+  !        & (obs%get_sig_u(i) ** 2)
+  !end do
+  !log_likelihood = 0.5d0 * log_likelihood
+
+  return 
+end subroutine forward_recv_func
+
+
 !-----------------------------------------------------------------------
   
