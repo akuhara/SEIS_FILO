@@ -187,9 +187,6 @@ program main
   end if
 
 
-  call mpi_finalize(i)
-  stop
-  
   
   ! Main
   do i = 1, para%get_n_iter()
@@ -207,6 +204,7 @@ program main
         if (is_ok) then
         !   call forward_rayleigh(tm_tmp, intpr, obs, &
         !        & ray_tmp, log_likelihood)
+           log_likelihood = 0.d0
         else
            log_likelihood = minus_infty
         end if
