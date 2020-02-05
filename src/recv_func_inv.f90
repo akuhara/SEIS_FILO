@@ -50,6 +50,8 @@ program main
   type(parallel) :: pt
   type(param) :: para
   type(observation_recv_func) :: obs
+  type(recv_func), allocatable :: rf(:), rf_tmp(:)
+
   character(200) :: filename, param_file
 
   
@@ -111,7 +113,6 @@ program main
        & solve_vp = para%get_solve_vp())
 
   
-
   ! Set model parameter & generate initial sample
   write(*,*)"Seeting model parameters"
   if (para%get_solve_vp()) then
@@ -146,12 +147,26 @@ program main
   end do
   
 
-
   ! Set forward computation
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
-
-
+  allocate(rf(obs%get_n_rf()), rf_tmp(obs%get_n_rf()))
+  do i = 1, obs%get_n_rf()
+     rf = recv_func( &
+          & vm = vm, &
+          & n = obs%get_n_smp(i), &
+          & delta = obs%get_delta(i), &
+          & rayp = obs%get_rayp(i), &
+          & a_gauss = obs%get_a_gauss(i), &
+          & phase = obs%get_phase(i), &
+          & deconv_flag = obs%get_deconv_flag(i), &
+          & t_pre = -obs%get_t_start(i), &
+          & correct_amp = obs%get_correct_amp(i) &
+          & )
+     
+  end do
+  
+  !---------------------------------------------------------------------
   
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
@@ -200,7 +215,7 @@ program main
              & log_proposal_ratio)
 
         ! Forward computation
-        !ray_tmp = ray
+        rf_tmp = rf
         if (is_ok) then
         !   call forward_rayleigh(tm_tmp, intpr, obs, &
         !        & ray_tmp, log_likelihood)

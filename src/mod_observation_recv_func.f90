@@ -43,6 +43,9 @@ module mod_observation_recv_func
      double precision, allocatable :: t_start(:)
      double precision, allocatable :: t_end(:)
      character(len=1), allocatable :: phase(:)
+     logical, allocatable          :: deconv_flag(:)
+     logical, allocatable          :: correct_amp(:)
+     
      
    contains
      procedure :: read_sac => observation_recv_func_read_sac
@@ -51,6 +54,13 @@ module mod_observation_recv_func
      procedure :: get_n_smp => observation_recv_func_get_n_smp
      procedure :: get_t_start => observation_recv_func_get_t_start
      procedure :: get_delta => observation_recv_func_get_delta
+     procedure :: get_rayp => observation_recv_func_get_rayp
+     procedure :: get_a_gauss => observation_recv_func_get_a_gauss
+     procedure :: get_phase => observation_recv_func_get_phase
+     procedure :: get_deconv_flag => &
+          & observation_recv_func_get_deconv_flag
+     procedure :: get_correct_amp => &
+          & observation_recv_func_get_correct_amp
   end type observation_recv_func
   
   interface observation_recv_func
@@ -102,8 +112,11 @@ contains
     allocate(self%t_start(self%n_rf), self%t_end(self%n_rf))
     allocate(self%n_smp(self%n_rf))
     allocate(self%phase(self%n_rf))
+    allocate(self%deconv_flag(self%n_rf))
+    allocate(self%correct_amp(self%n_rf))
     allocate(filename(self%n_rf))
-    
+
+
     do i = 1, self%n_rf
        ! get file name
        do
@@ -161,6 +174,18 @@ contains
              exit
           end if
        end do
+       ! deconv_flag, correct_amp
+       do
+          read(io, '(a)')line
+          lt = line_text(line, ignore_space=.false.)
+          line = lt%get_line()
+          if (len_trim(line) /= 0) then
+             read(line, *) self%deconv_flag(i), self%correct_amp(i)
+             write(*,*)self%deconv_flag(i), self%correct_amp(i)
+             exit
+          end if
+       end do
+       
     end do
 
     ! allocate data array
@@ -278,6 +303,64 @@ contains
   
   !---------------------------------------------------------------------
 
+  double precision function observation_recv_func_get_rayp(self, i) &
+       & result(rayp)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    rayp = self%rayp(i)
+    
+    return 
+  end function observation_recv_func_get_rayp
+  
+  !---------------------------------------------------------------------
 
+  double precision function observation_recv_func_get_a_gauss(self, i) &
+       & result(a_gauss)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    a_gauss = self%a_gauss(i)
+    
+    return 
+  end function observation_recv_func_get_a_gauss
+  
+  !---------------------------------------------------------------------
+
+  character(1) function observation_recv_func_get_phase(self, i) &
+       & result(phase)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    phase = self%phase(i)
+    
+    return 
+  end function observation_recv_func_get_phase
+  
+  !---------------------------------------------------------------------
+
+  logical function observation_recv_func_get_deconv_flag(self, i) &
+       & result(deconv_flag)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    deconv_flag = self%deconv_flag(i)
+    
+    return 
+  end function observation_recv_func_get_deconv_flag
+  
+  !---------------------------------------------------------------------
+
+  logical function observation_recv_func_get_correct_amp(self, i) &
+       & result(correct_amp)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    correct_amp = self%correct_amp(i)
+    
+    return 
+  end function observation_recv_func_get_correct_amp
+  
+  !---------------------------------------------------------------------
   
 end module mod_observation_recv_func
