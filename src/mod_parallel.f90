@@ -366,13 +366,13 @@ contains
     integer :: i, ierr, io
     type(mcmc) :: mc
     integer :: icol, n_all, n_iter
-    double precision, allocatable :: hist_all(:,:)
+    double precision, allocatable :: hist_all(:,:), hist_all2(:,:)
 
     
     n_all = self%n_chain * self%n_proc
     mc = self%mc(1)
     n_iter = mc%get_n_iter()
-    allocate(hist_all(n_iter, n_all))
+    allocate(hist_all(n_iter, n_all), hist_all2(n_iter, n_all))
 
     ! Gather information within the same node
     do i = 1, self%n_chain
@@ -389,7 +389,7 @@ contains
        icol = (i - 1) * self%n_proc + 1
        call mpi_gather(hist_all(1:n_iter, i), n_iter, &
             & MPI_DOUBLE_PRECISION, &
-            & hist_all(1:n_iter, icol), n_iter, &
+            & hist_all2(1:n_iter, icol), n_iter, &
             & MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
     end do
     
@@ -398,7 +398,7 @@ contains
        open(newunit = io, file = filename, status = "unknown", &
             & iostat = ierr)
        do i = 1, n_iter
-          write(io, *)hist_all(i, 1:n_all)
+          write(io, *)hist_all2(i, 1:n_all)
        end do
        close(io)
     end if

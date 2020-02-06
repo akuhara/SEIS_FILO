@@ -108,37 +108,39 @@ program main
        & solve_vp = para%get_solve_vp())
 
   ! Set model parameter & generate initial sample
+  write(*,*)"Setting model parameters"
   if (para%get_solve_vp()) then
      n_rx = 3
   else 
      n_rx = 2
   end if
   do i = 1, para%get_n_chain()
-
      tm = init_trans_d_model( &
           & k_min = para%get_k_min(), &
           & k_max = para%get_k_max(), &
           & n_rx=n_rx)
      call tm%set_prior(id_vs, id_uni, &
           & para%get_vs_min(), para%get_vs_max())
-     call tm%set_prior(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max()) 
      call tm%set_prior(id_z,  id_uni, &
           & para%get_z_min(), para%get_z_max())
      call tm%set_birth(id_vs, id_uni, &
           & para%get_vs_min(), para%get_vs_max())
-     call tm%set_birth(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max())
      call tm%set_birth(id_z,  id_uni, &
           & para%get_z_min(), para%get_z_max())
      call tm%set_perturb(id_vs, para%get_dev_vs())
-     call tm%set_perturb(id_vp, para%get_dev_vp())
+
      call tm%set_perturb(id_z,  para%get_dev_z())
+     if (para%get_solve_vp()) then
+        call tm%set_prior(id_vp, id_uni, &
+             & para%get_vp_min(), para%get_vp_max()) 
+        call tm%set_birth(id_vp, id_uni, &
+             & para%get_vp_min(), para%get_vp_max())
+        call tm%set_perturb(id_vp, para%get_dev_vp())
+     end if
      call tm%generate_model()
      call pt%set_tm(i, tm)
      call tm%finish()
   end do
-  
   ! Set forward computation
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))

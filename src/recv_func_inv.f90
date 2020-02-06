@@ -34,6 +34,7 @@ program main
   use mod_param
   use mod_observation_recv_func
   use mod_recv_func
+  use mod_covariance
   implicit none 
 
   integer :: n_rx
@@ -52,8 +53,10 @@ program main
   type(param) :: para
   type(observation_recv_func) :: obs
   type(recv_func), allocatable :: rf(:), rf_tmp(:)
-
+  type(covariance), allocatable :: cov(:)
   character(200) :: filename, param_file
+
+
 
   
   ! Initialize MPI 
@@ -99,6 +102,16 @@ program main
      write(111,*)
   end do
   
+  ! Covariance matrix
+  allocate(cov(obs%get_n_rf()))
+  do i = 1, obs%get_n_rf()
+     cov(i) = covariance(                    &
+          & n = obs%get_n_smp(i),         &
+          & a_gauss = obs%get_a_gauss(i), &
+          & delta = obs%get_delta(i)      &
+          & )
+  end do
+  
 
   ! Set interpreter 
   write(*,*)"Setting interpreter"
@@ -115,7 +128,7 @@ program main
 
   
   ! Set model parameter & generate initial sample
-  write(*,*)"Seeting model parameters"
+  write(*,*)"Setting model parameters"
   if (para%get_solve_vp()) then
      n_rx = 3
   else 
@@ -129,19 +142,24 @@ program main
           & n_rx=n_rx)
      call tm%set_prior(id_vs, id_uni, &
           & para%get_vs_min(), para%get_vs_max())
-     call tm%set_prior(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max()) 
      call tm%set_prior(id_z,  id_uni, &
           & para%get_z_min(), para%get_z_max())
      call tm%set_birth(id_vs, id_uni, &
           & para%get_vs_min(), para%get_vs_max())
-     call tm%set_birth(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max())
      call tm%set_birth(id_z,  id_uni, &
           & para%get_z_min(), para%get_z_max())
      call tm%set_perturb(id_vs, para%get_dev_vs())
-     call tm%set_perturb(id_vp, para%get_dev_vp())
+
      call tm%set_perturb(id_z,  para%get_dev_z())
+     if (para%get_solve_vp()) then
+        call tm%set_prior(id_vp, id_uni, &
+             & para%get_vp_min(), para%get_vp_max()) 
+        call tm%set_birth(id_vp, id_uni, &
+             & para%get_vp_min(), para%get_vp_max())
+        call tm%set_perturb(id_vp, para%get_dev_vp())
+     end if
+     
+
      call tm%generate_model()
      call pt%set_tm(i, tm)
      call tm%finish()
@@ -153,7 +171,7 @@ program main
   vm = intpr%get_vmodel(pt%get_tm(1))
   allocate(rf(obs%get_n_rf()), rf_tmp(obs%get_n_rf()))
   do i = 1, obs%get_n_rf()
-     rf = recv_func( &
+     rf(i) = recv_func( &
           & vm = vm, &
           & n = obs%get_n_smp(i) * 2, &
           & delta = obs%get_delta(i), &
@@ -180,6 +198,7 @@ program main
              & * log(para%get_temp_high()))
         call mc%set_temp(temp)
      end if
+     
      call pt%set_mc(i, mc)
   end do
   
@@ -207,7 +226,7 @@ program main
         rf_tmp = rf
         if (is_ok) then
            call forward_recv_func(tm_tmp, intpr, obs, &
-                & rf_tmp, log_likelihood)
+                & rf_tmp, cov, log_likelihood)
         else
            log_likelihood = minus_infty
         end if
@@ -240,12 +259,12 @@ program main
            end do
         end if
      end do
+     
      ! Swap temperture
      call pt%swap_temperature(verb=.true.)
   end do
   close(io_vz)
   
-  ! Post processing following the main loop
   
   ! Total model number
   n_mod = para%get_n_cool() * n_proc * &
@@ -302,6 +321,7 @@ program main
           & rf(i)%get_amp_min(), del_amp)
   end do
   
+  
   ! Likelihood history
   filename = "likelihood.history"
   call pt%output_history(filename, 'l')
@@ -313,7 +333,6 @@ program main
   call pt%output_proposal(filename)
   
   call mpi_finalize(ierr)
-  
   stop
 end program main
 !-----------------------------------------------------------------------
@@ -427,26 +446,27 @@ end subroutine output_mean_model
 
 !-----------------------------------------------------------------------
 
-subroutine forward_recv_func(tm, intpr, obs, rf, log_likelihood)
+subroutine forward_recv_func(tm, intpr, obs, rf, cov, log_likelihood)
   use mod_trans_d_model
   use mod_interpreter
   use mod_observation_recv_func
   use mod_recv_func
   use mod_vmodel
   use mod_const, only: minus_infty
-  
+  use mod_covariance
   implicit none 
   type(trans_d_model), intent(in) :: tm
   type(interpreter), intent(inout) :: intpr
   type(observation_recv_func), intent(in) :: obs
   type(recv_func), intent(inout) :: rf(*)
+  type(covariance), intent(in) :: cov(*)
   double precision, intent(out) :: log_likelihood
-  double precision :: misfit
+  double precision, allocatable :: misfit(:), phi1(:)
+  double precision :: phi, s
   type(vmodel) :: vm
-  integer :: i,j 
+  integer :: i,j, n
   
-  
-  ! calculate synthetic dispersion curves
+  ! Forward computation
   vm = intpr%get_vmodel(tm)
   do i = 1, obs%get_n_rf()
      call rf(i)%set_vmodel(vm)
@@ -456,12 +476,16 @@ subroutine forward_recv_func(tm, intpr, obs, rf, log_likelihood)
   ! calc misfit
   log_likelihood = 0.d0
   do i = 1, obs%get_n_rf()
-     misfit = 0.d0
-     do j = 1, obs%get_n_smp(i)
-        misfit = misfit + &
-             & (obs%get_rf_data(j, i) - rf(i)%get_rf_data(j)) ** 2
+     n = obs%get_n_smp(i)
+     s = obs%get_sigma(i)
+     allocate(misfit(n), phi1(n))
+     do  j = 1, n
+        misfit(j) = obs%get_rf_data(j, i) - rf(i)%get_rf_data(j)
      end do
-     log_likelihood = -0.5d0 * obs%get_n_smp(i) * log(misfit)
+     phi1 = matmul(misfit, cov(i)%get_inv())
+     phi = dot_product(phi1, misfit)
+     log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
+          & - dble(n) * log(s)
   end do
   
 

@@ -10,6 +10,9 @@ FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
 # FFTW Library
 FFTW = -I/usr/local/include -lfftw3
 
+# LAPACK Library
+LAPACK = -llapack -lblas
+
 
 #-----------------------------------------------------------------------
 # DONOT CHANGE BELOW
@@ -36,7 +39,7 @@ OBJS_RF_INV = recv_func_inv.o mod_parallel.o mod_random.o \
          mod_trans_d_model.o mod_mcmc.o mod_recv_func.o \
 	 mod_const.o mod_interpreter.o mod_observation_recv_func.o \
 	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
-         mod_line_text.o
+         mod_line_text.o mod_covariance.o
 
 TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) $(RF_INV)
 
@@ -55,7 +58,7 @@ recv_func_fwd.o: mod_param.mod mod_vmodel.mod mod_signal_process.mod \
 recv_func_inv.o: mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
                  mod_mcmc.mod mod_const.mod mod_interpreter.mod \
                  mod_param.mod mod_observation_recv_func.mod \
-                 mod_recv_func.mod 
+                 mod_recv_func.mod mod_covariance.mod
 
 mod_recv_func.o: mod_vmodel.mod mod_signal_process.mod
 mod_rayleigh.o: mod_vmodel.mod
@@ -77,12 +80,12 @@ $(RF_FWD): $(OBJS_RF_FWD)
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
 
 $(RF_INV): $(OBJS_RF_INV)
-	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
+	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
 
 clean:
 	rm -f *.mod ../bin/* *.o
 
 %.o: %.f90
-	$(FC) $(FFLAGS) -c $< $(FFTW) -o $*.o 
+	$(FC) $(FFLAGS) -c $< $(FFTW) $(LAPACK) -o $*.o 
 %.mod: %.f90 %.o
 	@:

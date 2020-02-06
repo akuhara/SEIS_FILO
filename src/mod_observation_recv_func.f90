@@ -37,8 +37,10 @@ module mod_observation_recv_func
      double precision, allocatable :: a_gauss(:)
      double precision, allocatable :: rayp(:)
      double precision, allocatable :: delta(:)
+     double precision, allocatable :: sigma(:)
      double precision, allocatable :: sigma_min(:)
      double precision, allocatable :: sigma_max(:)
+     double precision, allocatable :: dev_sigma(:)
      double precision, allocatable :: rf_data(:,:)
      double precision, allocatable :: t_start(:)
      double precision, allocatable :: t_end(:)
@@ -57,6 +59,7 @@ module mod_observation_recv_func
      procedure :: get_rayp => observation_recv_func_get_rayp
      procedure :: get_a_gauss => observation_recv_func_get_a_gauss
      procedure :: get_phase => observation_recv_func_get_phase
+     procedure :: get_sigma => observation_recv_func_get_sigma
      procedure :: get_deconv_flag => &
           & observation_recv_func_get_deconv_flag
      procedure :: get_correct_amp => &
@@ -109,6 +112,7 @@ contains
     allocate(self%a_gauss(self%n_rf), self%rayp(self%n_rf), &
          & self%delta(self%n_rf))
     allocate(self%sigma_min(self%n_rf), self%sigma_max(self%n_rf))
+    allocate(self%sigma(self%n_rf), self%dev_sigma(self%n_rf))
     allocate(self%t_start(self%n_rf), self%t_end(self%n_rf))
     allocate(self%n_smp(self%n_rf))
     allocate(self%phase(self%n_rf))
@@ -163,14 +167,14 @@ contains
              exit
           end if
        end do
-       !sigma_min, sigma_max
+       !sigma
        do
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) /= 0) then
-             read(line, *) self%sigma_min(i), self%sigma_max(i)
-             write(*,*)self%sigma_min(i), self%sigma_max(i)
+             read(line, *) self%sigma(i)
+             write(*,*)self%sigma(i)
              exit
           end if
        end do
@@ -339,6 +343,18 @@ contains
   
   !---------------------------------------------------------------------
 
+  double precision function observation_recv_func_get_sigma(self, i) &
+       & result(sigma)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sigma = self%sigma(i)
+    
+    return 
+  end function observation_recv_func_get_sigma
+  
+  !---------------------------------------------------------------------
+
   logical function observation_recv_func_get_deconv_flag(self, i) &
        & result(deconv_flag)
     class(observation_recv_func), intent(in) :: self
@@ -362,5 +378,8 @@ contains
   end function observation_recv_func_get_correct_amp
   
   !---------------------------------------------------------------------
+
+
+
   
 end module mod_observation_recv_func
