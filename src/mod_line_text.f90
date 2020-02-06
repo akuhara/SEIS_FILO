@@ -41,7 +41,7 @@ module mod_line_text
      procedure :: remove_comment => line_text_remove_comment
      procedure :: remove_space  => line_text_remove_space
      procedure :: read_value => line_text_read_value
-     
+     procedure :: get_line => line_text_get_line
 
   end type line_text
 
@@ -75,7 +75,9 @@ contains
     !write(*,*)self%line
     call self%remove_comment()
     !write(*,*)self%line
-    call self%remove_space()
+    if (self%ignore_space) then
+       call self%remove_space()
+    end if
     !write(*,*)self%line
     
     return 
@@ -141,6 +143,13 @@ contains
 
   !---------------------------------------------------------------------
   
+  character(line_max) function line_text_get_line(self) result(line)
+    class(line_text), intent(in) :: self
+    
+    line = self%line
+    
+    return 
+  end function line_text_get_line
 
 
 end module mod_line_text

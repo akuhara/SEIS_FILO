@@ -29,30 +29,34 @@ program main
   use mod_random
   use mod_trans_d_model
   use mod_mcmc
-  use mod_rayleigh
   use mod_const
   use mod_interpreter
-  use mod_observation_disper
   use mod_param
+  use mod_observation_recv_func
+  use mod_recv_func
+  use mod_covariance
   implicit none 
 
   integer :: n_rx
   logical :: verb
-  double precision :: fmin, fmax, df
-  integer :: i, j, ierr, n_proc, rank, io_vz, io_ray, n_arg
+  integer :: i, j, k, ierr, n_proc, rank, io_vz, n_arg
   integer :: n_mod
   double precision :: log_likelihood, temp
   double precision :: log_prior_ratio, log_proposal_ratio
+  double precision :: del_amp
   logical :: is_ok
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
   type(interpreter) :: intpr
   type(mcmc) :: mc
-  type(rayleigh) :: ray, ray_tmp
-  type(observation_disper) :: obs
   type(parallel) :: pt
   type(param) :: para
+  type(observation_recv_func) :: obs
+  type(recv_func), allocatable :: rf(:), rf_tmp(:)
+  type(covariance), allocatable :: cov(:)
   character(200) :: filename, param_file
+
+
 
   
   ! Initialize MPI 
@@ -89,10 +93,25 @@ program main
        &           rank)
   
   ! Read observation file
-  obs = init_observation_disper(trim(para%get_disper_in()))
-  fmin = obs%get_fmin()
-  df   = obs%get_df()
-  fmax = fmin + df * (obs%get_nf() - 1)
+  obs = init_observation_recv_func(trim(para%get_recv_func_in()))
+  do i = 1, obs%get_n_rf()
+     do j = 1, obs%get_n_smp(i)
+        write(111, *)obs%get_t_start(i) + (j - 1) * &
+             & obs%get_delta(i), obs%get_rf_data(j, i)
+     end do
+     write(111,*)
+  end do
+  
+  ! Covariance matrix
+  allocate(cov(obs%get_n_rf()))
+  do i = 1, obs%get_n_rf()
+     cov(i) = covariance(                    &
+          & n = obs%get_n_smp(i),         &
+          & a_gauss = obs%get_a_gauss(i), &
+          & delta = obs%get_delta(i)      &
+          & )
+  end do
+  
 
   ! Set interpreter 
   write(*,*)"Setting interpreter"
@@ -107,6 +126,7 @@ program main
        & ocean_thick = para%get_ocean_thick(), &
        & solve_vp = para%get_solve_vp())
 
+  
   ! Set model parameter & generate initial sample
   write(*,*)"Setting model parameters"
   if (para%get_solve_vp()) then
@@ -115,6 +135,7 @@ program main
      n_rx = 2
   end if
   do i = 1, para%get_n_chain()
+
      tm = init_trans_d_model( &
           & k_min = para%get_k_min(), &
           & k_max = para%get_k_max(), &
@@ -137,17 +158,34 @@ program main
              & para%get_vp_min(), para%get_vp_max())
         call tm%set_perturb(id_vp, para%get_dev_vp())
      end if
+     
+
      call tm%generate_model()
      call pt%set_tm(i, tm)
      call tm%finish()
   end do
+  
+
   ! Set forward computation
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
-  ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
-         & cmin=para%get_cmin(), cmax=para%get_cmax(), &
-         & dc=para%get_dc())
-
+  allocate(rf(obs%get_n_rf()), rf_tmp(obs%get_n_rf()))
+  do i = 1, obs%get_n_rf()
+     rf(i) = recv_func( &
+          & vm = vm, &
+          & n = obs%get_n_smp(i) * 2, &
+          & delta = obs%get_delta(i), &
+          & rayp = obs%get_rayp(i), &
+          & a_gauss = obs%get_a_gauss(i), &
+          & phase = obs%get_phase(i), &
+          & deconv_flag = obs%get_deconv_flag(i), &
+          & t_pre = -obs%get_t_start(i), &
+          & correct_amp = obs%get_correct_amp(i) &
+          & )
+     
+  end do
+  
+  
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
      ! Set transdimensional model
@@ -160,20 +198,13 @@ program main
              & * log(para%get_temp_high()))
         call mc%set_temp(temp)
      end if
+     
      call pt%set_mc(i, mc)
   end do
   
   ! Output files
   write(filename,'(A10,I3.3)')"vz_models.", rank
   open(newunit=io_vz, file=filename, status="unknown", iostat=ierr)
-  if (ierr /= 0) then
-     write(0,*)"ERROR: cannot create ", trim(filename)
-     call mpi_finalize(ierr)
-     stop
-  end if
-
-  write(filename,'(A8,I3.3)')"syn_ray.", rank
-  open(newunit=io_ray, file=filename, status="unknown", iostat=ierr)
   if (ierr /= 0) then
      write(0,*)"ERROR: cannot create ", trim(filename)
      call mpi_finalize(ierr)
@@ -192,10 +223,10 @@ program main
              & log_proposal_ratio)
 
         ! Forward computation
-        ray_tmp = ray
+        rf_tmp = rf
         if (is_ok) then
-           call forward_rayleigh(tm_tmp, intpr, obs, &
-                & ray_tmp, log_likelihood)
+           call forward_recv_func(tm_tmp, intpr, obs, &
+                & rf_tmp, cov, log_likelihood)
         else
            log_likelihood = minus_infty
         end if
@@ -204,7 +235,7 @@ program main
         call mc%judge_model(tm_tmp, log_likelihood, &
               & log_prior_ratio, log_proposal_ratio)
         if (mc%get_is_accepted()) then
-           ray = ray_tmp
+           rf = rf_tmp
         end if
         call pt%set_mc(j, mc)
 
@@ -223,16 +254,17 @@ program main
            call intpr%save_model(tm, io_vz)
            
            ! Synthetic data
-           call ray%output(io_ray)
+           do k = 1, obs%get_n_rf()
+              call rf(k)%save_syn()
+           end do
         end if
      end do
+     
      ! Swap temperture
      call pt%swap_temperature(verb=.true.)
   end do
   close(io_vz)
-  close(io_ray)
-
-  ! Post processing following the main loop
+  
   
   ! Total model number
   n_mod = para%get_n_cool() * n_proc * &
@@ -277,21 +309,19 @@ program main
           & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
           & intpr%get_dz())
   end if
-
-  ! Frequency-phase velocity
-  filename = "f_c.ppd"
-  call output_ppd_2d(filename, rank, ray%get_nf(), &
-       & ray%get_nc(), ray%get_n_fc(), &
-       & n_mod, obs%get_fmin(), obs%get_df(), &
-       & para%get_cmin(), para%get_dc())
-
-  ! Frequency-group velocity
-  filename = "f_u.ppd"
-  call output_ppd_2d(filename, rank, ray%get_nf(), &
-       & ray%get_nc(), ray%get_n_fu(), &
-       & n_mod, obs%get_fmin(), obs%get_df(), &
-       & para%get_cmin(), para%get_dc())
-
+  
+  ! Synthetic RF
+  do i = 1, obs%get_n_rf()
+     del_amp = (rf(i)%get_amp_max() - rf(i)%get_amp_min()) / &
+          & rf(i)%get_n_bin_amp()
+     write(filename, '(A6,I3.3,A4)')"syn_rf", i, ".ppd"
+     call output_ppd_2d(filename, rank, obs%get_n_smp(i) * 2, &
+          & rf(i)%get_n_bin_amp(), rf(i)%get_n_syn_rf(), &
+          & n_mod, obs%get_t_start(i), obs%get_delta(i), &
+          & rf(i)%get_amp_min(), del_amp)
+  end do
+  
+  
   ! Likelihood history
   filename = "likelihood.history"
   call pt%output_history(filename, 'l')
@@ -303,7 +333,6 @@ program main
   call pt%output_proposal(filename)
   
   call mpi_finalize(ierr)
-  
   stop
 end program main
 !-----------------------------------------------------------------------
@@ -417,47 +446,51 @@ end subroutine output_mean_model
 
 !-----------------------------------------------------------------------
 
-subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
+subroutine forward_recv_func(tm, intpr, obs, rf, cov, log_likelihood)
   use mod_trans_d_model
   use mod_interpreter
-  use mod_observation_disper
-  use mod_rayleigh
+  use mod_observation_recv_func
+  use mod_recv_func
   use mod_vmodel
   use mod_const, only: minus_infty
-  
+  use mod_covariance
   implicit none 
   type(trans_d_model), intent(in) :: tm
   type(interpreter), intent(inout) :: intpr
-  type(observation_disper), intent(in) :: obs
-  type(rayleigh), intent(inout) :: ray
+  type(observation_recv_func), intent(in) :: obs
+  type(recv_func), intent(inout) :: rf(*)
+  type(covariance), intent(in) :: cov(*)
   double precision, intent(out) :: log_likelihood
+  double precision, allocatable :: misfit(:), phi1(:)
+  double precision :: phi, s
   type(vmodel) :: vm
-  integer :: i
+  integer :: i,j, n
   
-  ! calculate synthetic dispersion curves
+  ! Forward computation
   vm = intpr%get_vmodel(tm)
-  call ray%set_vmodel(vm)
-  call ray%dispersion()
+  do i = 1, obs%get_n_rf()
+     call rf(i)%set_vmodel(vm)
+     call rf(i)%compute()
+  end do
   
   ! calc misfit
   log_likelihood = 0.d0
-  do i = 1, obs%get_nf()
-     if (ray%get_c(i) == 0.d0 .or. ray%get_u(i) == 0.d0) then
-        log_likelihood = minus_infty
-        exit
-     end if
-     log_likelihood = &
-          & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
-          & (obs%get_sig_c(i) ** 2)
-     log_likelihood = &
-          & log_likelihood - (ray%get_u(i) - obs%get_u(i)) ** 2 / &
-          & (obs%get_sig_u(i) ** 2)
-
+  do i = 1, obs%get_n_rf()
+     n = obs%get_n_smp(i)
+     s = obs%get_sigma(i)
+     allocate(misfit(n), phi1(n))
+     do  j = 1, n
+        misfit(j) = obs%get_rf_data(j, i) - rf(i)%get_rf_data(j)
+     end do
+     phi1 = matmul(misfit, cov(i)%get_inv())
+     phi = dot_product(phi1, misfit)
+     log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
+          & - dble(n) * log(s)
   end do
-  log_likelihood = 0.5d0 * log_likelihood
+  
 
   return 
-end subroutine forward_rayleigh
+end subroutine forward_recv_func
 
 
 !-----------------------------------------------------------------------

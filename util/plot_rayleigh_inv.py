@@ -155,7 +155,7 @@ class InvRslt:
         cbar.ax.set_ylabel(plabel)
         
         # Observation
-        df = pd.read_csv(param["obs_in"], delim_whitespace=True, \
+        df = pd.read_csv(param["disper_in"], delim_whitespace=True, \
                          header=0, \
                          names=(clabel, "c_err", ulabel, "u_err"))
         df[flabel] = np.arange(f_min, f_max, del_f)
@@ -168,7 +168,7 @@ class InvRslt:
 
     def _read_obs_header(self):
         param = self._param
-        file = param["obs_in"]
+        file = param["disper_in"]
         with open(file, 'r') as f:
             line = f.readline()
             item = line.split()
@@ -206,7 +206,14 @@ class InvRslt:
         file = "proposal.count"
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          index_col=0)
-        df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        
+        if param["solve_vp"].lower() == ".true.":
+            df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        elif param["solve_vp"].lower() == "t":
+            df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        else:
+            df.index = ['Birth', 'Death', 'Depth', 'Vs']
+
         df.columns = ['Proposed', 'Accepted']
         df.plot(kind='bar', ax=ax)
 

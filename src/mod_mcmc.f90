@@ -146,7 +146,7 @@ contains
          & log_proposal_ratio
     double precision :: ratio
     double precision :: r
-
+    integer :: i
     
     self%is_accepted = .false.
 
@@ -173,7 +173,8 @@ contains
     self%likelihood_saved(self%i_iter) = self%log_likelihood
     self%k_saved(self%i_iter) = self%tm%get_k()
     self%temp_saved(self%i_iter) = self%temp
-    
+
+
     return 
   end subroutine mcmc_judge_model
   
@@ -255,7 +256,7 @@ contains
     class(mcmc), intent(in) :: self
     double precision :: l(self%n_iter)
     
-    l = self%likelihood_saved
+    l(:) = self%likelihood_saved(:)
     
     return 
   end function mcmc_get_likelihood_saved
@@ -266,7 +267,7 @@ contains
     class(mcmc), intent(in) :: self
     double precision :: t(self%n_iter)
     
-    t = self%temp_saved
+    t(:) = self%temp_saved(:)
     
     return 
   end function mcmc_get_temp_saved
