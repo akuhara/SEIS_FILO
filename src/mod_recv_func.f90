@@ -482,9 +482,6 @@ contains
     double precision, intent(in) :: t_shift ! 
     integer :: i, j, n_shift
     double precision :: tmp(self%n)
-    write(*,*)self%n
-    write(*,*)size(self%rf_data), size(self%f_data)
-
 
     tmp(:) = self%rf_data(:)
     
