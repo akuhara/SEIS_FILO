@@ -1,6 +1,9 @@
 # SEIS_FILO (Alpha version)
 SEISmological tools for Flat Isotropic Layered structure in the Ocean; forward computation & transdimensional inversion
 
+# NOTE:
+Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. 
+
 Copyright (C) 2019 Takeshi Akuhara
 
 ![plot](./img/plot.png)
