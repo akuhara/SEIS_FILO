@@ -62,10 +62,10 @@ module mod_param
      double precision :: dev_vs = 0.02d0
 
 
-     integer :: nbin_z = -999
-     integer :: nbin_vs = -999
-     integer :: nbin_vp = -999
-     integer :: nbin_c  = -999
+     integer :: n_bin_z = -999
+     integer :: n_bin_vs = -999
+     integer :: n_bin_vp = -999
+     integer :: n_bin_c  = -999
 
 
      double precision :: fmin = -999.d0
@@ -113,10 +113,10 @@ module mod_param
      procedure :: get_i_seed4 => param_get_i_seed4
      procedure :: get_k_min => param_get_k_min
      procedure :: get_k_max => param_get_k_max
-     procedure :: get_nbin_z => param_get_nbin_z
-     procedure :: get_nbin_vs => param_get_nbin_vs
-     procedure :: get_nbin_vp => param_get_nbin_vp
-     procedure :: get_nbin_c => param_get_nbin_c
+     procedure :: get_n_bin_z => param_get_n_bin_z
+     procedure :: get_n_bin_vs => param_get_n_bin_vs
+     procedure :: get_n_bin_vp => param_get_n_bin_vp
+     procedure :: get_n_bin_c => param_get_n_bin_c
      
      procedure :: get_temp_high => param_get_temp_high
      procedure :: get_fmin => param_get_fmin
@@ -302,14 +302,14 @@ contains
        read(val, *) self%solve_vp
     else if (name == "ocean_flag") then
        read(val, *) self%ocean_flag 
-    else if (name == "nbin_z") then
-       read(val, *) self%nbin_z 
-    else if (name == "nbin_vs") then
-       read(val, *) self%nbin_vs
-    else if (name == "nbin_vp") then
-       read(val, *) self%nbin_vp
-    else if (name == "nbin_c") then
-       read(val, *) self%nbin_c
+    else if (name == "n_bin_z") then
+       read(val, *) self%n_bin_z 
+    else if (name == "n_bin_vs") then
+       read(val, *) self%n_bin_vs
+    else if (name == "n_bin_vp") then
+       read(val, *) self%n_bin_vp
+    else if (name == "n_bin_c") then
+       read(val, *) self%n_bin_c
     else if (name == "n_smp") then
        read(val, *) self%n_smp
     else if (name == "delta") then
@@ -450,44 +450,44 @@ contains
   
   !---------------------------------------------------------------------
 
-  integer function param_get_nbin_z(self) result(nbin_z)
+  integer function param_get_n_bin_z(self) result(n_bin_z)
     class(param), intent(in) :: self
     
-    nbin_z = self%nbin_z
+    n_bin_z = self%n_bin_z
     
     return 
-  end function param_get_nbin_z
+  end function param_get_n_bin_z
   
   
   !---------------------------------------------------------------------
 
-  integer function param_get_nbin_vs(self) result(nbin_vs)
+  integer function param_get_n_bin_vs(self) result(n_bin_vs)
     class(param), intent(in) :: self
     
-    nbin_vs = self%nbin_vs
+    n_bin_vs = self%n_bin_vs
     
     return 
-  end function param_get_nbin_vs
+  end function param_get_n_bin_vs
   
   !---------------------------------------------------------------------
 
-  integer function param_get_nbin_vp(self) result(nbin_vp)
+  integer function param_get_n_bin_vp(self) result(n_bin_vp)
     class(param), intent(in) :: self
     
-    nbin_vp = self%nbin_vp
+    n_bin_vp = self%n_bin_vp
     
     return 
-  end function param_get_nbin_vp
+  end function param_get_n_bin_vp
 
   !---------------------------------------------------------------------
 
-  integer function param_get_nbin_c(self) result(nbin_c)
+  integer function param_get_n_bin_c(self) result(n_bin_c)
     class(param), intent(in) :: self
     
-    nbin_c = self%nbin_c
+    n_bin_c = self%n_bin_c
     
     return 
-  end function param_get_nbin_c
+  end function param_get_n_bin_c
 
   !---------------------------------------------------------------------
 

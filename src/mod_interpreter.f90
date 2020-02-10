@@ -40,9 +40,9 @@ module mod_interpreter
      double precision :: ocean_vp    = 1.5d0
      double precision :: ocean_rho   = 1.d0
 
-     integer :: nbin_z
-     integer :: nbin_vs
-     integer :: nbin_vp
+     integer :: n_bin_z
+     integer :: n_bin_vs
+     integer :: n_bin_vp
 
      integer, allocatable :: n_vsz(:, :)
      integer, allocatable :: n_vpz(:, :)
@@ -69,9 +69,9 @@ module mod_interpreter
    contains
      procedure :: get_vmodel => interpreter_get_vmodel
      procedure :: save_model => interpreter_save_model
-     procedure :: get_nbin_z => interpreter_get_nbin_z
-     procedure :: get_nbin_vs => interpreter_get_nbin_vs
-     procedure :: get_nbin_vp => interpreter_get_nbin_vp
+     procedure :: get_n_bin_z => interpreter_get_n_bin_z
+     procedure :: get_n_bin_vs => interpreter_get_n_bin_vs
+     procedure :: get_n_bin_vp => interpreter_get_n_bin_vp
      procedure :: get_n_vpz => interpreter_get_n_vpz
      procedure :: get_n_vsz => interpreter_get_n_vsz
      procedure :: get_vpz_mean => interpreter_get_vpz_mean
@@ -90,12 +90,12 @@ contains
 
   !---------------------------------------------------------------------
   type(interpreter) function init_interpreter(nlay_max, z_min, z_max, &
-       & nbin_z, vs_min, vs_max, nbin_vs, vp_min, vp_max, nbin_vp, &
+       & n_bin_z, vs_min, vs_max, n_bin_vs, vp_min, vp_max, n_bin_vp, &
        & ocean_flag, ocean_thick, ocean_vp, ocean_rho, solve_vp) &
        & result(self)
     integer, intent(in) :: nlay_max
-    integer, intent(in) :: nbin_z, nbin_vs
-    integer, intent(in), optional :: nbin_vp
+    integer, intent(in) :: n_bin_z, n_bin_vs
+    integer, intent(in), optional :: n_bin_vp
     double precision, intent(in) :: z_min, z_max, vs_min, vs_max
     double precision, intent(in), optional :: vp_min, vp_max
     logical, intent(in), optional :: ocean_flag
@@ -111,19 +111,19 @@ contains
     
     self%z_min   = z_min
     self%z_max   = z_max
-    self%nbin_z  = nbin_z
+    self%n_bin_z  = n_bin_z
     self%vs_min  = vs_min
     self%vs_max  = vs_max
-    self%nbin_vs = nbin_vs
+    self%n_bin_vs = n_bin_vs
     
-    self%dz  = (z_max - 0.d0) / dble(nbin_z)
-    self%dvs = (vs_max - vs_min) / dble(nbin_vs)
+    self%dz  = (z_max - 0.d0) / dble(n_bin_z)
+    self%dvs = (vs_max - vs_min) / dble(n_bin_vs)
     
-    allocate(self%n_vsz(nbin_vs, nbin_z))
+    allocate(self%n_vsz(n_bin_vs, n_bin_z))
     self%n_vsz = 0
     allocate(self%n_layers(self%nlay_max))
     self%n_layers = 0
-    allocate(self%vsz_mean(nbin_z))
+    allocate(self%vsz_mean(n_bin_z))
     self%vsz_mean = 0.d0
 
     if (present(ocean_flag)) then
@@ -151,19 +151,19 @@ contains
           write(0,*)"ERROR: vp_max is not given"
           stop
        end if
-       if (.not. present(nbin_vp)) then
-          write(0,*)"ERROR: nbin_vp is not given"
+       if (.not. present(n_bin_vp)) then
+          write(0,*)"ERROR: n_bin_vp is not given"
           stop
        end if
        self%solve_vp = solve_vp
        if (self%solve_vp) then
           self%vp_min = vp_min
           self%vp_max = vp_max
-          self%nbin_vp = nbin_vp
-          self%dvp = (vp_max - vp_min) / dble(nbin_vp)
-          allocate(self%n_vpz(nbin_vp, nbin_z))
+          self%n_bin_vp = n_bin_vp
+          self%dvp = (vp_max - vp_min) / dble(n_bin_vp)
+          allocate(self%n_vpz(n_bin_vp, n_bin_z))
           self%n_vpz = 0
-          allocate(self%vpz_mean(nbin_z))
+          allocate(self%vpz_mean(n_bin_z))
           self%vpz_mean = 0.d0
        end if
     end if
@@ -241,7 +241,7 @@ contains
 
   function interpreter_get_n_vsz(self) result(n_vsz)
     class(interpreter), intent(in) :: self
-    integer :: n_vsz(self%nbin_vs, self%nbin_z)
+    integer :: n_vsz(self%n_bin_vs, self%n_bin_z)
 
     n_vsz = self%n_vsz
 
@@ -252,7 +252,7 @@ contains
 
   function interpreter_get_n_vpz(self) result(n_vpz)
     class(interpreter), intent(in) :: self
-    integer :: n_vpz(self%nbin_vp, self%nbin_z)
+    integer :: n_vpz(self%n_bin_vp, self%n_bin_z)
 
     n_vpz = self%n_vpz
 
@@ -263,7 +263,7 @@ contains
 
   function interpreter_get_vsz_mean(self) result(vsz_mean)
     class(interpreter), intent(in) :: self
-    double precision :: vsz_mean(self%nbin_z)
+    double precision :: vsz_mean(self%n_bin_z)
 
     vsz_mean = self%vsz_mean
 
@@ -274,7 +274,7 @@ contains
 
   function interpreter_get_vpz_mean(self) result(vpz_mean)
     class(interpreter), intent(in) :: self
-    double precision :: vpz_mean(self%nbin_z)
+    double precision :: vpz_mean(self%n_bin_z)
 
     vpz_mean = self%vpz_mean
 
@@ -313,7 +313,7 @@ contains
        if (ilay < nlay) then
           iz2 = int((tmpz + vm%get_h(ilay)) / self%dz) + 1
        else
-          iz2 = self%nbin_z + 1
+          iz2 = self%n_bin_z + 1
        end if
        layer: do iz = iz1, iz2 - 1
           z = (iz - 1) * self%dz
@@ -326,7 +326,7 @@ contains
           if (iv < 1) then
              iv = 1 ! This should occur for ocean
           end if
-          if (iz > self%nbin_z) exit model
+          if (iz > self%n_bin_z) exit model
           write(*,*)vp, vs, z
           self%n_vsz(iv, iz) = self%n_vsz(iv, iz) + 1
           self%vsz_mean(iz) = self%vsz_mean(iz) + vs
@@ -344,33 +344,33 @@ contains
 
   !---------------------------------------------------------------------
 
-  integer function interpreter_get_nbin_z(self) result(nbin_z)
+  integer function interpreter_get_n_bin_z(self) result(n_bin_z)
     class(interpreter), intent(in) ::self
 
-    nbin_z = self%nbin_z
+    n_bin_z = self%n_bin_z
     
     return 
-  end function interpreter_get_nbin_z
+  end function interpreter_get_n_bin_z
   
   !---------------------------------------------------------------------
 
-  integer function interpreter_get_nbin_vs(self) result(nbin_vs)
+  integer function interpreter_get_n_bin_vs(self) result(n_bin_vs)
     class(interpreter), intent(in) ::self
 
-    nbin_vs = self%nbin_vs
+    n_bin_vs = self%n_bin_vs
     
     return 
-  end function interpreter_get_nbin_vs
+  end function interpreter_get_n_bin_vs
   
   !---------------------------------------------------------------------
 
-  integer function interpreter_get_nbin_vp(self) result(nbin_vp)
+  integer function interpreter_get_n_bin_vp(self) result(n_bin_vp)
     class(interpreter), intent(in) ::self
 
-    nbin_vp = self%nbin_vp
+    n_bin_vp = self%n_bin_vp
     
     return 
-  end function interpreter_get_nbin_vp
+  end function interpreter_get_n_bin_vp
   
   !---------------------------------------------------------------------  
 

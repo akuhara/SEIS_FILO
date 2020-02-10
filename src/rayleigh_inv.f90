@@ -98,11 +98,11 @@ program main
   write(*,*)"Setting interpreter"
   intpr = init_interpreter(nlay_max= para%get_k_max(), &
        & z_min = para%get_z_min(), z_max = para%get_z_max(), &
-       & nbin_z = para%get_nbin_z(), &
+       & n_bin_z = para%get_n_bin_z(), &
        & vs_min = para%get_vs_min(), vs_max = para%get_vs_max(), &
-       & nbin_vs = para%get_nbin_vs(), &
+       & n_bin_vs = para%get_n_bin_vs(), &
        & vp_min = para%get_vp_min(), vp_max = para%get_vp_max(), &
-       & nbin_vp = para%get_nbin_vp(), &
+       & n_bin_vp = para%get_n_bin_vp(), &
        & ocean_flag = para%get_ocean_flag(), &
        & ocean_thick = para%get_ocean_thick(), &
        & solve_vp = para%get_solve_vp())
@@ -247,8 +247,8 @@ program main
   
   ! marginal posterior of Vs 
   filename = "vs_z.ppd"
-  call output_ppd_2d(filename, rank, para%get_nbin_vs(), &
-       & para%get_nbin_z(), intpr%get_n_vsz(), n_mod, &
+  call output_ppd_2d(filename, rank, para%get_n_bin_vs(), &
+       & para%get_n_bin_z(), intpr%get_n_vsz(), n_mod, &
        & para%get_vs_min() + 0.5d0 * intpr%get_dvs(), &
        & intpr%get_dvs(), &
        & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
@@ -256,7 +256,7 @@ program main
   
   ! Mean Vs
   filename = "vs_z.mean"
-  call output_mean_model(filename, rank, para%get_nbin_z(), &
+  call output_mean_model(filename, rank, para%get_n_bin_z(), &
        & intpr%get_vsz_mean(), n_mod, &
        & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
        & intpr%get_dz())
@@ -264,15 +264,15 @@ program main
   if (para%get_solve_vp()) then
      ! marginal posterior of Vp
      filename = "vp_z.ppd"
-     call output_ppd_2d(filename, rank, para%get_nbin_vp(), &
-          & para%get_nbin_z(), intpr%get_n_vpz(), n_mod, &
+     call output_ppd_2d(filename, rank, para%get_n_bin_vp(), &
+          & para%get_n_bin_z(), intpr%get_n_vpz(), n_mod, &
           & para%get_vp_min() + 0.5d0 * intpr%get_dvp(), &
           & intpr%get_dvp(), &
           & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
           & intpr%get_dz())
      ! Mean Vp
      filename = "vp_z.mean"
-     call output_mean_model(filename, rank, para%get_nbin_z(), &
+     call output_mean_model(filename, rank, para%get_n_bin_z(), &
           & intpr%get_vpz_mean(), n_mod, &
           & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
           & intpr%get_dz())
@@ -308,17 +308,17 @@ program main
 end program main
 !-----------------------------------------------------------------------
 
-subroutine output_ppd_1d(filename, rank, nbin_x, n_x, n_mod, x_min, dx)
+subroutine output_ppd_1d(filename, rank, n_bin_x, n_x, n_mod, x_min, dx)
   include 'mpif.h'
   character(*), intent(in) :: filename
-  integer, intent(in) :: rank, nbin_x, n_mod
-  integer, intent(in) :: n_x(nbin_x)
+  integer, intent(in) :: rank, n_bin_x, n_mod
+  integer, intent(in) :: n_x(n_bin_x)
   double precision, intent(in) :: x_min, dx
   double precision :: x
   integer :: io_x, ierr, i
-  integer :: n_x_all(nbin_x)
+  integer :: n_x_all(n_bin_x)
   
-  call mpi_reduce(n_x, n_x_all, nbin_x, MPI_INTEGER4, MPI_SUM, 0, &
+  call mpi_reduce(n_x, n_x_all, n_bin_x, MPI_INTEGER4, MPI_SUM, 0, &
        & MPI_COMM_WORLD, ierr)
   
   if (rank == 0) then
@@ -331,7 +331,7 @@ subroutine output_ppd_1d(filename, rank, nbin_x, n_x, n_mod, x_min, dx)
      end if
      
      
-     do i = 1, nbin_x
+     do i = 1, n_bin_x
         x = x_min + (i - 1) * dx
         write(io_x, '(3F13.5)') x, dble(n_x_all(i)) / dble(n_mod)
      end do
@@ -343,18 +343,18 @@ end subroutine output_ppd_1d
 
 !-----------------------------------------------------------------------
 
-subroutine output_ppd_2d(filename, rank, nbin_x, nbin_y, n_xy, n_mod, &
+subroutine output_ppd_2d(filename, rank, n_bin_x, n_bin_y, n_xy, n_mod, &
      & x_min, dx, y_min, dy)
   include 'mpif.h'
   character(*), intent(in) :: filename
-  integer, intent(in) :: rank, nbin_x, nbin_y, n_mod
-  integer, intent(in) :: n_xy(nbin_x, nbin_y)
+  integer, intent(in) :: rank, n_bin_x, n_bin_y, n_mod
+  integer, intent(in) :: n_xy(n_bin_x, n_bin_y)
   double precision, intent(in) :: x_min, dx, y_min, dy
   double precision :: x, y
   integer :: io_xy, ierr, i, j
-  integer :: n_xy_all(nbin_x, nbin_y)
+  integer :: n_xy_all(n_bin_x, n_bin_y)
   
-  call mpi_reduce(n_xy, n_xy_all, nbin_x * nbin_y, MPI_INTEGER4, &
+  call mpi_reduce(n_xy, n_xy_all, n_bin_x * n_bin_y, MPI_INTEGER4, &
        & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
   
   if (rank == 0) then
@@ -366,9 +366,9 @@ subroutine output_ppd_2d(filename, rank, nbin_x, nbin_y, n_xy, n_mod, &
         stop
      end if
      
-     do i = 1, nbin_y
+     do i = 1, n_bin_y
         y = y_min + (i - 1) * dy
-        do j = 1, nbin_x
+        do j = 1, n_bin_x
            x = x_min + (j - 1) * dx
            write(io_xy, '(3F13.5)') x, y, &
                 & dble(n_xy_all(j, i)) / dble(n_mod)
@@ -382,17 +382,17 @@ end subroutine output_ppd_2d
 
 !-----------------------------------------------------------------------
 
-subroutine output_mean_model(filename, rank, nbin_x, sum_x, n_mod, x_min, dx)
+subroutine output_mean_model(filename, rank, n_bin_x, sum_x, n_mod, x_min, dx)
   include 'mpif.h'
   character(*), intent(in) :: filename
-  integer, intent(in) :: rank, nbin_x, n_mod
-  double precision, intent(in) :: sum_x(nbin_x)
+  integer, intent(in) :: rank, n_bin_x, n_mod
+  double precision, intent(in) :: sum_x(n_bin_x)
   double precision, intent(in) :: x_min, dx
   double precision :: x
   integer :: io_x, ierr, i
-  double precision :: sum_x_all(nbin_x)
+  double precision :: sum_x_all(n_bin_x)
   
-  call mpi_reduce(sum_x, sum_x_all, nbin_x, MPI_DOUBLE_PRECISION, &
+  call mpi_reduce(sum_x, sum_x_all, n_bin_x, MPI_DOUBLE_PRECISION, &
        & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
   
   if (rank == 0) then
@@ -405,7 +405,7 @@ subroutine output_mean_model(filename, rank, nbin_x, sum_x, n_mod, x_min, dx)
      end if
      
      
-     do i = 1, nbin_x
+     do i = 1, n_bin_x
         x = x_min + (i - 1) * dx
         write(io_x, '(3F13.5)') x, sum_x_all(i) / dble(n_mod)
      end do

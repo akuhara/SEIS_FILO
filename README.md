@@ -96,7 +96,7 @@ ray_out = ray.out
   * __solve_vp__ (.true. -> solve Vp; .false. -> does not solve Vp)
   * __ocean_flag__ (.true. -> ocean-bottom setting; .false. -> on-land setting)
   * __ocean_thick__ (Ocean layer thickness (km))
-  * __nbin_z__, __nbin_vs__, __nbin_vp__ (# of bins for depth, Vs, and Vp)
+  * __n_bin_z__, __n_bin_vs__, __n_bin_vp__ (# of bins for depth, Vs, and Vp)
 * Comment out by "#" works fine.
 
 ```
@@ -149,9 +149,9 @@ ocean_flag=.false.
 ocean_thick=1.d0
 
 # Output binning
-nbin_z =50
-nbin_vp = 25 
-nbin_vs = 25 
+n_bin_z =50
+n_bin_vp = 25 
+n_bin_vs = 25 
 
 ```
 
