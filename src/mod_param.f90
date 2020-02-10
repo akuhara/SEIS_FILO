@@ -32,38 +32,50 @@ module mod_param
   type param
      private
      character(len=line_max) :: param_file
-     integer :: n_iter = -999
-     integer :: n_burn = -999
-     integer :: n_corr = -999
-     integer :: n_chain = -999
-     integer :: n_cool = -999
+
+     ! General Parametes for MCMC
+     integer :: n_iter = 500000
+     integer :: n_burn = 250000
+     integer :: n_corr = 100
+     double precision :: temp_high = 30.d0
+     integer :: n_chain = 5
+     integer :: n_cool = 1
      integer :: i_seed1 = 11111111
      integer :: i_seed2 = 22222222
      integer :: i_seed3 = 33333333
      integer :: i_seed4 = 44444444
-     integer :: k_min = -999
-     integer :: k_max = -999
+
+     ! Parameters defining model space
+     integer :: k_min = 1
+     integer :: k_max = 21
+     double precision :: z_min = 0.d0
+     double precision :: z_max = 70.d0
+     logical :: solve_vp = .false.
+     double precision :: vp_min = 4.5d0
+     double precision :: vp_max = 9.0d0
+     double precision :: vs_min = 2.5d0
+     double precision :: vs_max = 5.0d0
+     
+     ! Parameters for random perturbation
+     double precision :: dev_z  = 0.1d0
+     double precision :: dev_vp = 0.04d0
+     double precision :: dev_vs = 0.02d0
+
+
      integer :: nbin_z = -999
      integer :: nbin_vs = -999
      integer :: nbin_vp = -999
      integer :: nbin_c  = -999
 
-     double precision :: temp_high = -999.d0
+
      double precision :: fmin = -999.d0
      double precision :: fmax = -999.d0
      double precision :: df = -999.d0
      double precision :: cmin = -999.d0
      double precision :: cmax = -999.d0
      double precision :: dc = -999.d0
-     double precision :: dev_vs = -999.d0
-     double precision :: dev_vp = -999.d0
-     double precision :: dev_z  = -999.d0
-     double precision :: vs_min = -999.d0
-     double precision :: vs_max = -999.d0
-     double precision :: vp_min = -999.d0
-     double precision :: vp_max = -999.d0
-     double precision :: z_min = -999.d0
-     double precision :: z_max = -999.d0
+     
+     
      double precision :: ocean_thick = -999.d0
 
      ! Receiver function
@@ -82,7 +94,7 @@ module mod_param
      character(len=line_max) :: recv_func_in = ""
      character(len=line_max) :: recv_func_out = ""
 
-     logical :: solve_vp = .false.
+
      logical :: ocean_flag = .false.
      logical :: verb = .false.
 
@@ -142,7 +154,7 @@ module mod_param
      procedure :: get_correct_amp => param_get_correct_amp
      procedure :: get_recv_func_out => param_get_recv_func_out
      
-     
+     procedure :: check_mcmc_params => param_check_mcmc_params
 
   end type param
   
@@ -803,4 +815,85 @@ contains
   end function param_get_recv_func_out
   
   !---------------------------------------------------------------------
+
+  subroutine param_check_mcmc_params(self, is_ok)
+    class(param), intent(in) :: self
+    logical, intent(out) :: is_ok
+
+    is_ok = .true.
+
+    if (self%n_iter <= 0) then
+       write(0,*)"ERROR: n_iter must > 0"
+       is_ok = .false.
+    end if
+    if (self%n_iter < self%n_burn) then
+       write(0,*)"ERROR: n_iter must >= n_burn"
+       is_ok = .false.
+    end if
+    if (self%n_iter < self%n_corr) then
+       write(0,*)"ERROR: n_iter must >= n_corr"
+       is_ok = .false.
+    end if
+    if (self%temp_high <= 1.d0) then
+       write(0,*)"ERROR: temp_high must > 1.0"
+       is_ok = .false.
+    end if
+    if (self%n_chain <= 0) then
+       write(0,*)"ERROR: n_chain must > 0"
+       is_ok = .false.
+    end if
+    if (self%n_chain < self%n_cool) then
+       write(0,*)"ERROR: n_chain must >= n_cool"
+       is_ok = .false.
+    end if
+    if (self%k_min <= 0) then
+       write(0,*)"ERROR: k_min must > 0"
+       is_ok = .false.
+    end if
+    if (self%k_max <= self%k_min) then
+       write(0,*)"ERROR: k_max must > k_min"
+       is_ok = .false.
+    end if
+    if (self%z_min < 0.d0) then
+       write(0,*)"ERROR: z_min must >= 0.d0"
+       is_ok = .false.
+    end if
+    if (self%z_max <= self%z_min) then
+       write(0,*)"ERROR: z_max must > z_min"
+       is_ok = .false.
+    end if
+    if (self%vp_min < 0.d0) then
+       write(0,*)"ERROR: vp_min must >= 0.0"
+       is_ok = .false.
+    end if
+    if (self%vp_max <= self%vp_min) then
+       write(0,*)"ERROR: vp_max must > vp_min"
+       is_ok = .false.
+    end if
+    if (self%vs_min < 0.d0) then
+       write(0,*)"ERROR: vs_min must >= 0.0"
+       is_ok = .false.
+    end if
+    if (self%vs_max <= self%vs_min) then
+       write(0,*)"ERROR: vs_max must > vs_min"
+       is_ok = .false.
+    end if
+    if (self%dev_z <= 0.d0) then
+       write(0,*)"ERROR: dev_z must > 0.0"
+       is_ok = .false.
+    end if
+    if (self%dev_vp <= 0.d0) then
+       write(0,*)"ERROR: dev_vp must > 0.0"
+       is_ok = .false.
+    end if
+    if (self%dev_vs <= 0.d0) then
+       write(0,*)"ERROR: dev_vs must > 0.0"
+       is_ok = .false.
+    end if
+       
+
+    
+    return 
+  end subroutine param_check_mcmc_params
+
 end module mod_param

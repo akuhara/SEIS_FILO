@@ -116,7 +116,7 @@ contains
     self%vs_max  = vs_max
     self%nbin_vs = nbin_vs
     
-    self%dz  = (z_max - z_min) / dble(nbin_z)
+    self%dz  = (z_max - 0.d0) / dble(nbin_z)
     self%dvs = (vs_max - vs_min) / dble(nbin_vs)
     
     allocate(self%n_vsz(nbin_vs, nbin_z))
@@ -308,14 +308,14 @@ contains
     
     self%n_layers(tm%get_k()) = self%n_layers(tm%get_k()) + 1
     tmpz = 0.d0
-    do ilay = 1, nlay
+    model: do ilay = 1, nlay
        iz1 = int(tmpz / self%dz) + 1
        if (ilay < nlay) then
           iz2 = int((tmpz + vm%get_h(ilay)) / self%dz) + 1
        else
           iz2 = self%nbin_z + 1
        end if
-       do iz = iz1, iz2 - 1
+       layer: do iz = iz1, iz2 - 1
           z = (iz - 1) * self%dz
           vp = vm%get_vp(ilay)
           vs = vm%get_vs(ilay)
@@ -323,6 +323,11 @@ contains
           write(io,*)vp, vs, z
           
           iv = int((vs - self%vs_min) / self%dvs) + 1
+          if (iv < 1) then
+             iv = 1 ! This should occur for ocean
+          end if
+          if (iz > self%nbin_z) exit model
+          write(*,*)vp, vs, z
           self%n_vsz(iv, iz) = self%n_vsz(iv, iz) + 1
           self%vsz_mean(iz) = self%vsz_mean(iz) + vs
           if (self%solve_vp) then
@@ -331,9 +336,9 @@ contains
              self%vpz_mean(iz) = self%vpz_mean(iz) + vp
           end if
           
-       end do
+       end do layer
        tmpz = tmpz + vm%get_h(ilay) 
-    end do
+    end do model
     
   end subroutine interpreter_save_model
 

@@ -2,10 +2,10 @@
 FC = mpifort
 #-----------------------------------------------------------------------
 # For debug
-#FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
+FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check
 # For fast computation
-FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 # FFTW Library
 FFTW = -I/usr/local/include -lfftw3
