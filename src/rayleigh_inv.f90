@@ -103,7 +103,7 @@ program main
        & n_bin_vs = para%get_n_bin_vs(), &
        & vp_min = para%get_vp_min(), vp_max = para%get_vp_max(), &
        & n_bin_vp = para%get_n_bin_vp(), &
-       & ocean_flag = para%get_ocean_flag(), &
+       & is_ocean = para%get_is_ocean(), &
        & ocean_thick = para%get_ocean_thick(), &
        & solve_vp = para%get_solve_vp())
 

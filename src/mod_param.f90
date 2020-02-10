@@ -55,17 +55,20 @@ module mod_param
      double precision :: vp_max = 9.0d0
      double precision :: vs_min = 2.5d0
      double precision :: vs_max = 5.0d0
+     integer :: n_bin_z  = 50
+     integer :: n_bin_vs = 50
+     integer :: n_bin_vp = 50
      
      ! Parameters for random perturbation
      double precision :: dev_z  = 0.1d0
      double precision :: dev_vp = 0.04d0
      double precision :: dev_vs = 0.02d0
 
-
-     integer :: n_bin_z = -999
-     integer :: n_bin_vs = -999
-     integer :: n_bin_vp = -999
-     integer :: n_bin_c  = -999
+     ! Parameters for ocean layer
+     logical :: is_ocean = .false.
+     double precision :: ocean_thick = -999.d0
+     
+     integer :: n_bin_c  = 50
 
 
      double precision :: fmin = -999.d0
@@ -76,7 +79,7 @@ module mod_param
      double precision :: dc = -999.d0
      
      
-     double precision :: ocean_thick = -999.d0
+     
 
      ! Receiver function
      integer :: n_smp 
@@ -95,7 +98,7 @@ module mod_param
      character(len=line_max) :: recv_func_out = ""
 
 
-     logical :: ocean_flag = .false.
+
      logical :: verb = .false.
 
 
@@ -137,7 +140,7 @@ module mod_param
      procedure :: get_ocean_thick => param_get_ocean_thick
 
      procedure :: get_solve_vp => param_get_solve_vp
-     procedure :: get_ocean_flag => param_get_ocean_flag
+     procedure :: get_is_ocean => param_get_is_ocean
      
      procedure :: get_vmod_in => param_get_vmod_in
      procedure :: get_ray_out => param_get_ray_out
@@ -300,8 +303,8 @@ contains
        read(val, *) self%ocean_thick 
     else if (name == "solve_vp") then
        read(val, *) self%solve_vp
-    else if (name == "ocean_flag") then
-       read(val, *) self%ocean_flag 
+    else if (name == "is_ocean") then
+       read(val, *) self%is_ocean 
     else if (name == "n_bin_z") then
        read(val, *) self%n_bin_z 
     else if (name == "n_bin_vs") then
@@ -671,13 +674,13 @@ contains
   
   !---------------------------------------------------------------------
 
-  logical function param_get_ocean_flag(self) result(ocean_flag)
+  logical function param_get_is_ocean(self) result(is_ocean)
     class(param), intent(in) :: self
 
-    ocean_flag = self%ocean_flag
+    is_ocean = self%is_ocean
     
     return 
-  end function param_get_ocean_flag
+  end function param_get_is_ocean
   
   !---------------------------------------------------------------------
   
@@ -890,7 +893,19 @@ contains
        write(0,*)"ERROR: dev_vs must > 0.0"
        is_ok = .false.
     end if
-       
+    if (self%n_bin_z <= 0) then
+       write(0,*)"ERROR: n_bin_z must > 0"
+       is_ok = .false.
+    end if
+    if (self%n_bin_vp <= 0) then
+       write(0,*)"ERROR: n_bin_vp must > 0"
+       is_ok = .false.
+    end if
+    if (self%n_bin_vs <= 0) then
+       write(0,*)"ERROR: n_bin_vs must > 0"
+       is_ok = .false.
+    end if
+
 
     
     return 

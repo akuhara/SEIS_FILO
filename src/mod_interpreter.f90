@@ -35,7 +35,7 @@ module mod_interpreter
      private
      integer :: nlay_max
 
-     logical :: ocean_flag = .false.
+     logical :: is_ocean = .false.
      double precision :: ocean_thick = 0.d0
      double precision :: ocean_vp    = 1.5d0
      double precision :: ocean_rho   = 1.d0
@@ -91,14 +91,14 @@ contains
   !---------------------------------------------------------------------
   type(interpreter) function init_interpreter(nlay_max, z_min, z_max, &
        & n_bin_z, vs_min, vs_max, n_bin_vs, vp_min, vp_max, n_bin_vp, &
-       & ocean_flag, ocean_thick, ocean_vp, ocean_rho, solve_vp) &
+       & is_ocean, ocean_thick, ocean_vp, ocean_rho, solve_vp) &
        & result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
     integer, intent(in), optional :: n_bin_vp
     double precision, intent(in) :: z_min, z_max, vs_min, vs_max
     double precision, intent(in), optional :: vp_min, vp_max
-    logical, intent(in), optional :: ocean_flag
+    logical, intent(in), optional :: is_ocean
     double precision, intent(in), optional :: ocean_thick, &
          ocean_vp, ocean_rho
     logical, intent(in), optional :: solve_vp
@@ -126,8 +126,8 @@ contains
     allocate(self%vsz_mean(n_bin_z))
     self%vsz_mean = 0.d0
 
-    if (present(ocean_flag)) then
-       self%ocean_flag = ocean_flag
+    if (present(is_ocean)) then
+       self%is_ocean = is_ocean
     end if
 
     if (present(ocean_thick)) then
@@ -183,7 +183,7 @@ contains
     vm = init_vmodel()
 
     ! Set ocean layer
-    if (self%ocean_flag) then
+    if (self%is_ocean) then
        call vm%set_nlay(k + 2) ! k middle layers + 1 ocean layer + 
                                ! 1 half space
        call vm%set_vp(1, self%ocean_vp)
