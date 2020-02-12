@@ -38,8 +38,6 @@ module mod_observation_recv_func
      double precision, allocatable :: rayp(:)
      double precision, allocatable :: delta(:)
      double precision, allocatable :: sigma(:)
-     double precision, allocatable :: sigma_min(:)
-     double precision, allocatable :: sigma_max(:)
      double precision, allocatable :: dev_sigma(:)
      double precision, allocatable :: rf_data(:,:)
      double precision, allocatable :: t_start(:)
@@ -111,7 +109,6 @@ contains
     ! allocate
     allocate(self%a_gauss(self%n_rf), self%rayp(self%n_rf), &
          & self%delta(self%n_rf))
-    allocate(self%sigma_min(self%n_rf), self%sigma_max(self%n_rf))
     allocate(self%sigma(self%n_rf), self%dev_sigma(self%n_rf))
     allocate(self%t_start(self%n_rf), self%t_end(self%n_rf))
     allocate(self%n_smp(self%n_rf))
