@@ -66,10 +66,20 @@ module mod_param
 
      ! Parameters for ocean layer
      logical :: is_ocean = .false.
-     double precision :: ocean_thick = -999.d0
+     double precision :: ocean_thick = 0.d0
+     
+     ! Parameters for receiver functions
+     ! only used for recv_func_fwd
+     integer :: n_smp 
+     double precision :: rayp
+     double precision :: a_gauss
+     double precision :: delta
+     double precision :: t_pre
+     character(len=1) :: phase
+     logical :: deconv_flag
+     logical :: correct_amp
      
      integer :: n_bin_c  = 50
-
 
      double precision :: fmin = -999.d0
      double precision :: fmax = -999.d0
@@ -79,25 +89,11 @@ module mod_param
      double precision :: dc = -999.d0
      
      
-     
-
-     ! Receiver function
-     integer :: n_smp 
-     double precision :: rayp
-     double precision :: a_gauss
-     double precision :: delta
-     double precision :: t_pre
-     character(len=1) :: phase
-     logical :: deconv_flag = .true.
-     logical :: correct_amp = .false.
-     
      character(len=line_max) :: vmod_in = ""
      character(len=line_max) :: ray_out = ""
      character(len=line_max) :: disper_in = ""
      character(len=line_max) :: recv_func_in = ""
      character(len=line_max) :: recv_func_out = ""
-
-
 
      logical :: verb = .false.
 
