@@ -154,6 +154,8 @@ module mod_param
      procedure :: get_recv_func_out => param_get_recv_func_out
      
      procedure :: check_mcmc_params => param_check_mcmc_params
+     procedure :: check_recv_func_fwd_params &
+          & => param_check_recv_func_fwd_params
 
   end type param
   
@@ -902,9 +904,20 @@ contains
        is_ok = .false.
     end if
 
+    return 
+  end subroutine param_check_mcmc_params
+
+  !---------------------------------------------------------------------
+
+  subroutine param_check_recv_func_fwd_params(self, is_ok)
+    class(param), intent(in) :: self
+    logical, intent(out) :: is_ok
+
+    is_ok = .true.
+    
 
     
     return 
-  end subroutine param_check_mcmc_params
+  end subroutine param_check_recv_func_fwd_params
 
 end module mod_param

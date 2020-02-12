@@ -80,6 +80,15 @@ program main
  
   ! Read parameter file
   para = init_param(param_file, verb)
+  call para%check_mcmc_params(is_ok)
+  if (.not. is_ok) then
+     if (verb) then
+        write(0,*)"ERROR: while checking MCMC parameters"
+     end if
+     call mpi_finalize(ierr)
+     stop
+  end if
+        
   
   ! Initialize parallel chains
   pt = init_parallel(n_proc = n_proc, rank = rank, &
