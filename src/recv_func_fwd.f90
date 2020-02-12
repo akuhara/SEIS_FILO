@@ -35,6 +35,7 @@ program main
   type(param) :: para
   type(vmodel) :: vm
   type(recv_func) :: rf
+  logical :: is_ok
   
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
@@ -45,13 +46,19 @@ program main
   call get_command_argument(1, param_file)
   
   ! Read parameter file
-  para = init_param(param_file)
+  para = param(param_file)
+  call para%check_recv_func_fwd_params(is_ok)
+  if (.not. is_ok) then
+     write(0,*)"ERROR: while checking parameters"
+     stop
+  end if
+
 
   ! Set velocity model
   call vm%read_file(para%get_vmod_in())
-
+  
   ! Init RF
-  rf = init_recv_func(&
+  rf = recv_func(&
        & vm    = vm, &
        & n     = para%get_n_smp(), &
        & delta = para%get_delta(), &

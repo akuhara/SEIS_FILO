@@ -914,8 +914,28 @@ contains
     logical, intent(out) :: is_ok
 
     is_ok = .true.
-    
 
+    if (self%n_smp <= 0) then
+       write(0,*)"ERROR: n_smp must > 0"
+       is_ok = .false.
+    end if
+    if (self%rayp <= 0.d0) then
+       write(0,*)"ERROR: rayp must > 0.0"
+       is_ok = .false.
+    end if
+    if (self%a_gauss <= 0.d0) then
+       write(0,*)"ERROR: a_gauss must > 0.0"
+       is_ok = .false.
+    end if
+    if (self%delta <= 0.d0) then
+       write(0,*)"ERROR: delta must > 0.0"
+       is_ok = .false.
+    end if
+    if (self%phase /= "P" .or. self%phase /= "S") then
+       write(0,*)"ERROR: phase must be P or S"
+       is_ok = .false.
+    end if
+    
     
     return 
   end subroutine param_check_recv_func_fwd_params
