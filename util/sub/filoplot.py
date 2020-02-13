@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import numpy as np
+import struct
 
 class InvResult:
     def __init__(self, param_file):
@@ -150,7 +151,12 @@ class InvResult:
         mappable = ax.pcolormesh(t, a, data, cmap='hot_r')
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel) 
-        ax.set_xlim(t_min, t_max / 2)
+        ax.set_xlim([t_min, t_max / 2])
+
+        # plot observation
+        b, delta, t, data = self._read_sac(param["syn_rf_file"])
+        ax.plot(t, data, color="black")
+        
         
     #---------------------------------------------------------------
     
@@ -186,6 +192,37 @@ class InvResult:
                         item = tmp_line.split(" ")
                         self._param["t_start"] = item[0]
                         self._param["t_end"] = item[1]
+
+    #---------------------------------------------------------------
+
+    def _read_sac(self, sac_file):
+
+        endian = "<"
+
+        # read entire part of SAC file
+        f = open(sac_file, 'rb')
+        sac_data = f.read()
+
+        # check endian
+        header = struct.unpack_from(endian + 'i', sac_data, offset=4*76)
+        if (header[0] != 6):
+            endian = ">"
+            
+        # get headers
+        header = struct.unpack_from(endian + 'f', sac_data, offset=0)
+        delta = header[0]
+        header = struct.unpack_from(endian + 'f', sac_data, offset=4*5)
+        b = header[0]
+        header = struct.unpack_from(endian + 'i', sac_data, offset=4*79)
+        npts = header[0]
+        
+        # get data
+        data = struct.unpack_from(endian + 'f' * npts, sac_data, offset=4*158)
+        
+        # make time index
+        t = np.arange(b, b + npts * delta, delta)
+        
+        return b, delta, t, data
     
     #---------------------------------------------------------------
 

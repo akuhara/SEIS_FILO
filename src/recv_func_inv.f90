@@ -103,13 +103,13 @@ program main
   
   ! Read observation file
   obs = init_observation_recv_func(trim(para%get_recv_func_in()))
-  do i = 1, obs%get_n_rf()
-     do j = 1, obs%get_n_smp(i)
-        write(111, *)obs%get_t_start(i) + (j - 1) * &
-             & obs%get_delta(i), obs%get_rf_data(j, i)
-     end do
-     write(111,*)
-  end do
+  !do i = 1, obs%get_n_rf()
+  !   do j = 1, obs%get_n_smp(i)
+  !      write(111, *)obs%get_t_start(i) + (j - 1) * &
+  !           & obs%get_delta(i), obs%get_rf_data(j, i)
+  !   end do
+  !   write(111,*)
+  !end do
   
   ! Covariance matrix
   allocate(cov(obs%get_n_rf()))

@@ -550,7 +550,7 @@ contains
        write(0,*)"ERROR: cannot create ", trim(filename)
        stop
     end if
-    write(*,*)self%delta, -self%t_pre
+    !write(*,*)self%delta, -self%t_pre
     write(io, rec = 1) real(self%delta)
     write(io, rec = 6) real(-self%t_pre)
     write(io, rec = 77) nvhdr

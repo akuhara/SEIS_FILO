@@ -327,11 +327,14 @@ contains
              iv = 1 ! This should occur for ocean
           end if
           if (iz > self%n_bin_z) exit model
-          write(*,*)vp, vs, z
+          
           self%n_vsz(iv, iz) = self%n_vsz(iv, iz) + 1
           self%vsz_mean(iz) = self%vsz_mean(iz) + vs
           if (self%solve_vp) then
              iv = int((vp - self%vp_min) / self%dvp) + 1
+             if (iv < 1) then
+                iv = 1 ! This should occur for ocean
+             end if
              self%n_vpz(iv, iz) = self%n_vpz(iv, iz) + 1
              self%vpz_mean(iz) = self%vpz_mean(iz) + vp
           end if

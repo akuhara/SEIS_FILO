@@ -827,12 +827,12 @@ contains
        write(0,*)"ERROR: n_iter must > 0"
        is_ok = .false.
     end if
-    if (self%n_iter < self%n_burn) then
-       write(0,*)"ERROR: n_iter must >= n_burn"
+    if (self%n_iter <= self%n_burn) then
+       write(0,*)"ERROR: n_iter must > n_burn"
        is_ok = .false.
     end if
-    if (self%n_iter < self%n_corr) then
-       write(0,*)"ERROR: n_iter must >= n_corr"
+    if (self%n_iter - self%n_burn <= self%n_corr) then
+       write(0,*)"ERROR: n_iter - n_burn must > n_corr"
        is_ok = .false.
     end if
     if (self%temp_high <= 1.d0) then
@@ -931,7 +931,7 @@ contains
        write(0,*)"ERROR: delta must > 0.0"
        is_ok = .false.
     end if
-    if (self%phase /= "P" .or. self%phase /= "S") then
+    if (self%phase /= "P" .and. self%phase /= "S") then
        write(0,*)"ERROR: phase must be P or S"
        is_ok = .false.
     end if
