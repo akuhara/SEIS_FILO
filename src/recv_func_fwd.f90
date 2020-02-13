@@ -53,7 +53,6 @@ program main
      stop
   end if
 
-
   ! Set velocity model
   call vm%read_file(para%get_vmod_in())
   
