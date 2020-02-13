@@ -112,8 +112,81 @@ class InvResult:
         ax.set_xlabel(vlabel)
         ax.set_ylabel(zlabel)
         ax.set_ylim([z_max, 0])
+        ax.set_xlim([v_min, v_max])
         
+    #---------------------------------------------------------------
+    
+    def _plot_recv_func(self, fig, ax, trace_id):
+        param = self._param
+        ppd_file = "syn_rf" + str(trace_id).zfill(3) + ".ppd"
+        obs_file = param["recv_func_in"]
 
+        self._read_recv_func_obs(obs_file, trace_id)
+        param = self._param
+        
+        tlabel = "Time (s)"
+        alabel = "RF amp."
+        plabel = "Posterior probability"
+        
+        df = pd.read_csv(ppd_file, delim_whitespace=True, \
+                         header=None, \
+                         names=(alabel, tlabel, plabel))
+        amp_min = -1.0
+        amp_max = 1.0
+        n_bin_amp = 100
+        del_amp = (amp_max - amp_min) / n_bin_amp
+        
+        t_min = float(param["t_start"])
+        t_max = 2 * float(param["t_end"])
+        del_t = float(param["delta"])
+        
+        a, t = np.mgrid[slice(amp_min, \
+                              amp_max + del_amp, \
+                              del_amp), \
+                        slice(t_min - 0.5 * del_t, \
+                              t_max + 0.5 * del_t, \
+                              del_t)]
+        data = df.pivot(tlabel, alabel, plabel)
+        mappable = ax.pcolormesh(t, a, data, cmap='hot_r')
+        cbar = fig.colorbar(mappable, ax=ax)
+        cbar.ax.set_ylabel(plabel) 
+        ax.set_xlim(t_min, t_max / 2)
+        
+    #---------------------------------------------------------------
+    
+    def _read_recv_func_obs(self, obs_file, trace_id):
+        with open(obs_file, 'r') as f:
+            count = 0
+            for line in f:
+                tmp_line = line.rstrip()
+                
+                # Dealing with comment out
+                i = tmp_line.find('#')
+                if i >= 0:
+                    tmp_line = line[0:i]
+                
+                # Skip if line is null
+                if len(tmp_line) == 0:
+                    continue
+                
+                count += 1
+                
+                # Skip a line for N_trc
+                if count == 1:
+                    continue
+                
+                if (count - 2) // 6 + 1 == trace_id:
+                    iloc = (count - 2) % 6
+                    if iloc == 0:
+                        self._param["syn_rf_file"] = tmp_line
+                    elif iloc == 1:
+                        item = tmp_line.split(" ")
+                        self._param["delta"] = item[2]
+                    elif iloc == 3:
+                        item = tmp_line.split(" ")
+                        self._param["t_start"] = item[0]
+                        self._param["t_end"] = item[1]
+    
     #---------------------------------------------------------------
 
     def _plot_dispersion(self, fig, ax, mode):
@@ -198,7 +271,7 @@ class InvResult:
 
     #---------------------------------------------------------------
     
-    def _plot_proposal_count(self, fix, ax):
+    def _plot_proposal_count(self, fig, ax):
         param = self._param
         file = "proposal.count"
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
@@ -214,7 +287,9 @@ class InvResult:
         df.columns = ['Proposed', 'Accepted']
         df.plot(kind='bar', ax=ax)
         
+
     #---------------------------------------------------------------
+
     
     def draw_surface_wave_set(self):
         grid_geom = (4, 4)
@@ -265,4 +340,52 @@ class InvResult:
         #plt.show()
         fig.savefig("plot00.png")
         
+        
+    #---------------------------------------------------------------
+    def draw_recv_func_set(self, trace_id):
+        grid_geom = (4, 4)
+        fig_size = (22, 13)
+        param = self._param
+        sns.set()
+        sns.set_style('ticks')
+        fig = plt.figure(figsize=fig_size)
+        
+        fig.subplots_adjust(wspace=0.8, hspace=0.4)
+        
+        # Number of layers
+        ax = plt.subplot2grid(grid_geom, (0, 0), colspan=2, fig=fig)
+        self._plot_n_layers(fig, ax)
+        
+        # Receiver function
+        ax = plt.subplot2grid(grid_geom, (1, 0), colspan=2, fig=fig)
+        self._plot_recv_func(fig, ax, trace_id)
+
+        # Vs-z
+        ax = plt.subplot2grid(grid_geom, (2, 0), rowspan=2, fig=fig)
+        self._plot_vz(fig, ax, "vs")
+
+        # Vp-z
+        if param["solve_vp"].lower() == ".true.":
+            ax = plt.subplot2grid(grid_geom, (2, 1), rowspan=2, fig=fig)
+            self._plot_vz(fig, ax, "vp")
+            
+        # Likelihood history
+        ax = plt.subplot2grid(grid_geom, (0, 2), colspan=2, rowspan=1, \
+                              fig=fig)
+        self._plot_likelihood_history(fig, ax)
+
+        # Temperature hisotry
+        ax = plt.subplot2grid(grid_geom, (1, 2), colspan=2, rowspan=1, \
+                              fig=fig)
+        self._plot_temp_history(fig, ax)
+
+        # Proposal count
+        ax = plt.subplot2grid(grid_geom, (2, 2), colspan=2, rowspan=2, \
+                              fig=fig)
+        self._plot_proposal_count(fig, ax)
+
+        #plt.show()
+        out_file = "plot" + str(trace_id).zfill(2) + ".png"
+        fig.savefig(out_file)
+               
 #-----------------------------------------------------------------------
