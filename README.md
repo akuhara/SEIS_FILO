@@ -10,9 +10,11 @@ Copyright (C) 2019 Takeshi Akuhara
 ---
 
 ## Programs included in this package
-* [__rayleigh_fwd__](#Rayleigh-wave-forward-computation): Rayleigh wave forward computation
+* [__rayleigh_fwd__](#Rayleigh-wave-forward-computation): Rayleigh wave forward computation (phase & group velocities)
 * [__rayleigh_inv__](#Rayleigh-wave-inversion): Rayleigh wave transdimensional inversion by RJMCMC
 * [__recv_func_fwd__](#Receiver-function-forward-computation): Receiver function forward computation
+* [__recv_func_inv__](#Receiver-function-inversion): Receiver function inversion by RJMCMC
+* [__joint_inv__](#Rayleigh-wave-receiver-function-joint-inversion): Rayleigh wave and receiver function joint inversion by RJMCMC
 * [__Plot utilities__](#Plot-utilities)
 
 ## Install
