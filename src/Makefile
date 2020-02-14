@@ -41,7 +41,15 @@ OBJS_RF_INV = recv_func_inv.o mod_parallel.o mod_random.o \
 	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
          mod_line_text.o mod_covariance.o
 
-TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) $(RF_INV)
+JOINT_INV = ../bin/joint_inv
+OBJS_JOINT_INV = joint_inv.o mod_parallel.o mod_random.o \
+         mod_trans_d_model.o mod_mcmc.o mod_recv_func.o \
+	 mod_const.o mod_interpreter.o mod_observation_recv_func.o \
+	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
+         mod_line_text.o mod_covariance.o mod_observation_disper.o \
+	 mod_rayleigh.o
+
+TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) $(RF_INV) $(JOINT_INV)
 
 .PHONY: all
 all: $(TARGET)
@@ -59,6 +67,11 @@ recv_func_inv.o: mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
                  mod_mcmc.mod mod_const.mod mod_interpreter.mod \
                  mod_param.mod mod_observation_recv_func.mod \
                  mod_recv_func.mod mod_covariance.mod
+joint_inv.o:  mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
+              mod_mcmc.mod mod_const.mod mod_interpreter.mod \
+              mod_param.mod mod_observation_recv_func.mod \
+              mod_recv_func.mod mod_covariance.mod mod_rayleigh.mod \
+              mod_observation_disper.mod
 
 mod_recv_func.o: mod_vmodel.mod mod_signal_process.mod
 mod_rayleigh.o: mod_vmodel.mod
@@ -80,6 +93,9 @@ $(RF_FWD): $(OBJS_RF_FWD)
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
 
 $(RF_INV): $(OBJS_RF_INV)
+	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
+
+$(JOINT_INV): $(OBJS_JOINT_INV)
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
 
 clean:

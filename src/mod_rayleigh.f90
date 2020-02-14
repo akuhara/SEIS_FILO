@@ -79,7 +79,7 @@ module mod_rayleigh
      procedure :: get_c_array => rayleigh_get_c_array
      procedure :: get_u => rayleigh_get_u
      procedure :: get_u_array => rayleigh_get_u_array
-     procedure :: output => rayleigh_output
+     procedure :: save_syn => rayleigh_save_syn
      procedure :: get_n_fc => rayleigh_get_n_fc
      procedure :: get_n_fu => rayleigh_get_n_fu
      
@@ -606,13 +606,11 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine rayleigh_output(self, io)
+  subroutine rayleigh_save_syn(self)
     class(rayleigh), intent(inout) :: self
-    integer, intent(in) :: io
     integer :: i, j
     
     do i = 1, self%nf
-       write(io, *)(i - 1) * self%df + self%fmin, self%c(i), self%u(i)
        j = int((self%c(i) - self%cmin) / self%dc) + 1
        if (j < 1 .or. j > self%nc) cycle
        self%n_fc(i, j) = self%n_fc(i, j) + 1
@@ -623,7 +621,7 @@ contains
     end do
     
     return 
-  end subroutine rayleigh_output
+  end subroutine rayleigh_save_syn
 
   !---------------------------------------------------------------------
 

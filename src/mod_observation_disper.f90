@@ -29,7 +29,7 @@ module mod_observation_disper
   implicit none 
   
   type observation_disper
-
+     private
      ! surface wave
      integer :: nf
      double precision :: fmin, df
@@ -53,9 +53,9 @@ module mod_observation_disper
      
   end type observation_disper
   
-  interface observation
+  interface observation_disper
      module procedure :: init_observation_disper
-  end interface observation
+  end interface observation_disper
      
 contains
   

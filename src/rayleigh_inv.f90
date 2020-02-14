@@ -152,7 +152,7 @@ program main
   ! Set forward computation
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
-  ray = init_rayleigh(vm=vm, fmin=obs%fmin, fmax=fmax, df=df, &
+  ray = init_rayleigh(vm=vm, fmin=obs%get_fmin(), fmax=fmax, df=df, &
          & cmin=para%get_cmin(), cmax=para%get_cmax(), &
          & dc=para%get_dc())
 
@@ -231,7 +231,7 @@ program main
            call intpr%save_model(tm, io_vz)
            
            ! Synthetic data
-           call ray%output(io_ray)
+           call ray%save_syn()
         end if
      end do
      ! Swap temperture

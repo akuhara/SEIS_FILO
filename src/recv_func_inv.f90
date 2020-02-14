@@ -57,7 +57,6 @@ program main
   character(200) :: filename, param_file
 
 
-
   
   ! Initialize MPI 
   call mpi_init(ierr)
@@ -69,6 +68,17 @@ program main
      verb = .false.
   end if
 
+  
+  if (verb) then
+     write(*,*)"------------------------------------------------------"
+     write(*,*)" SEIS_FILO:                                           "
+     write(*,*)" SEISmological inversion tools for Flat and Isotropic "
+     write(*,*)" Layered structure in the Ocean                       "
+     write(*,*)" Copyright (C) 2019 Takeshi Akuhara                   "
+     write(*,*)"------------------------------------------------------"
+     write(*,*)
+     write(*,*)"Start recv_func"
+  end if
 
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
@@ -79,7 +89,7 @@ program main
   call get_command_argument(1, param_file)
  
   ! Read parameter file
-  para = init_param(param_file, verb)
+  para = param(param_file, verb)
   call para%check_mcmc_params(is_ok)
   if (.not. is_ok) then
      if (verb) then
@@ -91,7 +101,7 @@ program main
         
   
   ! Initialize parallel chains
-  pt = init_parallel(n_proc = n_proc, rank = rank, &
+  pt = parallel(n_proc = n_proc, rank = rank, &
        & n_chain = para%get_n_chain())
   
   ! Initialize random number sequence
@@ -102,16 +112,11 @@ program main
        &           rank)
   
   ! Read observation file
-  obs = init_observation_recv_func(trim(para%get_recv_func_in()))
-  !do i = 1, obs%get_n_rf()
-  !   do j = 1, obs%get_n_smp(i)
-  !      write(111, *)obs%get_t_start(i) + (j - 1) * &
-  !           & obs%get_delta(i), obs%get_rf_data(j, i)
-  !   end do
-  !   write(111,*)
-  !end do
+  if (verb) write(*,*)"Reading observation file"
+  obs = observation_recv_func(trim(para%get_recv_func_in()))
   
   ! Covariance matrix
+  if (verb) write(*,*)"Constructing covariance matrix"
   allocate(cov(obs%get_n_rf()))
   do i = 1, obs%get_n_rf()
      cov(i) = covariance(                    &
@@ -123,8 +128,8 @@ program main
   
 
   ! Set interpreter 
-  write(*,*)"Setting interpreter"
-  intpr = init_interpreter(nlay_max= para%get_k_max(), &
+  if (verb) write(*,*)"Setting interpreter"
+  intpr = interpreter(nlay_max= para%get_k_max(), &
        & z_min = para%get_z_min(), z_max = para%get_z_max(), &
        & n_bin_z = para%get_n_bin_z(), &
        & vs_min = para%get_vs_min(), vs_max = para%get_vs_max(), &
@@ -137,7 +142,7 @@ program main
 
   
   ! Set model parameter & generate initial sample
-  write(*,*)"Setting model parameters"
+  if (verb) write(*,*)"Setting model parameters"
   if (para%get_solve_vp()) then
      n_rx = 3
   else 
@@ -495,8 +500,9 @@ subroutine forward_recv_func(tm, intpr, obs, rf, cov, log_likelihood)
      phi = dot_product(phi1, misfit)
      log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
           & - dble(n) * log(s)
+     deallocate(misfit, phi1)
   end do
-  
+ 
 
   return 
 end subroutine forward_recv_func

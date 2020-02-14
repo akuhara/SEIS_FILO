@@ -28,7 +28,6 @@ module mod_param
   use mod_line_text
   implicit none 
   
-  
   type param
      private
      character(len=line_max) :: param_file
@@ -199,13 +198,18 @@ contains
     type(line_text) :: lt
     logical :: is_ok
 
-    write(*,*)"Reading parameters from ", trim(self%param_file)
+    if (self%verb) then
+       write(*,*)"Reading parameters from ", '"', &
+            & trim(self%param_file), '"'
+    end if
 
     open(newunit = io, file = self%param_file, &
          & status = 'old', iostat = ierr)
     if (ierr /= 0) then
-       write(0,*) "ERROR: cannot open ", trim(self%param_file)
-       write(0,*) "     : (param_read_file)"
+       if (self%verb) then
+          write(0,*) "ERROR: cannot open ", trim(self%param_file)
+       end if
+       call mpi_finalize(ierr)
        stop
     end if
     
@@ -223,7 +227,7 @@ contains
     close(io)
     
 
-    write(*,*)
+    
 
     return 
   end subroutine param_read_file
@@ -233,7 +237,9 @@ contains
   subroutine param_set_value(self, name, val)
     class(param), intent(inout) :: self
     character(len=*), intent(in) :: name, val
+    integer :: ierr
 
+    
     if (self%verb) then
        write(*,*)trim(name), " <- ", trim(val)
     end if
@@ -332,8 +338,12 @@ contains
     else if (name == "recv_func_in") then
        self%recv_func_in = val
     else
-       write(0,*)"Warnings: Invalid parameter name"
-       write(0,*)"        : ", name, "  (?)"
+       if (self%verb) then
+          write(0,*)"ERROR: Invalid parameter name"
+          write(0,*)"        : ", name, "  (?)"
+       end if
+       call mpi_finalize(ierr)
+       stop
     end if
     return 
   end subroutine param_set_value
