@@ -80,13 +80,13 @@ program main
      write(*,*)" Copyright (C) 2019 Takeshi Akuhara                   "
      write(*,*)"------------------------------------------------------"
      write(*,*)
-     write(*,*)"Start recv_func"
+     write(*,*)"Start join_inv"
   end if
 
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
   if (n_arg /= 1) then
-     write(0, *)"USAGE: rayleigh_inv [parameter file]"
+     write(0, *)"USAGE: joint_inv [parameter file]"
      stop
   end if
   call get_command_argument(1, param_file)
@@ -576,13 +576,17 @@ subroutine forward_rayleigh(tm, intpr, obs, ray, log_likelihood)
         log_likelihood = minus_infty
         exit
      end if
-     log_likelihood = &
-          & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
-          & (obs%get_sig_c(i) ** 2)
-     log_likelihood = &
-          & log_likelihood - (ray%get_u(i) - obs%get_u(i)) ** 2 / &
-          & (obs%get_sig_u(i) ** 2)
-
+     if (obs%get_sig_c(i) > 0.d0) then
+        log_likelihood = &
+             & log_likelihood - (ray%get_c(i) - obs%get_c(i)) ** 2 / &
+             & (obs%get_sig_c(i) ** 2)
+     end if
+     if (obs%get_sig_u(i) > 0.d0) then
+        log_likelihood = &
+             & log_likelihood - (ray%get_u(i) - obs%get_u(i)) ** 2 / &
+             & (obs%get_sig_u(i) ** 2)
+     end if
+     
   end do
   log_likelihood = 0.5d0 * log_likelihood
 
