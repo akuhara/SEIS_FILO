@@ -96,9 +96,11 @@ class InvResult:
                          names=(vlabel, zlabel, plabel))
         z, v = np.mgrid[slice(z_min, z_max + eps, del_z), \
                         slice(v_min, v_max + eps, del_v)]
-        
+        df_below_sea = df[df[zlabel] > float(param["z_min"])]
+        p_max = df_below_sea[plabel].max()
+        #print(p_max)
         data = df.pivot(zlabel, vlabel, plabel)
-        mappable = ax.pcolormesh(v, z, data, cmap='hot_r')
+        mappable = ax.pcolormesh(v, z, data, cmap='hot_r', vmax=p_max)
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel)
         
