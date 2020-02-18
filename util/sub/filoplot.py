@@ -94,7 +94,6 @@ class InvResult:
         
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          names=(vlabel, zlabel, plabel))
-        
         z, v = np.mgrid[slice(z_min, z_max + eps, del_z), \
                         slice(v_min, v_max + eps, del_v)]
         

@@ -321,14 +321,14 @@ program main
        & para%get_n_bin_z(), intpr%get_n_vsz(), n_mod, &
        & para%get_vs_min() + 0.5d0 * intpr%get_dvs(), &
        & intpr%get_dvs(), &
-       & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+       & 0.5d0 * intpr%get_dz(), &
        & intpr%get_dz())
   
   ! Mean Vs
   filename = "vs_z.mean"
   call output_mean_model(filename, rank, para%get_n_bin_z(), &
        & intpr%get_vsz_mean(), n_mod, &
-       & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+       & 0.5d0 * intpr%get_dz(), &
        & intpr%get_dz())
 
   if (para%get_solve_vp()) then
@@ -338,13 +338,13 @@ program main
           & para%get_n_bin_z(), intpr%get_n_vpz(), n_mod, &
           & para%get_vp_min() + 0.5d0 * intpr%get_dvp(), &
           & intpr%get_dvp(), &
-          & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+          & 0.5d0 * intpr%get_dz(), &
           & intpr%get_dz())
      ! Mean Vp
      filename = "vp_z.mean"
      call output_mean_model(filename, rank, para%get_n_bin_z(), &
           & intpr%get_vpz_mean(), n_mod, &
-          & para%get_z_min() + 0.5d0 * intpr%get_dz(), &
+          & 0.5d0 * intpr%get_dz(), &
           & intpr%get_dz())
   end if
   

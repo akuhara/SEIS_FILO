@@ -37,8 +37,11 @@ module mod_interpreter
 
      logical :: is_ocean = .false.
      double precision :: ocean_thick = 0.d0
-     double precision :: ocean_vp    = 1.5d0
-     double precision :: ocean_rho   = 1.d0
+     double precision :: vp_ocean    = 1.5d0
+     double precision :: rho_ocean   = 1.d0
+     double precision :: vs_bottom   = 4.6d0
+     double precision :: vp_bottom   = 8.1d0
+     double precision :: rho_bottom  = 3.3d0
 
      integer :: n_bin_z
      integer :: n_bin_vs
@@ -60,7 +63,6 @@ module mod_interpreter
      double precision :: vp_min
      double precision :: vp_max
      double precision :: dvp
-
      
      logical :: solve_vp = .true.
 
@@ -91,7 +93,8 @@ contains
   !---------------------------------------------------------------------
   type(interpreter) function init_interpreter(nlay_max, z_min, z_max, &
        & n_bin_z, vs_min, vs_max, n_bin_vs, vp_min, vp_max, n_bin_vp, &
-       & is_ocean, ocean_thick, ocean_vp, ocean_rho, solve_vp) &
+       & is_ocean, ocean_thick, vp_ocean, rho_ocean, solve_vp, &
+       & vp_bottom, vs_bottom, rho_bottom) &
        & result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
@@ -100,7 +103,9 @@ contains
     double precision, intent(in), optional :: vp_min, vp_max
     logical, intent(in), optional :: is_ocean
     double precision, intent(in), optional :: ocean_thick, &
-         ocean_vp, ocean_rho
+         & vp_ocean, rho_ocean
+    double precision, intent(in), optional :: vp_bottom, &
+         & vs_bottom, rho_bottom
     logical, intent(in), optional :: solve_vp
 
     self%nlay_max = nlay_max
@@ -134,14 +139,26 @@ contains
        self%ocean_thick = ocean_thick
     end if
 
-    if (present(ocean_vp)) then
-       self%ocean_vp = ocean_vp
+    if (present(vp_ocean)) then
+       self%vp_ocean = vp_ocean
     end if
     
-    if (present(ocean_rho)) then
-       self%ocean_rho = ocean_rho
+    if (present(rho_ocean)) then
+       self%rho_ocean = rho_ocean
     end if
 
+    if (present(vp_bottom)) then
+       self%vp_bottom = vp_bottom
+    end if
+    
+    if (present(vs_bottom)) then
+       self%vs_bottom = vs_bottom
+    end if
+
+    if (present(rho_bottom)) then
+       self%rho_bottom = rho_bottom
+    end if
+    
     if (present(solve_vp)) then
        if (.not. present(vp_min)) then
           write(0,*)"ERROR: vp_min is not given"
@@ -186,9 +203,9 @@ contains
     if (self%is_ocean) then
        call vm%set_nlay(k + 2) ! k middle layers + 1 ocean layer + 
                                ! 1 half space
-       call vm%set_vp(1, self%ocean_vp)
+       call vm%set_vp(1, self%vp_ocean)
        call vm%set_vs(1, -999.d0)
-       call vm%set_rho(1, self%ocean_rho)
+       call vm%set_rho(1, self%rho_ocean)
        call vm%set_h(1, self%ocean_thick)
        i1 = 1
     else
@@ -215,10 +232,12 @@ contains
        end if
        ! Thickness
        if (i == 1) then
-          call vm%set_h(i+i1, self%wrk_z(i))
+          call vm%set_h(i+i1, self%wrk_z(i) - self%z_min)
        else if (i == k) then
+          ! deepest layer
           call vm%set_h(i+i1, self%z_max - self%wrk_z(i-1))
        else 
+          ! others
           call vm%set_h(i+i1, self%wrk_z(i) - self%wrk_z(i-1))
        end if
        ! Density
@@ -226,13 +245,13 @@ contains
     end do
     ! Bottom layer
     ! Vs
-    call vm%set_vs(k+1+i1, 4.6d0) ! <- Fixed
+    call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
     ! Vp
-    call vm%vs2vp_brocher(k+1+i1)
+    call vm%set_vp(k+1+i1, self%vp_bottom)
     ! Thickness
     call vm%set_h(k+1+i1,  -99.d0) ! <- half space
     ! Density
-    call vm%vp2rho_brocher(k+1+i1)
+    call vm%set_rho(k+1+i1, self%rho_bottom)
     
     return 
   end function interpreter_get_vmodel
@@ -320,7 +339,7 @@ contains
           vp = vm%get_vp(ilay)
           vs = vm%get_vs(ilay)
           
-          write(io,*)vp, vs, z
+          !output_write(io,*)vp, vs, z
           
           iv = int((vs - self%vs_min) / self%dvs) + 1
           if (iv < 1) then

@@ -834,51 +834,51 @@ contains
     is_ok = .true.
 
     if (self%n_iter <= 0) then
-       write(0,*)"ERROR: n_iter must > 0"
+       if (self%verb) write(0,*)"ERROR: n_iter must > 0"
        is_ok = .false.
     end if
     if (self%n_iter <= self%n_burn) then
-       write(0,*)"ERROR: n_iter must > n_burn"
+       if (self%verb) write(0,*)"ERROR: n_iter must > n_burn"
        is_ok = .false.
     end if
     if (self%n_iter - self%n_burn <= self%n_corr) then
-       write(0,*)"ERROR: n_iter - n_burn must > n_corr"
+       if (self%verb) write(0,*)"ERROR: n_iter - n_burn must > n_corr"
        is_ok = .false.
     end if
     if (self%temp_high <= 1.d0) then
-       write(0,*)"ERROR: temp_high must > 1.0"
+       if (self%verb) write(0,*)"ERROR: temp_high must > 1.0"
        is_ok = .false.
     end if
     if (self%n_chain <= 0) then
-       write(0,*)"ERROR: n_chain must > 0"
+       if (self%verb) write(0,*)"ERROR: n_chain must > 0"
        is_ok = .false.
     end if
     if (self%n_chain < self%n_cool) then
-       write(0,*)"ERROR: n_chain must >= n_cool"
+       if (self%verb) write(0,*)"ERROR: n_chain must >= n_cool"
        is_ok = .false.
     end if
     if (self%k_min <= 0) then
-       write(0,*)"ERROR: k_min must > 0"
+       if (self%verb) write(0,*)"ERROR: k_min must > 0"
        is_ok = .false.
     end if
     if (self%k_max <= self%k_min) then
-       write(0,*)"ERROR: k_max must > k_min"
+       if (self%verb) write(0,*)"ERROR: k_max must > k_min"
        is_ok = .false.
     end if
     if (self%z_min < 0.d0) then
-       write(0,*)"ERROR: z_min must >= 0.d0"
+       if (self%verb) write(0,*)"ERROR: z_min must >= 0.d0"
        is_ok = .false.
     end if
     if (self%z_max <= self%z_min) then
-       write(0,*)"ERROR: z_max must > z_min"
+       if (self%verb) write(0,*)"ERROR: z_max must > z_min"
        is_ok = .false.
     end if
     if (self%vp_min < 0.d0) then
-       write(0,*)"ERROR: vp_min must >= 0.0"
+       if (self%verb) write(0,*)"ERROR: vp_min must >= 0.0"
        is_ok = .false.
     end if
     if (self%vp_max <= self%vp_min) then
-       write(0,*)"ERROR: vp_max must > vp_min"
+       if (self%verb) write(0,*)"ERROR: vp_max must > vp_min"
        is_ok = .false.
     end if
     if (self%vs_min < 0.d0) then
@@ -886,31 +886,37 @@ contains
        is_ok = .false.
     end if
     if (self%vs_max <= self%vs_min) then
-       write(0,*)"ERROR: vs_max must > vs_min"
+       if (self%verb) write(0,*)"ERROR: vs_max must > vs_min"
        is_ok = .false.
     end if
     if (self%dev_z <= 0.d0) then
-       write(0,*)"ERROR: dev_z must > 0.0"
+       if (self%verb) write(0,*)"ERROR: dev_z must > 0.0"
        is_ok = .false.
     end if
     if (self%dev_vp <= 0.d0) then
-       write(0,*)"ERROR: dev_vp must > 0.0"
+       if (self%verb) write(0,*)"ERROR: dev_vp must > 0.0"
        is_ok = .false.
     end if
     if (self%dev_vs <= 0.d0) then
-       write(0,*)"ERROR: dev_vs must > 0.0"
+       if (self%verb) write(0,*)"ERROR: dev_vs must > 0.0"
        is_ok = .false.
     end if
     if (self%n_bin_z <= 0) then
-       write(0,*)"ERROR: n_bin_z must > 0"
+       if (self%verb) write(0,*)"ERROR: n_bin_z must > 0"
        is_ok = .false.
     end if
     if (self%n_bin_vp <= 0) then
-       write(0,*)"ERROR: n_bin_vp must > 0"
+       if (self%verb) write(0,*)"ERROR: n_bin_vp must > 0"
        is_ok = .false.
     end if
     if (self%n_bin_vs <= 0) then
-       write(0,*)"ERROR: n_bin_vs must > 0"
+       if (self%verb) write(0,*)"ERROR: n_bin_vs must > 0"
+       is_ok = .false.
+    end if
+
+    if (self%is_ocean .and. self%ocean_thick > self%z_min) then
+       if (self%verb) write(0,*)"ERROR: z_min must > " // &  
+            & "ocean_thick for ocean mode"
        is_ok = .false.
     end if
 
@@ -926,23 +932,23 @@ contains
     is_ok = .true.
 
     if (self%n_smp <= 0) then
-       write(0,*)"ERROR: n_smp must > 0"
+       if (self%verb) write(0,*)"ERROR: n_smp must > 0"
        is_ok = .false.
     end if
     if (self%rayp <= 0.d0) then
-       write(0,*)"ERROR: rayp must > 0.0"
+       if (self%verb) write(0,*)"ERROR: rayp must > 0.0"
        is_ok = .false.
     end if
     if (self%a_gauss <= 0.d0) then
-       write(0,*)"ERROR: a_gauss must > 0.0"
+       if (self%verb) write(0,*)"ERROR: a_gauss must > 0.0"
        is_ok = .false.
     end if
     if (self%delta <= 0.d0) then
-       write(0,*)"ERROR: delta must > 0.0"
+       if (self%verb) write(0,*)"ERROR: delta must > 0.0"
        is_ok = .false.
     end if
     if (self%phase /= "P" .and. self%phase /= "S") then
-       write(0,*)"ERROR: phase must be P or S"
+       if (self%verb) write(0,*)"ERROR: phase must be P or S"
        is_ok = .false.
     end if
     
