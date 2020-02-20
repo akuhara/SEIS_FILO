@@ -24,9 +24,9 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_interpreter
-  use mod_trans_d_model
-  use mod_vmodel
+module cls_interpreter
+  use cls_trans_d_model
+  use cls_vmodel
   use mod_sort
   use mod_const
   implicit none 
@@ -426,5 +426,5 @@ contains
   
   !---------------------------------------------------------------------  
   
-end module mod_interpreter
+end module cls_interpreter
 

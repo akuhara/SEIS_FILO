@@ -24,8 +24,8 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_param
-  use mod_line_text
+module cls_param
+  use cls_line_text
   implicit none 
   
   type param
@@ -956,4 +956,4 @@ contains
     return 
   end subroutine param_check_recv_func_fwd_params
 
-end module mod_param
+end module cls_param

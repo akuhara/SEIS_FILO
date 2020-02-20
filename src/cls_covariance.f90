@@ -1,4 +1,4 @@
-module mod_covariance
+module cls_covariance
   implicit none 
   
   type covariance
@@ -107,4 +107,4 @@ contains
   
   !---------------------------------------------------------------------
   
-end module mod_covariance
+end module cls_covariance

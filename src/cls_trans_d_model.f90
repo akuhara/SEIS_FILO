@@ -24,7 +24,7 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_trans_d_model
+module cls_trans_d_model
   use mod_random
   implicit none 
   
@@ -616,5 +616,5 @@ contains
     return
   end subroutine trans_d_model_finish
 
-end module mod_trans_d_model
+end module cls_trans_d_model
   

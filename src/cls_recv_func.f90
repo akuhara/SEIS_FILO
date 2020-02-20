@@ -24,9 +24,9 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_recv_func
-  use mod_vmodel
-  use mod_signal_process
+module cls_recv_func
+  use cls_vmodel
+  use cls_signal_process
   implicit none 
   
   complex(kind(0d0)), private, parameter :: ei = (0.d0, 1.d0)
@@ -623,4 +623,4 @@ contains
   end function recv_func_get_n_syn_rf
 
   !---------------------------------------------------------------------
-end module mod_recv_func
+end module cls_recv_func

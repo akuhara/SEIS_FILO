@@ -24,7 +24,7 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_observation_disper
+module cls_observation_disper
   
   implicit none 
   
@@ -215,4 +215,4 @@ contains
   !---------------------------------------------------------------------
 
   
-end module mod_observation_disper
+end module cls_observation_disper

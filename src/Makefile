@@ -19,35 +19,35 @@ LAPACK = -llapack -lblas
 #-----------------------------------------------------------------------
 
 RAY_FWD = ../bin/rayleigh_fwd
-OBJS_RAY_FWD = rayleigh_fwd.o mod_vmodel.o mod_rayleigh.o mod_param.o \
-	       mod_line_text.o
+OBJS_RAY_FWD = rayleigh_fwd.o cls_vmodel.o cls_rayleigh.o cls_param.o \
+	       cls_line_text.o
 
 RAY_INV = ../bin/rayleigh_inv	
-OBJS_RAY_INV   = rayleigh_inv.o mod_mcmc.o mod_trans_d_model.o \
-	 mod_rayleigh.o mod_vmodel.o mod_random.o mod_interpreter.o \
-	 mod_sort.o mod_const.o mod_observation_disper.o \
-	 mod_parallel.o mod_param.o mod_line_text.o
+OBJS_RAY_INV   = rayleigh_inv.o cls_mcmc.o cls_trans_d_model.o \
+	 cls_rayleigh.o cls_vmodel.o mod_random.o cls_interpreter.o \
+	 mod_sort.o mod_const.o cls_observation_disper.o \
+	 cls_parallel.o cls_param.o cls_line_text.o mod_output.o
 
 
 RF_FWD = ../bin/recv_func_fwd
-OBJS_RF_FWD = recv_func_fwd.o mod_vmodel.o mod_param.o \
-	 mod_line_text.o mod_signal_process.o mod_random.o \
-	 mod_recv_func.o
+OBJS_RF_FWD = recv_func_fwd.o cls_vmodel.o cls_param.o \
+	 cls_line_text.o cls_signal_process.o \
+	 cls_recv_func.o
 
 RF_INV = ../bin/recv_func_inv
-OBJS_RF_INV = recv_func_inv.o mod_parallel.o mod_random.o \
-         mod_trans_d_model.o mod_mcmc.o mod_recv_func.o \
-	 mod_const.o mod_interpreter.o mod_observation_recv_func.o \
-	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
-         mod_line_text.o mod_covariance.o
+OBJS_RF_INV = recv_func_inv.o cls_parallel.o mod_random.o \
+         cls_trans_d_model.o cls_mcmc.o cls_recv_func.o \
+	 mod_const.o cls_interpreter.o cls_observation_recv_func.o \
+	 cls_param.o cls_vmodel.o cls_signal_process.o mod_sort.o \
+         cls_line_text.o cls_covariance.o mod_output.o
 
 JOINT_INV = ../bin/joint_inv
-OBJS_JOINT_INV = joint_inv.o mod_parallel.o mod_random.o \
-         mod_trans_d_model.o mod_mcmc.o mod_recv_func.o \
-	 mod_const.o mod_interpreter.o mod_observation_recv_func.o \
-	 mod_param.o mod_vmodel.o mod_signal_process.o mod_sort.o \
-         mod_line_text.o mod_covariance.o mod_observation_disper.o \
-	 mod_rayleigh.o
+OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
+         cls_trans_d_model.o cls_mcmc.o cls_recv_func.o \
+	 mod_const.o cls_interpreter.o cls_observation_recv_func.o \
+	 cls_param.o cls_vmodel.o cls_signal_process.o mod_sort.o \
+         cls_line_text.o cls_covariance.o cls_observation_disper.o \
+	 cls_rayleigh.o mod_output.o  
 
 TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) $(RF_INV) $(JOINT_INV)
 
@@ -55,33 +55,33 @@ TARGET = $(RAY_FWD) $(RAY_INV) $(RF_FWD) $(RF_INV) $(JOINT_INV)
 all: $(TARGET)
 
 
-rayleigh_inv.o: mod_random.mod mod_trans_d_model.mod mod_mcmc.mod \
-	        mod_rayleigh.mod mod_interpreter.mod mod_const.mod \
-		mod_observation_disper.mod mod_parallel.mod \
-                mod_param.mod
-rayleigh_fwd.o: mod_rayleigh.mod mod_vmodel.mod mod_param.mod \
-	        mod_recv_func.mod
-recv_func_fwd.o: mod_param.mod mod_vmodel.mod mod_signal_process.mod \
-                 mod_random.mod mod_recv_func.mod
-recv_func_inv.o: mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
-                 mod_mcmc.mod mod_const.mod mod_interpreter.mod \
-                 mod_param.mod mod_observation_recv_func.mod \
-                 mod_recv_func.mod mod_covariance.mod
-joint_inv.o:  mod_parallel.mod mod_random.mod mod_trans_d_model.mod \
-              mod_mcmc.mod mod_const.mod mod_interpreter.mod \
-              mod_param.mod mod_observation_recv_func.mod \
-              mod_recv_func.mod mod_covariance.mod mod_rayleigh.mod \
-              mod_observation_disper.mod
+rayleigh_inv.o: mod_random.mod cls_trans_d_model.mod cls_mcmc.mod \
+	        cls_rayleigh.mod cls_interpreter.mod mod_const.mod \
+		cls_observation_disper.mod cls_parallel.mod \
+                cls_param.mod mod_output.mod
+rayleigh_fwd.o: cls_rayleigh.mod cls_vmodel.mod cls_param.mod \
+	        cls_recv_func.mod
+recv_func_fwd.o: cls_param.mod cls_vmodel.mod cls_signal_process.mod \
+                 cls_recv_func.mod
+recv_func_inv.o: cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
+                 cls_mcmc.mod mod_const.mod cls_interpreter.mod \
+                 cls_param.mod cls_observation_recv_func.mod \
+                 cls_recv_func.mod cls_covariance.mod mod_output.mod
+joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
+              cls_mcmc.mod mod_const.mod cls_interpreter.mod \
+              cls_param.mod cls_observation_recv_func.mod \
+              cls_recv_func.mod cls_covariance.mod cls_rayleigh.mod \
+              cls_observation_disper.mod mod_output.mod
 
-mod_recv_func.o: mod_vmodel.mod mod_signal_process.mod
-mod_rayleigh.o: mod_vmodel.mod
-mod_trans_d_model.o: mod_random.mod
-mod_mcmc.o: mod_random.mod mod_trans_d_model.mod 
-mod_interpreter.o: mod_trans_d_model.mod mod_vmodel.mod mod_sort.mod \
+cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod
+cls_rayleigh.o: cls_vmodel.mod
+cls_trans_d_model.o: mod_random.mod
+cls_mcmc.o: mod_random.mod cls_trans_d_model.mod 
+cls_interpreter.o: cls_trans_d_model.mod cls_vmodel.mod mod_sort.mod \
                    mod_const.mod
-mod_parallel.o: mod_mcmc.mod mod_trans_d_model.mod
-mod_param.o: mod_line_text.mod
-mod_observation_recv_func.o: mod_line_text.mod
+cls_parallel.o: cls_mcmc.mod cls_trans_d_model.mod
+cls_param.o: cls_line_text.mod
+cls_observation_recv_func.o: cls_line_text.mod
 
 $(RAY_FWD): $(OBJS_RAY_FWD)
 	$(FC) $(FFLAGS) $^ -o $@

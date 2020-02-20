@@ -24,7 +24,7 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_vmodel
+module cls_vmodel
   implicit none 
   
   type vmodel
@@ -441,4 +441,4 @@ contains
     
   !---------------------------------------------------------------------
 
-end module mod_vmodel
+end module cls_vmodel

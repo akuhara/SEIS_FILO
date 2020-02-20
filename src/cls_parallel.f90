@@ -27,9 +27,9 @@
 !> Module to perform parallel tempering MCMC
 !> @author 
 !> Takeshi Akuhara
-module mod_parallel
-  use mod_trans_d_model
-  use mod_mcmc
+module cls_parallel
+  use cls_trans_d_model
+  use cls_mcmc
   implicit none 
   include 'mpif.h'
 
@@ -43,10 +43,10 @@ module mod_parallel
   !! @param rank    Process ID
   !! @param n_cahin # of MCMC chains per process
   !! @param mc      A struct that contains MCMC chain property
-  !!                (see mod_mcmc.f90 for details)
+  !!                (see cls_mcmc.f90 for details)
   !! @param tm      A structure that contains 
   !!                transdimensional model parameters and related 
-  !!                setting (see mod_trans_d_model.f90 for details)  
+  !!                setting (see cls_trans_d_model.f90 for details)  
   !---------------------------------------------------------------------
   type parallel
      private
@@ -112,7 +112,7 @@ contains
   !! @param[in]    tm   A structure that contains 
   !!                    transdimensional model parameters and related 
   !!                    settings
-  !!                    (see mod_trans_d_model.f90 for details)  
+  !!                    (see cls_trans_d_model.f90 for details)  
   !---------------------------------------------------------------------
   subroutine parallel_set_tm(self, i, tm)
     class(parallel), intent(inout) :: self 
@@ -138,7 +138,7 @@ contains
   !!                    
   !! @return       A structure that contains 
   !!               transdimensional model parameters and related 
-  !!               settings (see mod_trans_d_model.f90 for details)  
+  !!               settings (see cls_trans_d_model.f90 for details)  
   !---------------------------------------------------------------------
   type(trans_d_model) function parallel_get_tm(self, i) result(tm)
     class(parallel), intent(inout) :: self
@@ -161,7 +161,7 @@ contains
   !! @param[inout] self Object
   !! @param[in]    i    MCMC chain ID
   !! @param[in]    mc   A structure that contains MCMC properties
-  !!                    (see mod_mcmc.f90 for details)
+  !!                    (see cls_mcmc.f90 for details)
   !---------------------------------------------------------------------
   subroutine parallel_set_mc(self, i, mc)
     class(parallel), intent(inout) :: self
@@ -185,7 +185,7 @@ contains
   !! @param[in] self Object
   !! @param[in] i    MCMC chain ID
   !! @return         A structure that contains MCMC properties
-  !!                 (see mod_mcmc.f90 for details)
+  !!                 (see cls_mcmc.f90 for details)
   !---------------------------------------------------------------------
   type(mcmc) function parallel_get_mc(self, i) result(mc)
     class(parallel), intent(inout) :: self
@@ -573,4 +573,4 @@ contains
   !---------------------------------------------------------------------
 
 
-end module mod_parallel
+end module cls_parallel

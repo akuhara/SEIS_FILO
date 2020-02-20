@@ -24,7 +24,7 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_line_text
+module cls_line_text
   implicit none 
   
   integer, parameter :: line_max = 200, symbol_max = 10
@@ -152,4 +152,4 @@ contains
   end function line_text_get_line
 
 
-end module mod_line_text
+end module cls_line_text

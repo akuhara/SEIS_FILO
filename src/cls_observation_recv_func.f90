@@ -24,8 +24,8 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_observation_recv_func
-  use mod_line_text, only: line_max, line_text
+module cls_observation_recv_func
+  use cls_line_text, only: line_max, line_text
   implicit none
   
   type observation_recv_func
@@ -379,4 +379,4 @@ contains
 
 
   
-end module mod_observation_recv_func
+end module cls_observation_recv_func

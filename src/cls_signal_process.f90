@@ -24,7 +24,7 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_signal_process
+module cls_signal_process
   implicit none
   include 'fftw3.f'
 
@@ -181,6 +181,6 @@ contains
   end subroutine signal_process_set_gaussian_filter
 
   
-end module mod_signal_process
+end module cls_signal_process
 
 

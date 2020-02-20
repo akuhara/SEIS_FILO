@@ -24,9 +24,9 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_mcmc
+module cls_mcmc
   use mod_random
-  use mod_trans_d_model
+  use cls_trans_d_model
   implicit none 
   
   type mcmc 
@@ -146,7 +146,6 @@ contains
          & log_proposal_ratio
     double precision :: ratio
     double precision :: r
-    integer :: i
     
     self%is_accepted = .false.
 
@@ -314,4 +313,4 @@ contains
 
   !---------------------------------------------------------------------
 
-end module mod_mcmc
+end module cls_mcmc

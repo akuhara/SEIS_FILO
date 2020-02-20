@@ -24,8 +24,8 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module mod_rayleigh
-  use mod_vmodel
+module cls_rayleigh
+  use cls_vmodel
   implicit none 
   
   double precision, private, parameter :: pi = acos(-1.d0)
@@ -105,7 +105,7 @@ contains
     self%vmodel = vm
     nlay = self%vmodel%get_nlay()
     if (nlay < 1) then
-       write(0,*)"ERROR: velocity model is not defined (mod_rayleigh)"
+       write(0,*)"ERROR: velocity model is not defined"
        stop
     end if
     if (self%vmodel%get_vs(1) < 0.d0) then
@@ -647,4 +647,4 @@ contains
   
   !---------------------------------------------------------------------
 
-end module mod_rayleigh
+end module cls_rayleigh

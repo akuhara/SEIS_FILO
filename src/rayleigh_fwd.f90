@@ -25,9 +25,9 @@
 !
 !=======================================================================
 program main
-  use mod_param
-  use mod_vmodel
-  use mod_rayleigh
+  use cls_param
+  use cls_vmodel
+  use cls_rayleigh
   implicit none 
   integer :: n_arg
   character(len=200) :: param_file

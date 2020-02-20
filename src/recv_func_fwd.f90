@@ -25,10 +25,9 @@
 !
 !=======================================================================
 program main
-  use mod_param
-  use mod_vmodel
-  use mod_random
-  use mod_recv_func
+  use cls_param
+  use cls_vmodel
+  use cls_recv_func
   implicit none   
   integer :: n_arg
   character(len=200) :: param_file
