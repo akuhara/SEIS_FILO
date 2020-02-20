@@ -25,7 +25,7 @@
 !
 !=======================================================================
 module cls_observation_recv_func
-  use cls_line_text, only: line_max, line_text
+  use cls_line_text
   implicit none
   
   type observation_recv_func
@@ -89,12 +89,11 @@ contains
          & iostat = ierr)
     if (ierr /= 0) then
        write(0,*)"ERROR: cannot open ", trim(recv_func_in)
-       write(0,*)"     : (init_observation_recv_func)"
        stop
     end if
     
     
-    ! Read observation file
+    ! Get number of RFs from input file
     do
        read(io, '(a)')line
        lt = line_text(line, ignore_space=.false.)
@@ -188,7 +187,8 @@ contains
        end do
        
     end do
-
+    close(io)
+    
     ! allocate data array
     do concurrent (i=1:self%n_rf)
        self%n_smp(:) &
@@ -216,7 +216,7 @@ contains
     integer :: i_start, i_end, j, io
     
     open(newunit = io, file = filename, access = 'direct', &
-         & iostat = ierr, recl = 4)
+         & iostat = ierr, recl = 4, status = 'old')
     if (ierr /= 0) then
        write(0,*)"ERROR: cannot open ", trim(filename)
        stop
