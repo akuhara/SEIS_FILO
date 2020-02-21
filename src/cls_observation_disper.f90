@@ -40,7 +40,7 @@ module cls_observation_disper
      double precision, allocatable :: sig_u(:,:) ! uncertainties in u
      double precision, allocatable :: cmin(:), cmax(:), dc(:)
      integer, allocatable :: n_mode(:)
-     character(1), allocatable :: phase(:)
+     character(1), allocatable :: disper_phase(:)
      
    contains
      procedure :: get_nf => observation_disper_get_nf
@@ -60,6 +60,8 @@ module cls_observation_disper
      procedure :: get_sig_u_array => observation_disper_get_sig_u_array
      procedure :: get_n_disp => observation_disper_get_n_disp
      procedure :: set_n_disp => observation_disper_set_n_disp
+     procedure :: get_disper_phase &
+          & => observation_disper_get_disper_phase
      procedure :: get_n_mode => observation_disper_get_n_mode
      procedure :: read_data => observation_disper_read_data
      
@@ -106,7 +108,7 @@ contains
     allocate(self%nf(self%n_disp), self%fmin(self%n_disp))
     allocate(self%fmax(self%n_disp))
     allocate(self%df(self%n_disp))
-    allocate(self%phase(self%n_disp))
+    allocate(self%disper_phase(self%n_disp))
     allocate(self%cmin(self%n_disp), self%cmax(self%n_disp))
     allocate(self%dc(self%n_disp))
     allocate(filename(self%n_disp))
@@ -124,13 +126,13 @@ contains
              exit
           end if
        end do
-       ! phase
+       ! disper_phase
        do 
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) /= 0) then
-             read(line, *) self%phase(i), self%n_mode(i)
+             read(line, *) self%disper_phase(i), self%n_mode(i)
              exit
           end if
        end do
@@ -377,6 +379,18 @@ contains
     return 
   end subroutine observation_disper_set_n_disp
   
+  !---------------------------------------------------------------------
+  
+  character(1) function observation_disper_get_disper_phase(self, i) &
+       & result(disper_phase)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    disper_phase = self%disper_phase(i)
+
+    return 
+  end function observation_disper_get_disper_phase
+
   !---------------------------------------------------------------------
 
   integer function observation_disper_get_n_mode(self, i) result(n_mode)

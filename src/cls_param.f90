@@ -89,7 +89,7 @@ module cls_param
      double precision :: cmax = -999.d0
      double precision :: dc = -999.d0
      integer :: n_mode = -999
-     character(len=1) :: disp_phase
+     character(len=1) :: disper_phase
      
      
      character(len=line_max) :: vmod_in = ""
@@ -128,6 +128,7 @@ module cls_param
      procedure :: get_cmax => param_get_cmax
      procedure :: get_dc => param_get_dc
      procedure :: get_n_mode => param_get_n_mode
+     procedure :: get_disper_phase => param_get_disper_phase
      procedure :: get_dev_vs => param_get_dev_vs
      procedure :: get_dev_vp => param_get_dev_vp
      procedure :: get_dev_z => param_get_dev_z
@@ -143,7 +144,7 @@ module cls_param
      procedure :: get_is_ocean => param_get_is_ocean
      
      procedure :: get_vmod_in => param_get_vmod_in
-     procedure :: get_ray_out => param_get_ray_out
+     procedure :: get_disper_out => param_get_disper_out
      procedure :: get_disper_in  => param_get_disper_in
      procedure :: get_recv_func_in => param_get_recv_func_in
 
@@ -262,10 +263,12 @@ contains
        read(val, *) self%dc 
     else if (name == "n_mode") then
        read(val, *) self%n_mode
+    else if (name == "disper_phase") then
+       self%disper_phase = val
     else if (name == "vmod_in") then
        self%vmod_in = val
-    else if (name == "ray_out") then
-       self%ray_out = val
+    else if (name == "disper_out") then
+       self%disper_out = val
     else if (name == "n_iter") then
        read(val, *) self%n_iter
     else if (name == "n_burn") then
@@ -587,6 +590,17 @@ contains
   end function param_get_n_mode
 
   !---------------------------------------------------------------------
+  
+  character(1) function param_get_disper_phase(self) &
+       & result(disper_phase)
+    class(param), intent(in) :: self
+    
+    disper_phase = self%disper_phase
+    
+    return 
+  end function param_get_disper_phase
+
+  !---------------------------------------------------------------------
 
   double precision function param_get_dev_vs(self) result(dev_vs)
     class(param), intent(in) :: self
@@ -720,14 +734,14 @@ contains
   
   !---------------------------------------------------------------------
   
-  character(len=line_max) function param_get_ray_out(self) &
-       & result(ray_out)
+  character(len=line_max) function param_get_disper_out(self) &
+       & result(disper_out)
     class(param), intent(in) :: self
     
-    ray_out = self%ray_out
+    disper_out = self%disper_out
     
     return
-  end function param_get_ray_out
+  end function param_get_disper_out
   
   !---------------------------------------------------------------------
 

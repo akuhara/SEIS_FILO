@@ -52,6 +52,7 @@ module cls_disper
      integer :: io
      integer, allocatable :: n_fc(:,:)
      integer, allocatable :: n_fu(:,:)
+     character(1) :: disper_phase
      integer :: n_mode
 
      logical :: full_calculation = .false.
@@ -61,7 +62,7 @@ module cls_disper
      double precision :: y(5)
      logical :: is_ocean
      
-     character(len=200) :: ray_out = ""
+     character(len=200) :: disper_out = ""
      logical :: out_flag = .false.
 
    contains
@@ -95,12 +96,14 @@ contains
   !---------------------------------------------------------------------
   
   type(disper) function init_disper(vm, fmin, fmax, df, &
-       & cmin, cmax, dc, n_mode, ray_out) result(self)
+       & cmin, cmax, dc, disper_phase, n_mode, disper_out) result(self)
     type(vmodel), intent(in) :: vm
     double precision, intent(in) :: fmin, fmax, df
     double precision, intent(in) :: cmin, cmax, dc
+    character(*), intent(in) :: disper_phase
     integer, intent(in) :: n_mode
-    character(*), intent(in), optional :: ray_out
+    
+    character(*), intent(in), optional :: disper_out
     integer :: nlay, ierr
     
     ! velocity model
@@ -138,13 +141,23 @@ contains
     end if
     self%n_mode = n_mode
     
+    self%disper_phase = disper_phase
+    if (self%disper_phase == "L") then
+       write(0,*)"ERROR: Love wave it not supported yet"
+       stop
+    end if
+    if (self%disper_phase /= "L" .and. self%disper_phase /= "R") then
+       write(0,*)"ERROR: disper_phase must be L or R"
+       stop
+    end if
+
     ! output file
-    if (present(ray_out)) then
-       self%ray_out = ray_out
+    if (present(disper_out)) then
+       self%disper_out = disper_out
        open(newunit = self%io, status = "unknown", &
-            & file = ray_out, iostat=ierr)
+            & file = disper_out, iostat=ierr)
        if (ierr /= 0) then
-          write(0, *)"ERROR: cannot creat ", trim(ray_out)
+          write(0, *)"ERROR: cannot creat ", trim(disper_out)
           write(0, *)"     : (init_disper)"
           stop
        end if

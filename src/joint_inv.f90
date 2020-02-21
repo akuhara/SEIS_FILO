@@ -230,7 +230,8 @@ program main
           & cmin=obs_disp%get_cmin(i), &
           & cmax=obs_disp%get_cmax(i), &
           & dc=obs_disp%get_dc(i), &
-          & n_mode = obs_disp%get_n_mode(i) &
+          & n_mode = obs_disp%get_n_mode(i), &
+          & disper_phase = obs_disp%get_disper_phase(i) &
           & )
   end do
   

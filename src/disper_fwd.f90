@@ -59,12 +59,13 @@ program main
        & cmin   = para%get_cmin(), &
        & cmax   = para%get_cmax(), &
        & dc     = para%get_dc(), &
+       & disper_phase = para%get_disper_phase(), &
        & n_mode = para%get_n_mode(), &
-       & ray_out = para%get_ray_out() &
+       & disper_out = para%get_disper_out() &
        & )
   
   call disp%dispersion()
  
-
+  
   stop
 end program main
