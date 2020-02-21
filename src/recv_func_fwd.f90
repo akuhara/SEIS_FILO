@@ -62,7 +62,7 @@ program main
        & delta = para%get_delta(), &
        & rayp  = para%get_rayp(), &
        & a_gauss = para%get_a_gauss(), &
-       & phase = para%get_phase(), &
+       & rf_phase = para%get_rf_phase(), &
        & deconv_flag = para%get_deconv_flag(), &
        & t_pre = para%get_t_pre(), &
        & correct_amp = para%get_correct_amp()&

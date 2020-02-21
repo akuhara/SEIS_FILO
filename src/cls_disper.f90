@@ -24,7 +24,7 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-module cls_rayleigh
+module cls_disper
   use cls_vmodel
   implicit none 
   
@@ -35,7 +35,7 @@ module cls_rayleigh
   integer, private, parameter :: i23 = 4, i24 = 5
 
 
-  type rayleigh
+  type disper
      private
      type(vmodel) :: vmodel
      
@@ -52,6 +52,8 @@ module cls_rayleigh
      integer :: io
      integer, allocatable :: n_fc(:,:)
      integer, allocatable :: n_fu(:,:)
+     character(1) :: disper_phase
+     integer :: n_mode
 
      logical :: full_calculation = .false.
 
@@ -60,45 +62,48 @@ module cls_rayleigh
      double precision :: y(5)
      logical :: is_ocean
      
-     character(len=200) :: ray_out = ""
+     character(len=200) :: disper_out = ""
      logical :: out_flag = .false.
 
    contains
-     procedure :: dispersion => rayleigh_dispersion
-     procedure :: init_propagation => rayleigh_init_propagation
-     procedure :: do_propagation => rayleigh_do_propagation
-     procedure :: solid_propagator => rayleigh_solid_propagator
-     procedure :: liquid_propagator => rayleigh_liquid_propagator
-     procedure :: find_root => rayleigh_find_root
-     procedure :: set_full_calculation => rayleigh_set_full_calculation
-     procedure :: do_full_calculation => rayleigh_do_full_calculation
-     procedure :: set_vmodel => rayleigh_set_vmodel
-     procedure :: get_nf => rayleigh_get_nf
-     procedure :: get_nc => rayleigh_get_nc
-     procedure :: get_c => rayleigh_get_c
-     procedure :: get_c_array => rayleigh_get_c_array
-     procedure :: get_u => rayleigh_get_u
-     procedure :: get_u_array => rayleigh_get_u_array
-     procedure :: save_syn => rayleigh_save_syn
-     procedure :: get_n_fc => rayleigh_get_n_fc
-     procedure :: get_n_fu => rayleigh_get_n_fu
+     procedure :: dispersion => disper_dispersion
+     procedure :: init_propagation => disper_init_propagation
+     procedure :: do_propagation => disper_do_propagation
+     procedure :: solid_propagator => disper_solid_propagator
+     procedure :: liquid_propagator => disper_liquid_propagator
+     procedure :: find_root => disper_find_root
+     procedure :: set_full_calculation => disper_set_full_calculation
+     procedure :: do_full_calculation => disper_do_full_calculation
+     procedure :: set_vmodel => disper_set_vmodel
+     procedure :: get_nf => disper_get_nf
+     procedure :: get_nc => disper_get_nc
+     procedure :: get_c => disper_get_c
+     procedure :: get_c_array => disper_get_c_array
+     procedure :: get_u => disper_get_u
+     procedure :: get_u_array => disper_get_u_array
+     procedure :: save_syn => disper_save_syn
+     procedure :: get_n_fc => disper_get_n_fc
+     procedure :: get_n_fu => disper_get_n_fu
      
-  end type rayleigh
+  end type disper
 
-  interface rayleigh
-     module procedure init_rayleigh
-  end interface rayleigh
+  interface disper
+     module procedure init_disper
+  end interface disper
   
 contains
   
   !---------------------------------------------------------------------
   
-  type(rayleigh) function init_rayleigh(vm, fmin, fmax, df, &
-       & cmin, cmax, dc, ray_out) result(self)
+  type(disper) function init_disper(vm, fmin, fmax, df, &
+       & cmin, cmax, dc, disper_phase, n_mode, disper_out) result(self)
     type(vmodel), intent(in) :: vm
     double precision, intent(in) :: fmin, fmax, df
     double precision, intent(in) :: cmin, cmax, dc
-    character(*), intent(in), optional :: ray_out
+    character(*), intent(in) :: disper_phase
+    integer, intent(in) :: n_mode
+    
+    character(*), intent(in), optional :: disper_out
     integer :: nlay, ierr
     
     ! velocity model
@@ -134,16 +139,26 @@ contains
        write(0,*)"ERROR: cmax must be .gt. cmin (self)"
        stop
     end if
+    self%n_mode = n_mode
     
-    
+    self%disper_phase = disper_phase
+    if (self%disper_phase == "L") then
+       write(0,*)"ERROR: Love wave it not supported yet"
+       stop
+    end if
+    if (self%disper_phase /= "L" .and. self%disper_phase /= "R") then
+       write(0,*)"ERROR: disper_phase must be L or R"
+       stop
+    end if
+
     ! output file
-    if (present(ray_out)) then
-       self%ray_out = ray_out
+    if (present(disper_out)) then
+       self%disper_out = disper_out
        open(newunit = self%io, status = "unknown", &
-            & file = ray_out, iostat=ierr)
+            & file = disper_out, iostat=ierr)
        if (ierr /= 0) then
-          write(0, *)"ERROR: cannot creat ", trim(ray_out)
-          write(0, *)"     : (init_rayleigh)"
+          write(0, *)"ERROR: cannot creat ", trim(disper_out)
+          write(0, *)"     : (init_disper)"
           stop
        end if
        self%out_flag = .true.
@@ -155,32 +170,35 @@ contains
     self%n_fu(:,:) = 0
    
     return 
-  end function init_rayleigh
+  end function init_disper
     
   !---------------------------------------------------------------------
 
-  subroutine rayleigh_dispersion(self)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_dispersion(self)
+    class(disper), intent(inout) :: self
     double precision :: omega, c_start, prev_rslt, grad
     double precision :: c, u
+    logical :: first_flag
     integer :: i
     
     prev_rslt = 0.d0
     c_start = self%cmin
+    first_flag = .true.
     do i = 1, self%nf
        omega = 2.d0 * pi * (self%fmin  + (i - 1) * self%df)
        if (.not. self%full_calculation) then
           ! find root
           if (i /= 1) then
+             first_flag = .false.
              if (self%u(i-1) /= 0.d0) then
                 grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
                      & self%c(i-1) / (omega - 2.d0 * pi * self%df)
-                if (grad < -0.1d0) then
+                !if (grad < -0.1d0) then
                    c_start = self%c(i-1) + &
                         & 2.d0 * grad * 2.d0 * pi * self%df
-                else
-                   c_start = self%c(i-1) - 0.05d0
-                end if
+                !else
+                !   c_start = self%c(i-1) - 0.05d0
+                !end if
                 if (c_start <= self%cmin) then
                    c_start = self%cmin
                 end if
@@ -188,7 +206,7 @@ contains
           else
              c_start = self%cmin
           end if
-          call self%find_root(omega, c_start, c, u)
+          call self%find_root(omega, c_start, c, u, first_flag)
           self%c(i) = c
           self%u(i) = u
           if (self%out_flag) then
@@ -203,12 +221,12 @@ contains
 
     
     return 
-  end subroutine rayleigh_dispersion
+  end subroutine disper_dispersion
   
   !---------------------------------------------------------------------
   
-  subroutine rayleigh_do_full_calculation(self, omega)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_do_full_calculation(self, omega)
+    class(disper), intent(inout) :: self
     double precision, intent(in) :: omega
     integer :: i
     double precision :: c_tmp, rslt
@@ -220,15 +238,16 @@ contains
     end do
     
     return 
-  end subroutine rayleigh_do_full_calculation
+  end subroutine disper_do_full_calculation
 
   !---------------------------------------------------------------------
   
-  subroutine rayleigh_find_root(self, omega, c_start, c, u)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_find_root(self, omega, c_start, c, u, first_flag)
+    class(disper), intent(inout) :: self
     double precision, intent(in) :: omega, c_start
     double precision, intent(out) :: c, u
-    integer :: i
+    logical, intent(in) :: first_flag
+    integer :: i, count
     double precision :: c_tmp, rslt, prev_rslt, cmin2, cmax2
     double precision :: c1, c2, rslt1_c, rslt2_c, del_c
     double precision :: rslt_min, rslt_max
@@ -239,24 +258,29 @@ contains
 
     ! First step 
     prev_rslt = 0.d0
+    count = -1
     do i = 1, self%nc
        c_tmp = c_start + (i - 1) * self%dc
        !write(*,*)"C_tmp=", c_tmp
-       if (c_tmp > self%vmodel%get_vs(self%vmodel%get_nlay())) exit
+       if (c_tmp > self%cmax) exit
        !write(*,*)"First"
        call self%do_propagation(omega, c_tmp, rslt)
        if (prev_rslt * rslt < 0) then
-          is_found = .true.
-          prev_rslt = rslt
-          cmin2 = c_tmp - self%dc
-          cmax2 = c_tmp
-          exit
+          count = count + 1
+          if (.not. first_flag .or. self%n_mode == count) then
+             is_found = .true.
+             prev_rslt = rslt
+             cmin2 = c_tmp - self%dc
+             cmax2 = c_tmp
+             exit
+          end if
        end if
        prev_rslt = rslt
     end do
     if (.not. is_found) then
-       write(0,*)"Warning: root is not found (rayleigh_find_root)", &
-            & "       : omega = ", omega, ", c_tmp = ", c_tmp
+       write(0,*)"Warning: root is not found (disper_find_root)", &
+            & " omega = ", omega, ", c_tmp = ", c_tmp, ", n_mode = ", &
+            & self%n_mode
        c = 0.d0
        u = 0.d0
        return
@@ -309,11 +333,11 @@ contains
     u = c / (1.d0 + omega * del_omega / (c * del_c))
     !write(*,*)"C=", c, "U=",u
     return
-  end subroutine rayleigh_find_root
+  end subroutine disper_find_root
   !---------------------------------------------------------------------
 
-  subroutine rayleigh_do_propagation(self, omega, c, rslt)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_do_propagation(self, omega, c, rslt)
+    class(disper), intent(inout) :: self
     double precision, intent(in) :: omega, c
     double precision, intent(out) :: rslt
     integer :: i, nlay, i0
@@ -341,12 +365,12 @@ contains
     end if
     
     return 
-  end subroutine rayleigh_do_propagation
+  end subroutine disper_do_propagation
   
   !---------------------------------------------------------------------
   
-  subroutine rayleigh_init_propagation(self, c)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_init_propagation(self, c)
+    class(disper), intent(inout) :: self
     integer :: nlay
     double precision, intent(in) :: c
 
@@ -360,7 +384,7 @@ contains
     
     if (c > vp .or. c > vs) then
        write(0,*)"ERROR: phase velocity must be lower than Vp or Vs "
-       write(0,*)"     : at the model bottom (rayleigh_init_propagation)"
+       write(0,*)"     : at the model bottom (disper_init_propagation)"
        write(0,*)"     : vp=", vp, "vs=", vs, "c=", c
        stop
     end if
@@ -375,12 +399,12 @@ contains
     self%y(i24) = -rho * (gm * self%y(i12) + rho * (gm - 1.d0)) 
     
     return 
-  end subroutine rayleigh_init_propagation
+  end subroutine disper_init_propagation
   
   !---------------------------------------------------------------------
   
-  function rayleigh_solid_propagator(self, i, omega, c) result(p)
-    class(rayleigh), intent(inout) :: self
+  function disper_solid_propagator(self, i, omega, c) result(p)
+    class(disper), intent(inout) :: self
     integer, intent(in) :: i
     double precision, intent(in) :: omega, c
     double precision :: p(5, 5)
@@ -446,12 +470,12 @@ contains
     
 
     return
-  end function rayleigh_solid_propagator
+  end function disper_solid_propagator
 
   !---------------------------------------------------------------------
   
-  function rayleigh_liquid_propagator(self, omega, c) result(p)
-    class(rayleigh), intent(inout) :: self
+  function disper_liquid_propagator(self, omega, c) result(p)
+    class(disper), intent(inout) :: self
     double precision, intent(in) :: omega, c
     double precision :: vp, rho, h, k
     double precision :: ca, sa, ra2, fac
@@ -470,7 +494,7 @@ contains
     p(2, 2) = ca
     
     return 
-  end function rayleigh_liquid_propagator
+  end function disper_liquid_propagator
 
   !---------------------------------------------------------------------
   
@@ -516,8 +540,8 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine rayleigh_set_full_calculation(self, flag)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_set_full_calculation(self, flag)
+    class(disper), intent(inout) :: self
     logical, intent(in), optional :: flag
 
     if (present(flag)) then
@@ -527,87 +551,87 @@ contains
     end if
     
     return 
-  end subroutine rayleigh_set_full_calculation
+  end subroutine disper_set_full_calculation
 
   !---------------------------------------------------------------------
 
-  subroutine rayleigh_set_vmodel(self, vm)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_set_vmodel(self, vm)
+    class(disper), intent(inout) :: self
     type(vmodel), intent(in) :: vm
     
     self%vmodel = vm
 
     return 
-  end subroutine rayleigh_set_vmodel
+  end subroutine disper_set_vmodel
 
   !---------------------------------------------------------------------
 
-  integer function rayleigh_get_nf(self) result(nf)
-    class(rayleigh), intent(in) :: self
+  integer function disper_get_nf(self) result(nf)
+    class(disper), intent(in) :: self
 
     nf = self%nf
     
     return 
-  end function rayleigh_get_nf
+  end function disper_get_nf
 
   !---------------------------------------------------------------------
 
-  integer function rayleigh_get_nc(self) result(nc)
-    class(rayleigh), intent(in) :: self
+  integer function disper_get_nc(self) result(nc)
+    class(disper), intent(in) :: self
 
     nc = self%nc
     
     return 
-  end function rayleigh_get_nc
+  end function disper_get_nc
 
   !---------------------------------------------------------------------
 
-  double precision function rayleigh_get_c(self, i) result(c)
-    class(rayleigh), intent(in) :: self
+  double precision function disper_get_c(self, i) result(c)
+    class(disper), intent(in) :: self
     integer, intent(in) :: i
     
     c = self%c(i)
 
     return 
-  end function rayleigh_get_c
+  end function disper_get_c
 
   !---------------------------------------------------------------------
   
-  function rayleigh_get_c_array(self) result(c)
-    class(rayleigh), intent(in) :: self
+  function disper_get_c_array(self) result(c)
+    class(disper), intent(in) :: self
     double precision :: c(self%nf)
   
     c(:) = self%c(:)
 
     return 
-  end function rayleigh_get_c_array
+  end function disper_get_c_array
 
   !---------------------------------------------------------------------
   
-  double precision function rayleigh_get_u(self, i) result(u)
-    class(rayleigh), intent(in) :: self
+  double precision function disper_get_u(self, i) result(u)
+    class(disper), intent(in) :: self
     integer, intent(in) :: i
     
     u = self%u(i)
 
     return 
-  end function rayleigh_get_u
+  end function disper_get_u
 
   !---------------------------------------------------------------------
 
-  function rayleigh_get_u_array(self) result(u)
-    class(rayleigh), intent(in) :: self
+  function disper_get_u_array(self) result(u)
+    class(disper), intent(in) :: self
     double precision :: u(self%nf)
   
     u(:) = self%u(:)
 
     return 
-  end function rayleigh_get_u_array
+  end function disper_get_u_array
 
   !---------------------------------------------------------------------
   
-  subroutine rayleigh_save_syn(self)
-    class(rayleigh), intent(inout) :: self
+  subroutine disper_save_syn(self)
+    class(disper), intent(inout) :: self
     integer :: i, j
     
     do i = 1, self%nf
@@ -621,30 +645,30 @@ contains
     end do
     
     return 
-  end subroutine rayleigh_save_syn
+  end subroutine disper_save_syn
 
   !---------------------------------------------------------------------
 
-  function rayleigh_get_n_fc(self) result(n_fc)
-    class(rayleigh), intent(in) :: self
+  function disper_get_n_fc(self) result(n_fc)
+    class(disper), intent(in) :: self
     integer :: n_fc(self%nf, self%nc)
     
     n_fc(:,:) = self%n_fc(:,:)
 
     return 
-  end function rayleigh_get_n_fc
+  end function disper_get_n_fc
   
   !---------------------------------------------------------------------
 
-  function rayleigh_get_n_fu(self) result(n_fu)
-    class(rayleigh), intent(in) :: self
+  function disper_get_n_fu(self) result(n_fu)
+    class(disper), intent(in) :: self
     integer :: n_fu(self%nf, self%nc)
     
     n_fu(:,:) = self%n_fu(:,:)
 
     return 
-  end function rayleigh_get_n_fu
+  end function disper_get_n_fu
   
   !---------------------------------------------------------------------
 
-end module cls_rayleigh
+end module cls_disper

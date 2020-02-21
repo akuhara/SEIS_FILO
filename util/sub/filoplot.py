@@ -178,7 +178,7 @@ class InvResult:
                 
                 count += 1
                 
-                # Skip a line for N_trc
+                # Skip a line of N_trc
                 if count == 1:
                     continue
                 
@@ -227,20 +227,23 @@ class InvResult:
     
     #---------------------------------------------------------------
 
-    def _plot_dispersion(self, fig, ax, mode):
-        self._read_dispersion_obs_header()
+    def _plot_dispersion(self, fig, ax, mode, curve_id):
         param = self._param
+        obs_file = param["disper_in"]
+        self._read_dispersion_obs(obs_file, curve_id)
+
         clabel = "Phase velocity (km/s)"
         ulabel = "Group velocity (km/s)"
         if mode == "c":
-            file = "f_c.ppd"
+            ppd_file = "syn_phase" + str(curve_id).zfill(3) + ".ppd"
             vlabel = clabel
         elif mode == "u":
-            file = "f_u.ppd"
+            ppd_file = "syn_group" + str(curve_id).zfill(3) + ".ppd"
             vlabel = ulabel
         flabel = "Frequency (Hz)"
         plabel = "Posterior probability"
-        df = pd.read_csv(file, delim_whitespace=True, header=None, \
+        print(ppd_file)
+        df = pd.read_csv(ppd_file, delim_whitespace=True, header=None, \
                          names=(flabel, vlabel, plabel))
         v_min = float(param["cmin"])
         v_max = float(param["cmax"])
@@ -248,8 +251,8 @@ class InvResult:
         f_min = float(param["fmin"])
         del_f = float(param["df"])
         nf    = int(param["nf"])
-        f_max = f_min + nf * del_f
-        
+        f_max = f_min + (nf -1) * del_f
+        print(v_min, v_max, del_v, f_min, del_f, nf, f_max)
         v, f = np.mgrid[slice(v_min - 0.5 * del_v, \
                               v_max + 0.5 *  del_v, \
                               del_v), \
@@ -265,25 +268,54 @@ class InvResult:
         cbar.ax.set_ylabel(plabel)
         
         # Observation
-        df = pd.read_csv(param["disper_in"], delim_whitespace=True, \
-                         header=0, \
+        df = pd.read_csv(param["obs_disper_file"],\
+                         delim_whitespace=True, \
+                         header=None, \
                          names=(clabel, "c_err", ulabel, "u_err"))
-        df[flabel] = np.arange(f_min, f_max, del_f)
+        print(f_min, f_max, del_f)
+        print(np.arange(f_min, f_max, del_f))
+        df[flabel] = np.arange(f_min, f_max + 0.5 * del_f, del_f)
 
         df.plot.scatter(flabel, vlabel, ax=ax, s=5, marker=".", \
                         c="blue")
 
     #---------------------------------------------------------------       
+    def _read_dispersion_obs(self, obs_file, curve_id):
+        with open(obs_file, 'r') as f:
+            count = 0
+            for line in f:
+                tmp_line = line.rstrip()
+                
+                # Dealing with comment out
+                i = tmp_line.find('#')
+                if i >= 0:
+                    tmp_line = line[0:i]
+                
+                # Skip if line is null
+                if len(tmp_line) == 0:
+                    continue
+                
+                count += 1
+                
+                # Skip a line of N_disp
+                if count == 1:
+                    continue
 
-    def _read_dispersion_obs_header(self):
-        param = self._param
-        file = param["disper_in"]
-        with open(file, 'r') as f:
-            line = f.readline()
-            item = line.split()
-            self._param["nf"] = item[0]
-            self._param["fmin"] = item[1]
-            self._param["df"] = item[2]
+                if (count - 2) // 4 + 1 == curve_id:
+                    iloc = (count - 2) % 4
+                    if iloc == 0:
+                        self._param["obs_disper_file"] = tmp_line
+                    elif iloc == 2:
+                        item = tmp_line.split(" ")
+                        self._param["nf"]   = item[0]
+                        self._param["fmin"] = item[1]
+                        self._param["df"]   = item[2]
+                    elif iloc == 3:
+                        item = tmp_line.split(" ")
+                        self._param["cmin"] = item[0]
+                        self._param["cmax"] = item[1]
+                        self._param["dc"] = item[2]
+
 
     #---------------------------------------------------------------
     
@@ -329,7 +361,7 @@ class InvResult:
     #---------------------------------------------------------------
 
     
-    def draw_surface_wave_set(self):
+    def draw_surface_wave_set(self, curve_id):
         grid_geom = (4, 4)
         fig_size = (22, 13)
         param = self._param
@@ -345,11 +377,11 @@ class InvResult:
         
         # Phase velocity
         ax = plt.subplot2grid(grid_geom, (1, 0), fig=fig)
-        self._plot_dispersion(fig, ax, "c")
+        self._plot_dispersion(fig, ax, "c", curve_id)
 
         # Group velocity
         ax = plt.subplot2grid(grid_geom, (1, 1), fig=fig)
-        self._plot_dispersion(fig, ax, "u")
+        self._plot_dispersion(fig, ax, "u", curve_id)
 
         # Vs-z
         ax = plt.subplot2grid(grid_geom, (2, 0), rowspan=2, fig=fig)
@@ -375,8 +407,11 @@ class InvResult:
                               fig=fig)
         self._plot_proposal_count(fig, ax)
 
-        #plt.show()
-        fig.savefig("plot00.png")
+        # Output
+        out_file = "disper" + str(curve_id).zfill(2) + ".png"
+        print("Output: " + out_file)
+        fig.savefig(out_file)
+        
         
         
     #---------------------------------------------------------------
@@ -422,8 +457,9 @@ class InvResult:
                               fig=fig)
         self._plot_proposal_count(fig, ax)
 
-        #plt.show()
-        out_file = "plot" + str(trace_id).zfill(2) + ".png"
+        # Output
+        out_file = "recv_func" + str(trace_id).zfill(2) + ".png"
+        print("Output: " + out_file)
         fig.savefig(out_file)
                
 #-----------------------------------------------------------------------

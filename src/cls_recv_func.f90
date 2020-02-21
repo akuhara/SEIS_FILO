@@ -44,7 +44,7 @@ module cls_recv_func
      double precision :: a_gauss
      double precision :: damp = 0.001d0
      double precision :: t_pre
-     character(len=1) :: phase
+     character(len=1) :: rf_phase
      
      logical :: deconv_flag = .true.
      logical :: is_ocean = .false.
@@ -90,14 +90,14 @@ contains
   !---------------------------------------------------------------------
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
-       & phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
+       & rf_phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
        & amp_min, amp_max) result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
     double precision, intent(in) :: rayp
     double precision, intent(in) :: a_gauss
-    character(*), intent(in) :: phase
+    character(*), intent(in) :: rf_phase
     logical, intent(in), optional :: deconv_flag
     logical, intent(in), optional :: correct_amp
     double precision, intent(in), optional :: t_pre
@@ -112,7 +112,7 @@ contains
     self%df = 1.d0 / (n * delta)
     self%rayp = rayp
     self%a_gauss = a_gauss
-    self%phase = phase
+    self%rf_phase = rf_phase
     if (present(deconv_flag)) then
        self%deconv_flag = deconv_flag
     end if
@@ -193,7 +193,7 @@ contains
        end if
     else 
        ! W/O deconvolution 
-       if (self%phase == "P") then
+       if (self%rf_phase == "P") then
           i_src = iz
           i_target = ir
        else
@@ -205,7 +205,7 @@ contains
        call sp%inverse_fft()
        fac = maxval(sp%get_t_data())
        
-       if (self%phase == "P") then
+       if (self%rf_phase == "P") then
           call sp%set_f_data(self%f_data(:, i_target))
        else
           call sp%set_f_data(-conjg(self%f_data(:, i_target)))
@@ -215,7 +215,7 @@ contains
        self%rf_data(:) = sp%get_t_data() / fac
        t_arrival = self%first_arrival()
 
-       if (self%phase == "P") then
+       if (self%rf_phase == "P") then
           call self%shift_rf_data(self%t_pre - t_arrival)
        else
           call self%shift_rf_data(self%t_pre + t_arrival)
@@ -262,14 +262,14 @@ contains
           ! On-land
           denom = self%p_mat(3,1) * self%p_mat(4,2) - &
                 & self%p_mat(3,2) * self%p_mat(4,1)
-          if (self%phase == "P") then
+          if (self%rf_phase == "P") then
              self%f_data(iomg, ir) =   self%p_mat(4,2) / denom
              self%f_data(iomg, iz) = - self%p_mat(4,1) / denom
-          else if (self%phase == "S") then
+          else if (self%rf_phase == "S") then
              self%f_data(iomg, ir) = - self%p_mat(3,2) / denom
              self%f_data(iomg, iz) =   self%p_mat(3,1) / denom
           else
-             write(0,*)"ERROR: invalid phase type:",  self%phase
+             write(0,*)"ERROR: invalid rf_phase type:",  self%rf_phase
              stop
           end if
        else
@@ -278,16 +278,16 @@ contains
           a = self%p_mat(4,2)*lq(1,1) + self%p_mat(4,4)*lq(2,1)
           b = self%p_mat(3,2)*lq(1,1) + self%p_mat(3,4)*lq(2,1)
           denom = a * self%p_mat(3,1) - b * self%p_mat(4,1)
-          if (self%phase == "P") then 
+          if (self%rf_phase == "P") then 
              self%f_data(iomg, ir) = a / denom
              self%f_data(iomg, iz) = &
                   & - lq(1,1)* self%p_mat(4,1) / denom
-          else if (self%phase == "S") then
+          else if (self%rf_phase == "S") then
              self%f_data(iomg, ir) = - b / denom
              self%f_data(iomg, iz) = &
                   & lq(1,1) * self%p_mat(3,1) / denom
           else
-             write(0,*)"ERROR: invalid phase type:",  self%phase
+             write(0,*)"ERROR: invalid rf_phase type:",  self%rf_phase
              stop
           end if
        end if
@@ -421,7 +421,7 @@ contains
     complex(kind(0d0)) :: rslt(self%n)
     
     
-    if (self%phase == "P") then
+    if (self%rf_phase == "P") then
        i_src = iz
        i_target = ir
     else
@@ -440,7 +440,7 @@ contains
             & max(zz(i), w_level)
     end do
     
-    if (self%phase == "S") then
+    if (self%rf_phase == "S") then
        rslt(:) = -conjg(rslt)
     end if
     
@@ -463,7 +463,7 @@ contains
     end if
     t = 0.d0
     do ilay = i0, nlay - 1
-       if (self%phase == "P") then
+       if (self%rf_phase == "P") then
          v = self%vmodel%get_vp(ilay)
       else
          v = self%vmodel%get_vs(ilay)
