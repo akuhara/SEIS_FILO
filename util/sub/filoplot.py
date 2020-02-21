@@ -242,6 +242,7 @@ class InvResult:
             vlabel = ulabel
         flabel = "Frequency (Hz)"
         plabel = "Posterior probability"
+        print(ppd_file)
         df = pd.read_csv(ppd_file, delim_whitespace=True, header=None, \
                          names=(flabel, vlabel, plabel))
         v_min = float(param["cmin"])
@@ -250,8 +251,8 @@ class InvResult:
         f_min = float(param["fmin"])
         del_f = float(param["df"])
         nf    = int(param["nf"])
-        f_max = f_min + nf * del_f
-        
+        f_max = f_min + (nf -1) * del_f
+        print(v_min, v_max, del_v, f_min, del_f, nf, f_max)
         v, f = np.mgrid[slice(v_min - 0.5 * del_v, \
                               v_max + 0.5 *  del_v, \
                               del_v), \

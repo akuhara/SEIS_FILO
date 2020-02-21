@@ -42,7 +42,7 @@ module cls_observation_recv_func
      double precision, allocatable :: rf_data(:,:)
      double precision, allocatable :: t_start(:)
      double precision, allocatable :: t_end(:)
-     character(len=1), allocatable :: phase(:)
+     character(len=1), allocatable :: rf_phase(:)
      logical, allocatable          :: deconv_flag(:)
      logical, allocatable          :: correct_amp(:)
      
@@ -51,12 +51,13 @@ module cls_observation_recv_func
      procedure :: read_sac => observation_recv_func_read_sac
      procedure :: get_rf_data => observation_recv_func_get_rf_data
      procedure :: get_n_rf => observation_recv_func_get_n_rf
+     procedure :: set_n_rf => observation_recv_func_set_n_rf
      procedure :: get_n_smp => observation_recv_func_get_n_smp
      procedure :: get_t_start => observation_recv_func_get_t_start
      procedure :: get_delta => observation_recv_func_get_delta
      procedure :: get_rayp => observation_recv_func_get_rayp
      procedure :: get_a_gauss => observation_recv_func_get_a_gauss
-     procedure :: get_phase => observation_recv_func_get_phase
+     procedure :: get_rf_phase => observation_recv_func_get_rf_phase
      procedure :: get_sigma => observation_recv_func_get_sigma
      procedure :: get_deconv_flag => &
           & observation_recv_func_get_deconv_flag
@@ -111,7 +112,7 @@ contains
     allocate(self%sigma(self%n_rf), self%dev_sigma(self%n_rf))
     allocate(self%t_start(self%n_rf), self%t_end(self%n_rf))
     allocate(self%n_smp(self%n_rf))
-    allocate(self%phase(self%n_rf))
+    allocate(self%rf_phase(self%n_rf))
     allocate(self%deconv_flag(self%n_rf))
     allocate(self%correct_amp(self%n_rf))
     allocate(filename(self%n_rf))
@@ -141,14 +142,14 @@ contains
              exit
           end if
        end do
-       ! phase
+       ! rf_phase
        do
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) /= 0) then
-             read(line, *) self%phase(i)
-             write(*,*)self%phase(i)
+             read(line, *) self%rf_phase(i)
+             write(*,*)self%rf_phase(i)
              exit
           end if
        end do
@@ -268,7 +269,18 @@ contains
   end function observation_recv_func_get_n_rf
     
   !---------------------------------------------------------------------
-
+  
+  subroutine observation_recv_func_set_n_rf(self, n_rf)
+    class(observation_recv_func), intent(inout) :: self
+    integer, intent(in) :: n_rf
+    
+    self%n_rf = n_rf
+    
+    return 
+  end subroutine observation_recv_func_set_n_rf
+  
+  !---------------------------------------------------------------------
+  
   integer function observation_recv_func_get_n_smp(self, i) result(n_smp)
     class(observation_recv_func), intent(in) :: self
     integer, intent(in) :: i
@@ -328,15 +340,15 @@ contains
   
   !---------------------------------------------------------------------
 
-  character(1) function observation_recv_func_get_phase(self, i) &
-       & result(phase)
+  character(1) function observation_recv_func_get_rf_phase(self, i) &
+       & result(rf_phase)
     class(observation_recv_func), intent(in) :: self
     integer, intent(in) :: i
     
-    phase = self%phase(i)
+    rf_phase = self%rf_phase(i)
     
     return 
-  end function observation_recv_func_get_phase
+  end function observation_recv_func_get_rf_phase
   
   !---------------------------------------------------------------------
 

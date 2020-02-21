@@ -35,7 +35,7 @@ program main
   use cls_observation_recv_func
   use cls_recv_func
   use cls_covariance
-  use cls_rayleigh
+  use cls_disper
   use cls_observation_disper
   use mod_output
   use mod_forward
@@ -58,7 +58,7 @@ program main
   type(observation_recv_func) :: obs_rf
   type(recv_func), allocatable :: rf(:), rf_tmp(:)
   type(covariance), allocatable :: cov(:)
-  type(rayleigh), allocatable :: ray(:), ray_tmp(:)
+  type(disper), allocatable :: disp(:), disp_tmp(:)
   type(observation_disper) :: obs_disp
   character(200) :: filename, param_file
   
@@ -116,12 +116,22 @@ program main
        &           rank)
   
   ! Read observation file
-  if (verb) write(*,*)"Reading observation file"
-  obs_rf = observation_recv_func(trim(para%get_recv_func_in()))
-
+  if (trim(para%get_recv_func_in()) /= "") then
+     if (verb) write(*,*)"Reading observation file"
+     obs_rf = observation_recv_func(trim(para%get_recv_func_in()))
+  else
+     if (verb) write(*,*)"No receiver function input"
+     call obs_rf%set_n_rf(0)
+  end if
+  
   ! Read observation file
-  if (verb) write(*,*)"Reading observation file"
-  obs_disp = observation_disper(trim(para%get_disper_in()))
+  if (trim(para%get_disper_in()) /= "") then
+     if (verb) write(*,*)"Reading observation file"
+     obs_disp = observation_disper(trim(para%get_disper_in()))
+  else
+     if (verb) write(*,*)"No dispersion curve input"
+     call obs_disp%set_n_disp(0)
+  end if
   
   ! Covariance matrix
   if (verb) write(*,*)"Constructing covariance matrix"
@@ -199,7 +209,7 @@ program main
           & delta = obs_rf%get_delta(i), &
           & rayp = obs_rf%get_rayp(i), &
           & a_gauss = obs_rf%get_a_gauss(i), &
-          & phase = obs_rf%get_phase(i), &
+          & rf_phase = obs_rf%get_rf_phase(i), &
           & deconv_flag = obs_rf%get_deconv_flag(i), &
           & t_pre = -obs_rf%get_t_start(i), &
           & correct_amp = obs_rf%get_correct_amp(i) &
@@ -207,19 +217,20 @@ program main
      
   end do
   
-  ! Set forward computation (rayleigh)
+  ! Set forward computation (disper)
   tm = pt%get_tm(1)
   vm = intpr%get_vmodel(pt%get_tm(1))
-  allocate(ray(obs_disp%get_n_disp()), &
-       & ray_tmp(obs_disp%get_n_disp()))
+  allocate(disp(obs_disp%get_n_disp()), &
+       & disp_tmp(obs_disp%get_n_disp()))
   do i = 1, obs_disp%get_n_disp()
-     ray(i) = init_rayleigh(vm=vm, &
+     disp(i) = disper(vm=vm, &
           & fmin=obs_disp%get_fmin(i), &
           & fmax=obs_disp%get_fmax(i), &
           & df=obs_disp%get_df(i), &
           & cmin=obs_disp%get_cmin(i), &
           & cmax=obs_disp%get_cmax(i), &
-          & dc=obs_disp%get_dc(i) &
+          & dc=obs_disp%get_dc(i), &
+          & n_mode = obs_disp%get_n_mode(i) &
           & )
   end do
   
@@ -261,12 +272,12 @@ program main
 
         ! Forward computation
         rf_tmp = rf
-        ray_tmp = ray
+        disp_tmp = disp
         if (is_ok) then
            call forward_recv_func(tm_tmp, intpr, obs_rf, &
                 & rf_tmp, cov, log_likelihood)
-           call forward_rayleigh(tm_tmp, intpr, obs_disp, &
-                & ray_tmp, log_likelihood2)
+           call forward_disper(tm_tmp, intpr, obs_disp, &
+                & disp_tmp, log_likelihood2)
            log_likelihood = &
                 log_likelihood + log_likelihood2
         else
@@ -278,7 +289,7 @@ program main
               & log_prior_ratio, log_proposal_ratio)
         if (mc%get_is_accepted()) then
            rf = rf_tmp
-           ray = ray_tmp
+           disp = disp_tmp
         end if
         call pt%set_mc(j, mc)
 
@@ -301,7 +312,7 @@ program main
               call rf(k)%save_syn()
            end do
            do k = 1, obs_disp%get_n_disp()
-              call ray(k)%save_syn()
+              call disp(k)%save_syn()
            end do
            
         end if
@@ -371,15 +382,15 @@ program main
   ! Synthetic dispersion curves
   do i = 1, obs_disp%get_n_disp()
      write(filename, '(A9,I3.3,A4)')"syn_phase", i, ".ppd"
-     call output_ppd_2d(filename, rank, ray(i)%get_nf(), &
-          & ray(i)%get_nc(), ray(i)%get_n_fc(), &
+     call output_ppd_2d(filename, rank, disp(i)%get_nf(), &
+          & disp(i)%get_nc(), disp(i)%get_n_fc(), &
           & n_mod, obs_disp%get_fmin(i), obs_disp%get_df(i), &
           & obs_disp%get_cmin(i), obs_disp%get_dc(i))
      
      ! Frequency-group velocity
      write(filename, '(A9,I3.3,A4)')"syn_group", i, ".ppd"
-     call output_ppd_2d(filename, rank, ray(i)%get_nf(), &
-          & ray(i)%get_nc(), ray(i)%get_n_fu(), &
+     call output_ppd_2d(filename, rank, disp(i)%get_nf(), &
+          & disp(i)%get_nc(), disp(i)%get_n_fu(), &
           & n_mod, obs_disp%get_fmin(i), obs_disp%get_df(i), &
           & obs_disp%get_cmin(i), obs_disp%get_dc(i))
   end do

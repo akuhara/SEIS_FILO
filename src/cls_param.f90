@@ -68,28 +68,32 @@ module cls_param
      double precision :: ocean_thick = 0.d0
      
      ! Parameters for receiver functions
-     ! only used for recv_func_fwd
+     ! only used by recv_func_fwd
      integer :: n_smp 
      double precision :: rayp
      double precision :: a_gauss
      double precision :: delta
      double precision :: t_pre
-     character(len=1) :: phase
+     character(len=1) :: rf_phase
      logical :: deconv_flag
      logical :: correct_amp
      
      integer :: n_bin_c  = 50
 
+     ! Parameter for dispersion
+     ! only used by rayleigh_fwd 
      double precision :: fmin = -999.d0
      double precision :: fmax = -999.d0
      double precision :: df = -999.d0
      double precision :: cmin = -999.d0
      double precision :: cmax = -999.d0
      double precision :: dc = -999.d0
+     integer :: n_mode = -999
+     character(len=1) :: disp_phase
      
      
      character(len=line_max) :: vmod_in = ""
-     character(len=line_max) :: ray_out = ""
+     character(len=line_max) :: disper_out = ""
      character(len=line_max) :: disper_in = ""
      character(len=line_max) :: recv_func_in = ""
      character(len=line_max) :: recv_func_out = ""
@@ -123,6 +127,7 @@ module cls_param
      procedure :: get_cmin => param_get_cmin
      procedure :: get_cmax => param_get_cmax
      procedure :: get_dc => param_get_dc
+     procedure :: get_n_mode => param_get_n_mode
      procedure :: get_dev_vs => param_get_dev_vs
      procedure :: get_dev_vp => param_get_dev_vp
      procedure :: get_dev_z => param_get_dev_z
@@ -146,7 +151,7 @@ module cls_param
      procedure :: get_rayp => param_get_rayp
      procedure :: get_a_gauss => param_get_a_gauss
      procedure :: get_t_pre => param_get_t_pre
-     procedure :: get_phase => param_get_phase
+     procedure :: get_rf_phase => param_get_rf_phase
      procedure :: get_delta => param_get_delta
      procedure :: get_deconv_flag => param_get_deconv_flag
      procedure :: get_correct_amp => param_get_correct_amp
@@ -255,6 +260,8 @@ contains
        read(val, *) self%cmax 
     else if (name == "dc") then
        read(val, *) self%dc 
+    else if (name == "n_mode") then
+       read(val, *) self%n_mode
     else if (name == "vmod_in") then
        self%vmod_in = val
     else if (name == "ray_out") then
@@ -327,8 +334,8 @@ contains
        read(val, *) self%a_gauss
     else if (name == "t_pre") then
        read(val, *) self%t_pre
-    else if (name == "phase") then
-       self%phase = val
+    else if (name == "rf_phase") then
+       self%rf_phase = val
     else if (name == "deconv_flag") then
        read(val, *) self%deconv_flag
     else if (name == "correct_amp") then
@@ -570,6 +577,16 @@ contains
   end function param_get_dc
 
   !---------------------------------------------------------------------
+  
+  integer function param_get_n_mode(self) result(n_mode)
+    class(param), intent(in) :: self
+    
+    n_mode = self%n_mode
+    
+    return 
+  end function param_get_n_mode
+
+  !---------------------------------------------------------------------
 
   double precision function param_get_dev_vs(self) result(dev_vs)
     class(param), intent(in) :: self
@@ -786,13 +803,13 @@ contains
 
   !---------------------------------------------------------------------
 
-  character(1) function param_get_phase(self) result(phase)
+  character(1) function param_get_rf_phase(self) result(rf_phase)
     class(param), intent(in) :: self
 
-    phase = self%phase
+    rf_phase = self%rf_phase
 
     return
-  end function param_get_phase
+  end function param_get_rf_phase
   
   !---------------------------------------------------------------------
   
@@ -947,8 +964,8 @@ contains
        if (self%verb) write(0,*)"ERROR: delta must > 0.0"
        is_ok = .false.
     end if
-    if (self%phase /= "P" .and. self%phase /= "S") then
-       if (self%verb) write(0,*)"ERROR: phase must be P or S"
+    if (self%rf_phase /= "P" .and. self%rf_phase /= "S") then
+       if (self%verb) write(0,*)"ERROR: rf_phase must be P or S"
        is_ok = .false.
     end if
     

@@ -39,6 +39,7 @@ module cls_observation_disper
      double precision, allocatable :: sig_c(:,:) ! uncertainties in c
      double precision, allocatable :: sig_u(:,:) ! uncertainties in u
      double precision, allocatable :: cmin(:), cmax(:), dc(:)
+     integer, allocatable :: n_mode(:)
      character(1), allocatable :: phase(:)
      
    contains
@@ -58,6 +59,8 @@ module cls_observation_disper
      procedure :: get_sig_u => observation_disper_get_sig_u
      procedure :: get_sig_u_array => observation_disper_get_sig_u_array
      procedure :: get_n_disp => observation_disper_get_n_disp
+     procedure :: set_n_disp => observation_disper_set_n_disp
+     procedure :: get_n_mode => observation_disper_get_n_mode
      procedure :: read_data => observation_disper_read_data
      
   end type observation_disper
@@ -107,6 +110,7 @@ contains
     allocate(self%cmin(self%n_disp), self%cmax(self%n_disp))
     allocate(self%dc(self%n_disp))
     allocate(filename(self%n_disp))
+    allocate(self%n_mode(self%n_disp))
 
     do i = 1, self%n_disp
        ! get file name
@@ -126,7 +130,7 @@ contains
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) /= 0) then
-             read(line, *) self%phase(i)
+             read(line, *) self%phase(i), self%n_mode(i)
              exit
           end if
        end do
@@ -364,6 +368,28 @@ contains
 
   !---------------------------------------------------------------------
 
+  subroutine observation_disper_set_n_disp(self, n_disp)
+    class(observation_disper), intent(inout) :: self
+    integer, intent(in) :: n_disp
+
+    self%n_disp = n_disp
+    
+    return 
+  end subroutine observation_disper_set_n_disp
+  
+  !---------------------------------------------------------------------
+
+  integer function observation_disper_get_n_mode(self, i) result(n_mode)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+
+    n_mode = self%n_mode(i)
+    
+    return 
+  end function observation_disper_get_n_mode
+
+  !---------------------------------------------------------------------
+  
   subroutine observation_disper_read_data(self, filename, i)
     class(observation_disper), intent(inout) :: self
     character(*), intent(in) :: filename
