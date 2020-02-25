@@ -351,7 +351,7 @@ contains
           vp = vm%get_vp(ilay)
           vs = vm%get_vs(ilay)
           
-          write(*,*)vp, vs, z
+          !write(*,*)vp, vs, z
           
           iv = int((vs - self%vs_min) / self%dvs) + 1
           if (iv < 1) then
