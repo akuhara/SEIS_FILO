@@ -98,6 +98,11 @@ module cls_param
      character(len=line_max) :: recv_func_in = ""
      character(len=line_max) :: recv_func_out = ""
 
+     ! bottom layer
+     double precision :: vs_bottom = 4.6d0
+     double precision :: vp_bottom = 8.1d0
+     double precision :: rho_bottom = 3.3d0
+
      logical :: verb = .false.
 
 
@@ -158,9 +163,15 @@ module cls_param
      procedure :: get_correct_amp => param_get_correct_amp
      procedure :: get_recv_func_out => param_get_recv_func_out
      
+     procedure :: get_vp_bottom => param_get_vp_bottom
+     procedure :: get_vs_bottom => param_get_vs_bottom
+     procedure :: get_rho_bottom => param_get_rho_bottom
+     
      procedure :: check_mcmc_params => param_check_mcmc_params
      procedure :: check_recv_func_fwd_params &
           & => param_check_recv_func_fwd_params
+     
+     
 
   end type param
   
@@ -347,6 +358,12 @@ contains
        self%recv_func_out = val
     else if (name == "recv_func_in") then
        self%recv_func_in = val
+    else if (name == "vs_bottom") then
+       read(val, *) self%vs_bottom
+    else if (name == "vp_bottom") then
+       read(val, *) self%vp_bottom
+    else if (name == "rho_bottom") then
+       read(val, *) self%rho_bottom
     else
        if (self%verb) then
           write(0,*)"ERROR: Invalid parameter name"
@@ -855,6 +872,36 @@ contains
     
     return
   end function param_get_recv_func_out
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_vp_bottom(self) result(vp_bottom)
+    class(param), intent(in) :: self
+    
+    vp_bottom = self%vp_bottom 
+    
+    return 
+  end function param_get_vp_bottom
+  
+  !---------------------------------------------------------------------
+
+  double precision function param_get_vs_bottom(self) result(vs_bottom)
+    class(param), intent(in) :: self
+    
+    vs_bottom = self%vs_bottom 
+    
+    return 
+  end function param_get_vs_bottom
+  
+  !---------------------------------------------------------------------
+
+  double precision function param_get_rho_bottom(self) result(rho_bottom)
+    class(param), intent(in) :: self
+    
+    rho_bottom = self%rho_bottom 
+    
+    return 
+  end function param_get_rho_bottom
   
   !---------------------------------------------------------------------
 

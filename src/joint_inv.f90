@@ -156,7 +156,10 @@ program main
        & n_bin_vp = para%get_n_bin_vp(), &
        & is_ocean = para%get_is_ocean(), &
        & ocean_thick = para%get_ocean_thick(), &
-       & solve_vp = para%get_solve_vp())
+       & solve_vp = para%get_solve_vp(), &
+       & vp_bottom = para%get_vp_bottom(), &
+       & vs_bottom = para%get_vs_bottom(), &
+       & rho_bottom = para%get_rho_bottom())
 
   
   ! Set model parameter & generate initial sample
