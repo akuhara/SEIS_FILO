@@ -248,21 +248,21 @@ contains
     if (self%vs_bottom > 0.d0) then
        call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
     else
-       call vm%set_vs(k+i+i1, self%wrk_vs(k+i1))
+       call vm%set_vs(k+1+i1, self%wrk_vs(k+i1))
     end if
     ! Vp
     if (self%vp_bottom > 0.d0) then
        call vm%set_vp(k+1+i1, self%vp_bottom)
     else
-       call vm%set_vp(k+i+i1, self%wrk_vp(k+i1))
+       call vm%set_vp(k+1+i1, self%wrk_vp(k+i1))
     end if
     ! Thickness
     call vm%set_h(k+1+i1,  -99.d0) ! <- half space
     ! Density
-    if (self%rho_bottom > 0.d0) then	
+    if (self%rho_bottom > 0.d0) then
        call vm%set_rho(k+1+i1, self%rho_bottom)
     else
-       call vm%set_rho(k+i+i1, self%wrk_rho(k+i1))
+       call vm%vp2rho_brocher(k+1+i1)
     end if
     
     return 

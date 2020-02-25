@@ -369,7 +369,7 @@ contains
     logical, intent(out) :: is_ok
     integer :: i, k2
 
-    if (self%k < self%k_max) then
+    if (self%k < self%k_max - 1) then
        is_ok = .true.
     else
        is_ok = .false.
