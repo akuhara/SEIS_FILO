@@ -248,13 +248,17 @@ contains
     if (self%vs_bottom > 0.d0) then
        call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
     else
-       call vm%set_vs(k+1+i1, self%wrk_vs(k+i1))
+       call vm%set_vs(k+1+i1, self%wrk_vs(k))
     end if
     ! Vp
     if (self%vp_bottom > 0.d0) then
        call vm%set_vp(k+1+i1, self%vp_bottom)
     else
-       call vm%set_vp(k+1+i1, self%wrk_vp(k+i1))
+       if (self%solve_vp) then
+          call vm%set_vp(k+1+i1, self%wrk_vp(k))
+       else
+          call vm%vs2vp_brocher(k+1+i1)
+       end if
     end if
     ! Thickness
     call vm%set_h(k+1+i1,  -99.d0) ! <- half space
@@ -262,8 +266,10 @@ contains
     if (self%rho_bottom > 0.d0) then
        call vm%set_rho(k+1+i1, self%rho_bottom)
     else
-       call vm%vp2rho_brocher(k+1+i1)
+       call vm%vp2rho_brocher(k)
     end if
+    
+    !call vm%display()
     
     return 
   end function interpreter_get_vmodel
