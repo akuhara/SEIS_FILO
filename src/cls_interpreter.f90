@@ -245,13 +245,25 @@ contains
     end do
     ! Bottom layer
     ! Vs
-    call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
+    if (self%vs_bottom > 0.d0) then
+       call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
+    else
+       call vm%set_vs(k+i+i1, self%wrk_vs(k+i1))
+    end if
     ! Vp
-    call vm%set_vp(k+1+i1, self%vp_bottom)
+    if (self%vp_bottom > 0.d0) then
+       call vm%set_vp(k+1+i1, self%vp_bottom)
+    else
+       call vm%set_vp(k+i+i1, self%wrk_vp(k+i1))
+    end if
     ! Thickness
     call vm%set_h(k+1+i1,  -99.d0) ! <- half space
     ! Density
-    call vm%set_rho(k+1+i1, self%rho_bottom)
+    if (self%rho_bottom > 0.d0) then	
+       call vm%set_rho(k+1+i1, self%rho_bottom)
+    else
+       call vm%set_rho(k+i+i1, self%wrk_rho(k+i1))
+    end if
     
     return 
   end function interpreter_get_vmodel
@@ -339,7 +351,7 @@ contains
           vp = vm%get_vp(ilay)
           vs = vm%get_vs(ilay)
           
-          !output_write(io,*)vp, vs, z
+          write(*,*)vp, vs, z
           
           iv = int((vs - self%vs_min) / self%dvs) + 1
           if (iv < 1) then

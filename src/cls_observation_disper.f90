@@ -418,8 +418,14 @@ contains
        stop
     end if
     do j = 1, self%nf(i)
-       read(io,*)self%c(j, i), self%sig_c(j, i), &
+       read(io,*,iostat = ierr)self%c(j, i), self%sig_c(j, i), &
             & self%u(j, i), self%sig_u(j, i)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: while reading ", trim(filename), & 
+               & " of Line", j, "th data"
+          call mpi_finalize(ierr)
+          stop
+       end if
     end do
     close(io)
     
