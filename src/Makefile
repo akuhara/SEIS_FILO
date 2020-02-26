@@ -18,17 +18,18 @@ LAPACK = -llapack -lblas
 # DONOT CHANGE BELOW
 #-----------------------------------------------------------------------
 
-DISP_FWD = ../bin/disper_fwd
+BINDIR = ../bin
+DISP_FWD = $(BINDIR)/disper_fwd
 OBJS_DISP_FWD = disper_fwd.o cls_vmodel.o cls_disper.o cls_param.o \
 	       cls_line_text.o
 
 
-RF_FWD = ../bin/recv_func_fwd
+RF_FWD = $(BINDIR)/recv_func_fwd
 OBJS_RF_FWD = recv_func_fwd.o cls_vmodel.o cls_param.o \
 	 cls_line_text.o cls_signal_process.o \
 	 cls_recv_func.o
 
-JOINT_INV = ../bin/joint_inv
+JOINT_INV = $(BINDIR)/joint_inv
 OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
          cls_trans_d_model.o cls_mcmc.o cls_recv_func.o \
 	 mod_const.o cls_interpreter.o cls_observation_recv_func.o \
@@ -67,16 +68,19 @@ mod_forward.o: cls_trans_d_model.mod cls_interpreter.mod \
                cls_vmodel.mod mod_const.mod cls_covariance.mod
 
 $(DISP_FWD): $(OBJS_DISP_FWD)
+	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	$(FC) $(FFLAGS) $^ -o $@
 
 $(RF_FWD): $(OBJS_RF_FWD)
+	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
 
 $(JOINT_INV): $(OBJS_JOINT_INV)
+	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
 
 clean:
-	rm -f *.mod ../bin/* *.o
+	rm -f *.mod $(BINDIR)/* *.o
 
 %.o: %.f90
 	$(FC) $(FFLAGS) -c $< $(FFTW) $(LAPACK) -o $*.o 

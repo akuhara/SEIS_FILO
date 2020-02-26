@@ -43,7 +43,7 @@ program main
 
   integer :: n_rx
   logical :: verb
-  integer :: i, j, k, ierr, n_proc, rank, io_vz, n_arg
+  integer :: i, j, k, ierr, n_proc, rank, n_arg
   integer :: n_mod
   double precision :: log_likelihood, temp, log_likelihood2
   double precision :: log_prior_ratio, log_proposal_ratio
@@ -254,15 +254,6 @@ program main
      call pt%set_mc(i, mc)
   end do
   
-  ! Output files
-  write(filename,'(A10,I3.3)')"vz_models.", rank
-  open(newunit=io_vz, file=filename, status="unknown", iostat=ierr)
-  if (ierr /= 0) then
-     write(0,*)"ERROR: cannot create ", trim(filename)
-     call mpi_finalize(ierr)
-     stop
-  end if
-  
   ! Main
   do i = 1, para%get_n_iter()
      ! MCMC step
@@ -309,7 +300,7 @@ program main
            tm = mc%get_tm()
            
            ! V-Z
-           call intpr%save_model(tm, io_vz)
+           call intpr%save_model(tm)
            
            ! Synthetic data
            do k = 1, obs_rf%get_n_rf()
@@ -325,7 +316,6 @@ program main
      ! Swap temperture
      call pt%swap_temperature(verb=.true.)
   end do
-  close(io_vz)
   
   
   ! Total model number

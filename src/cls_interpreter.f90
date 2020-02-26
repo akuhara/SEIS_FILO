@@ -232,12 +232,14 @@ contains
        end if
        ! Thickness
        if (i == 1) then
+          !write(*,*)self%wrk_z(i) - self%z_min, "A", self%wrk_z(i), self%z_min
           call vm%set_h(i+i1, self%wrk_z(i) - self%z_min)
        else if (i == k) then
           ! deepest layer
           call vm%set_h(i+i1, self%z_max - self%wrk_z(i-1))
        else 
           ! others
+          !write(*,*)self%wrk_z(i) - self%wrk_z(i-1), "B"
           call vm%set_h(i+i1, self%wrk_z(i) - self%wrk_z(i-1))
        end if
        ! Density
@@ -266,7 +268,7 @@ contains
     if (self%rho_bottom > 0.d0) then
        call vm%set_rho(k+1+i1, self%rho_bottom)
     else
-       call vm%vp2rho_brocher(k)
+       call vm%vp2rho_brocher(k+1+i1)
     end if
     
     !call vm%display()
@@ -331,10 +333,9 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine interpreter_save_model(self, tm, io)
+  subroutine interpreter_save_model(self, tm)
     class(interpreter), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
-    integer, intent(in) :: io
     type(vmodel) :: vm
     integer :: nlay
     integer :: ilay, iz, iz1, iz2, iv
