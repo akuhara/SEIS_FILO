@@ -140,6 +140,10 @@ contains
        stop
     end if
     self%n_mode = n_mode
+
+    if (n_mode < 0) then
+       self%full_calculation = .true.
+    end if
     
     self%disper_phase = disper_phase
     if (self%disper_phase == "L") then
@@ -218,6 +222,7 @@ contains
           end if
        else
           ! full calculation
+          write(*,*)"FULL"
           call self%do_full_calculation(omega)
        end if
     end do
