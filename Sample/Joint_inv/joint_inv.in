@@ -1,0 +1,45 @@
+# MCMC iteration
+n_iter = 20000
+n_corr = 100
+n_burn = 10000
+
+# Parallel temerping
+n_chain   = 5
+n_cool    = 1
+temp_high = 30.0
+
+
+# Inversion setting
+solve_vp    = .false.
+is_ocean    = .true.
+ocean_thick = 1.0
+
+# MCMC prior
+k_min = 1
+k_max = 21 
+vs_min = 1.0
+vs_max = 5.0
+vp_min = 5.0
+vp_max = 8.5
+z_min  = 1.0
+z_max  = 10.0
+
+# MCMC proposal
+dev_vs = 0.03
+dev_vp = 0.03
+dev_z  = 0.03
+
+# Observation file
+recv_func_in = recv_func.in
+disper_in    = disper.in
+
+# Output binning
+n_bin_z  = 50
+n_bin_vp = 25 
+n_bin_vs = 25 
+
+# Random number seeds
+i_seed1 = 11111111  
+i_seed2 = 22222222
+i_seed3 = 33333333 
+i_seed4 = 44444444
