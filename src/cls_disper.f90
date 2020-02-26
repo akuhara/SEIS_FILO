@@ -193,12 +193,9 @@ contains
              if (self%u(i-1) /= 0.d0) then
                 grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
                      & self%c(i-1) / (omega - 2.d0 * pi * self%df)
-                !if (grad < -0.1d0) then
-                   c_start = self%c(i-1) + &
-                        & 2.d0 * grad * 2.d0 * pi * self%df
-                !else
-                !   c_start = self%c(i-1) - 0.05d0
-                !end if
+                c_start = self%c(i-1) + &
+                     & 3.5d0 * grad * 2.d0 * pi * self%df
+                !c_start = self%cmin
                 if (c_start <= self%cmin) then
                    c_start = self%cmin
                 end if
@@ -207,6 +204,12 @@ contains
              c_start = self%cmin
           end if
           call self%find_root(omega, c_start, c, u, first_flag)
+          if (c == 0.d0) then
+             self%c(:) = 0.d0
+             self%u(:) = 0.d0
+             write(*,*)"END dispersion calculation"
+             return
+          end if
           self%c(i) = c
           self%u(i) = u
           if (self%out_flag) then
@@ -279,7 +282,8 @@ contains
     end do
     if (.not. is_found) then
        write(0,*)"Warning: root is not found (disper_find_root)", &
-            & " omega = ", omega, ", c_tmp = ", c_tmp, ", n_mode = ", &
+            & " frequency = ", omega / 2.0 / pi, &
+            & ", c_tmp = ", c_tmp, ", n_mode = ", &
             & self%n_mode
        c = 0.d0
        u = 0.d0
