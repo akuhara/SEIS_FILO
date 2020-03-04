@@ -1,17 +1,21 @@
+FC = mpif90
+#FC = mpifort
 
-FC = mpifort
-#-----------------------------------------------------------------------
-# For debug
-FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
+# * Debug
+#FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check
-# For fast computation
+# * Fast computation
 #FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+#FFTW = -I/usr/local/include -lfftw3
+#LAPACK = -llapack -lblas
 
-# FFTW Library
-FFTW = -I/usr/local/include -lfftw3
-
-# LAPACK Library
-LAPACK = -llapack -lblas
+#-----------------------------------------------------------------------
+# EIC
+#-----------------------------------------------------------------------
+FFLAGS = -assume byterecl -traceback -g -check bounds -fpe0 -lmpi
+MKLROOT = /home/app/intel/compilers_and_libraries_2019.5.281/linux/mkl
+FFTW = -I$(MKLROOT)/include/fftw
+LAPACK = -mkl=parallel
 
 
 #-----------------------------------------------------------------------
