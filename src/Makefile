@@ -13,7 +13,7 @@ FC = mpif90
 # LAPACK Library
 #LAPACK = -llapack -lblas
 
-FFLAGS = -assume byterecl -traceback -g -check bounds -fpe0 -lmpi
+FFLAGS = -assume byterecl -traceback -g -check bounds -fpe0 -lmpi 
 MKLROOT = /home/app/intel/compilers_and_libraries_2019.5.281/linux/mkl
 FFTW = -I$(MKLROOT)/include/fftw -mkl=parallel
 LAPACK = 
