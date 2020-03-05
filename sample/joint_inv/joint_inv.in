@@ -1,7 +1,7 @@
 # MCMC iteration
-n_iter = 20
-n_corr = 1
-n_burn = 10
+n_iter = 20000
+n_corr = 100	
+n_burn = 10000
 
 # Parallel temerping
 n_chain   = 5
