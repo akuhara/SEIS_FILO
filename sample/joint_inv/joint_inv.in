@@ -1,6 +1,6 @@
 # MCMC iteration
 n_iter = 20000
-n_corr = 100
+n_corr = 100	
 n_burn = 10000
 
 # Parallel temerping

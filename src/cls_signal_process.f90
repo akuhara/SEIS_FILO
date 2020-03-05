@@ -25,8 +25,9 @@
 !
 !=======================================================================
 module cls_signal_process
+  use, intrinsic :: iso_c_binding
   implicit none
-  include 'fftw3.f'
+  include 'fftw3.f03'
 
   double precision, private, parameter :: pi = acos(-1.d0)
 
@@ -39,10 +40,15 @@ module cls_signal_process
      integer :: n
      double precision :: dt
      double precision :: df
-     double precision, allocatable   :: t_data(:)
-     complex(kind(0d0)), allocatable :: f_data(:)
-     integer(8) :: ifft_fwd
-     integer(8) :: ifft_inv
+     !double precision, allocatable   :: t_data(:)
+     !complex(kind(0d0)), allocatable :: f_data(:)
+     !integer(8) :: ifft_fwd
+     !integer(8) :: ifft_inv
+     type(C_PTR) :: plan_fwd
+     type(C_PTR) :: plan_inv
+     real(C_DOUBLE), allocatable :: t_data(:)
+     complex(C_DOUBLE_COMPLEX), allocatable :: f_data(:)
+     
      double precision, allocatable :: filter(:)
      
    contains
@@ -74,10 +80,15 @@ contains
     self%f_data(1:n) = (0.d0, 0.d0)
     self%t_data(1:n) = 0.d0
     self%filter(1:n) = 0.d0
-    call dfftw_plan_dft_c2r_1d(self%ifft_inv, n, &
-         & self%f_data, self%t_data, FFTW_ESTIMATE)
-    call dfftw_plan_dft_r2c_1d(self%ifft_fwd, n, &
-         & self%t_data, self%f_data, FFTW_ESTIMATE)
+    self%plan_inv = fftw_plan_dft_c2r_1d(n, self%f_data, self%t_data, &
+         & FFTW_MEASURE)
+    self%plan_fwd = fftw_plan_dft_r2c_1d(n, self%t_data, self%f_data, &
+         & FFTW_MEASURE)
+    
+    !call dfftw_plan_dft_c2r_1d(self%ifft_inv, n, &
+    !     & self%f_data, self%t_data, FFTW_ESTIMATE)
+    !call dfftw_plan_dft_r2c_1d(self%ifft_fwd, n, &
+    !     & self%t_data, self%f_data, FFTW_ESTIMATE)
     
     return 
   end function init_signal_process
@@ -131,7 +142,7 @@ contains
   subroutine signal_process_forward_fft(self)
     class(signal_process), intent(inout) :: self
 
-    call dfftw_execute(self%ifft_fwd)
+    call fftw_execute_dft_r2c(self%plan_fwd, self%t_data, self%f_data)
 
     return 
   end subroutine signal_process_forward_fft
@@ -141,7 +152,7 @@ contains
   subroutine signal_process_inverse_fft(self)
     class(signal_process), intent(inout) :: self
 
-    call dfftw_execute(self%ifft_inv)
+    call fftw_execute_dft_c2r(self%plan_inv, self%f_data, self%t_data)
     self%t_data(:) = self%t_data(:) / self%n
 
     return 

@@ -1,17 +1,34 @@
-
-FC = mpifort
 #-----------------------------------------------------------------------
-# For debug
+# Complier  
+#-----------------------------------------------------------------------
+
+# Example 1. GNU fortran for debug
+FC     = mpifort
 FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
-            -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check
-# For fast computation
+         -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check
+
+
+# Example 2. GNU fortran for fast computation
+#FC     = mpifort
 #FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
-# FFTW Library
-FFTW = -I/usr/local/include -lfftw3
+# Example 3. Intel compiler for debug
+#FC      = mpif90
+#FFLAGS  = -assume byterecl -traceback -g -check bounds -fpe0 -lmpi 
+#MKLROOT = /home/app/intel/compilers_and_libraries_2019.5.281/linux/mkl
 
-# LAPACK Library
+
+#-----------------------------------------------------------------------
+# Libararies
+#-----------------------------------------------------------------------
+
+# Example A. General case
+FFTW   = -I/usr/local/include -lfftw3
 LAPACK = -llapack -lblas
+
+# Example B. EIC
+#FFTW    = -I$(MKLROOT)/include/fftw -mkl=parallel
+#LAPACK  =  # leave this empty
 
 
 #-----------------------------------------------------------------------

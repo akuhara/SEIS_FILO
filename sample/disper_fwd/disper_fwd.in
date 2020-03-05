@@ -1,0 +1,10 @@
+fmin = 0.01
+fmax = 1.0
+df   = 0.002
+vmod_in = vmod.in
+cmin    = 1.5
+cmax    = 4.6
+dc      = 0.02
+disper_phase = R
+n_mode = 0       
+disper_out = disper_test.out

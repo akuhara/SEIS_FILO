@@ -367,7 +367,7 @@ contains
     type(mcmc) :: mc
     integer :: icol, n_all, n_iter
     double precision, allocatable :: hist_all(:,:), hist_all2(:,:)
-
+    character(50) :: fmt
     
     n_all = self%n_chain * self%n_proc
     mc = self%mc(1)
@@ -397,8 +397,14 @@ contains
     if (self%rank == 0) then
        open(newunit = io, file = filename, status = "unknown", &
             & iostat = ierr)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: cannot create ", trim(filename)
+          call mpi_finalize(ierr)
+          stop
+       end if
        do i = 1, n_iter
-          write(io, *)hist_all2(i, 1:n_all)
+          write(fmt, '("(",I0,"E15.3)")')n_all
+          write(io, trim(fmt))hist_all2(i, 1:n_all)
        end do
        close(io)
     end if
