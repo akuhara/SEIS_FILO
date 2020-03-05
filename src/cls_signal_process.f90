@@ -42,8 +42,8 @@ module cls_signal_process
      double precision :: df
      !double precision, allocatable   :: t_data(:)
      !complex(kind(0d0)), allocatable :: f_data(:)
-     integer(8) :: ifft_fwd
-     integer(8) :: ifft_inv
+     !integer(8) :: ifft_fwd
+     !integer(8) :: ifft_inv
      type(C_PTR) :: plan_fwd
      type(C_PTR) :: plan_inv
      real(C_DOUBLE), allocatable :: t_data(:)
@@ -142,7 +142,7 @@ contains
   subroutine signal_process_forward_fft(self)
     class(signal_process), intent(inout) :: self
 
-    call dfftw_execute(self%plan_fwd, self%t_data, self%f_data)
+    call fftw_execute_dft_r2c(self%plan_fwd, self%t_data, self%f_data)
 
     return 
   end subroutine signal_process_forward_fft
@@ -152,7 +152,7 @@ contains
   subroutine signal_process_inverse_fft(self)
     class(signal_process), intent(inout) :: self
 
-    call dfftw_execute(self%plan_inv, self%f_data, self%t_data)
+    call fftw_execute_dft_c2r(self%plan_inv, self%f_data, self%t_data)
     self%t_data(:) = self%t_data(:) / self%n
 
     return 
