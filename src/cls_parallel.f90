@@ -403,7 +403,7 @@ contains
           stop
        end if
        do i = 1, n_iter
-          write(fmt, '(A1,I10.10,A2)')'(', n_all, 'f)'
+          write(fmt, '("(",I0,"f10.3)")')n_all
           write(io, trim(fmt))hist_all2(i, 1:n_all)
        end do
        close(io)
