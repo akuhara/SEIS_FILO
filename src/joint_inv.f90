@@ -106,8 +106,14 @@ program main
         
   
   ! Initialize parallel chains
-  pt = parallel(n_proc = n_proc, rank = rank, &
-       & n_chain = para%get_n_chain())
+  pt = parallel(                       &
+       & n_proc  = n_proc,             &
+       & rank    = rank,               &
+       & n_chain = para%get_n_chain(), &
+       & verb    = verb)
+  
+  call mpi_finalize(ierr)
+  stop
   
   ! Initialize random number sequence
   call init_random(para%get_i_seed1(), &

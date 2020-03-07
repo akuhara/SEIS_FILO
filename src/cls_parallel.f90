@@ -56,6 +56,7 @@ module cls_parallel
      type(mcmc), allocatable :: mc(:) 
      type(trans_d_model), &
           & allocatable :: tm(:) 
+     logical :: verb = .false.
    contains
      procedure :: set_tm => parallel_set_tm 
      procedure :: get_tm => parallel_get_tm
@@ -89,15 +90,32 @@ contains
   !! @param[in] n_chains # of MCMC chain per process
   !! @return Object
   !---------------------------------------------------------------------
-  type(parallel) function init_parallel(n_proc, rank, n_chain) &
+  type(parallel) function init_parallel(n_proc, rank, n_chain, verb) &
        & result(self)
     integer, intent(in) :: n_proc, rank, n_chain
+    logical, intent(in), optional :: verb
+
+    if (present(verb)) then
+       self%verb = verb
+    end if
+
+    if (self%verb) then
+       write(*,*)"Initialize prallel MCMC"
+    end if
+
     self%n_proc = n_proc
     self%rank = rank
     self%n_chain = n_chain
     
     allocate(self%tm(n_chain))
     allocate(self%mc(n_chain))
+
+    if (self%verb) then
+       write(*,'(A,I5,A,I5,A,I5)')"# of total MCMC chains = ", &
+            & n_proc, " proc. * ", n_chain, " chains/proc. = ", &
+            & n_chain * n_proc
+       write(*,*)
+    end if
     
     return 
   end function init_parallel
@@ -118,9 +136,10 @@ contains
     class(parallel), intent(inout) :: self 
     integer, intent(in) :: i 
     type(trans_d_model), intent(in) :: tm 
-    
+    integer :: ierr
     if (i < 0 .or. i > self%n_chain) then
        write(0, *)"ERROR: in valid i (parallel_set_tm)"
+       call mpi_finalize(ierr)
        stop
     end if
     self%tm(i) = tm
@@ -143,8 +162,10 @@ contains
   type(trans_d_model) function parallel_get_tm(self, i) result(tm)
     class(parallel), intent(inout) :: self
     integer, intent(in) :: i
+    integer :: ierr
     if (i < 0 .or. i > self%n_chain) then
        write(0, *)"ERROR: in valid i (parallel_get_tm)"
+       call mpi_finalize(ierr)
        stop
     end if
 
@@ -167,9 +188,10 @@ contains
     class(parallel), intent(inout) :: self
     integer, intent(in) :: i
     type(mcmc), intent(in) :: mc
-    
+    integer :: ierr
     if (i < 0 .or. i > self%n_chain) then
        write(0, *)"ERROR: in valid i (parallel_set_mc)"
+       call mpi_finalize(ierr)
        stop
     end if
     self%mc(i) = mc
@@ -190,8 +212,10 @@ contains
   type(mcmc) function parallel_get_mc(self, i) result(mc)
     class(parallel), intent(inout) :: self
     integer, intent(in) :: i
+    integer :: ierr
     if (i < 0 .or. i > self%n_chain) then
        write(0, *)"ERROR: in valid i (parallel_get_mc)"
+       call mpi_finalize(ierr) 
        stop
     end if
 
