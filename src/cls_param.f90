@@ -185,24 +185,28 @@ contains
   
   !---------------------------------------------------------------------
   
-  type(param) function init_param(param_file, verb) 
+  type(param) function init_param(param_file, verb) result(self)
     character(len=*), intent(in) :: param_file
     logical, intent(in), optional :: verb
 
     if (present(verb)) then
-       init_param%verb = verb
+       self%verb = verb
     end if
     
-    init_param%param_file = param_file
-    init_param%vmod_in = ""
-    init_param%fmin = -999.d0
-    init_param%fmax = -999.d0
-    init_param%df = -999.d0
-    init_param%cmin = -999.d0
-    init_param%cmax = -999.d0
-    init_param%dc = -999.d0
-    call init_param%read_file()
-    
+    self%param_file = param_file
+    self%vmod_in = ""
+    self%fmin = -999.d0
+    self%fmax = -999.d0
+    self%df = -999.d0
+    self%cmin = -999.d0
+    self%cmax = -999.d0
+    self%dc = -999.d0
+    call self%read_file()
+
+    if (self%verb) then
+       write(*,*)
+    end if
+
     return 
   end function init_param
 
