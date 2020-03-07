@@ -81,7 +81,8 @@ program main
      write(*,*)" Copyright (C) 2019 Takeshi Akuhara                   "
      write(*,*)"------------------------------------------------------"
      write(*,*)
-     write(*,*)"Start join_inv"
+     write(*,*)"Start Program <joint_inv>"
+     write(*,*)
   end if
 
   ! Get parameter file name from command line argument
