@@ -88,7 +88,10 @@ program main
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
   if (n_arg /= 1) then
-     write(0, *)"USAGE: joint_inv [parameter file]"
+     if (verb) then
+        write(0, *)"USAGE: joint_inv [parameter file]"
+     end if
+     call mpi_finalize(ierr)
      stop
   end if
   call get_command_argument(1, param_file)
@@ -111,9 +114,6 @@ program main
        & rank    = rank,               &
        & n_chain = para%get_n_chain(), &
        & verb    = verb)
-  
-  call mpi_finalize(ierr)
-  stop
   
   ! Initialize random number sequence
   call init_random(para%get_i_seed1(), &
