@@ -138,8 +138,7 @@ program main
      call obs_disp%set_n_disp(0)
   end if
   
-  call mpi_finalize(ierr)
-  stop
+
   ! Covariance matrix
   if (verb) write(*,*)"Constructing covariance matrix"
   allocate(cov(obs_rf%get_n_rf()))
