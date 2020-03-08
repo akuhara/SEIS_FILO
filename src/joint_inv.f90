@@ -126,19 +126,20 @@ program main
   if (trim(para%get_recv_func_in()) /= "") then
      obs_rf = observation_recv_func(para%get_recv_func_in(), verb)
   else
-     if (verb) write(*,*)"No receiver function input"
+     if (verb) write(*,*)"<< No receiver function input >>"
      call obs_rf%set_n_rf(0)
   end if
   
   ! Read observation file
   if (trim(para%get_disper_in()) /= "") then
-     if (verb) write(*,*)"Reading observation file"
-     obs_disp = observation_disper(trim(para%get_disper_in()))
+     obs_disp = observation_disper(para%get_disper_in(), verb)
   else
-     if (verb) write(*,*)"No dispersion curve input"
+     if (verb) write(*,*)"<< No dispersion curve input >>"
      call obs_disp%set_n_disp(0)
   end if
   
+  call mpi_finalize(ierr)
+  stop
   ! Covariance matrix
   if (verb) write(*,*)"Constructing covariance matrix"
   allocate(cov(obs_rf%get_n_rf()))

@@ -193,6 +193,11 @@ contains
        self%verb = verb
     end if
     
+    if (self%verb) then
+       write(*,'(3A)')"<< Reading parameters from ", &
+            & trim(param_file), " >>"
+    end if    
+    
     self%param_file = param_file
     self%vmod_in = ""
     self%fmin = -999.d0
@@ -218,11 +223,6 @@ contains
     integer :: ierr, io
     type(line_text) :: lt
     logical :: is_ok
-
-    if (self%verb) then
-       write(*,*)"Reading parameters from ", '"', &
-            & trim(self%param_file), '"'
-    end if
 
     open(newunit = io, file = self%param_file, &
          & status = 'old', iostat = ierr)

@@ -100,7 +100,7 @@ contains
     end if
 
     if (self%verb) then
-       write(*,*)"Initialize prallel MCMC"
+       write(*,'(A)')"<< Initialize prallel MCMC >>"
     end if
 
     self%n_proc = n_proc

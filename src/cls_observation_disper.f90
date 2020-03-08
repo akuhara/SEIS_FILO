@@ -41,7 +41,8 @@ module cls_observation_disper
      double precision, allocatable :: cmin(:), cmax(:), dc(:)
      integer, allocatable :: n_mode(:)
      character(1), allocatable :: disper_phase(:)
-     
+     logical :: verb = .false.
+
    contains
      procedure :: get_nf => observation_disper_get_nf
      procedure :: get_fmin => observation_disper_get_fmin
@@ -75,20 +76,32 @@ contains
   
   !---------------------------------------------------------------------
 
-  type(observation_disper) function init_observation_disper(rayobs_in) &
+  type(observation_disper) &
+       & function init_observation_disper(rayobs_in, verb) &
        & result(self)
     character(len=*), intent(in) :: rayobs_in
+    logical, intent(in), optional :: verb
     integer :: ierr, io, i
     character(line_max) :: line
     character(line_max), allocatable :: filename(:)
     type(line_text) :: lt
     
-    write(*,*)"Reading observed Rayleigh wave dispersion curve from ", &
-         & trim(rayobs_in)
+    if (present(verb)) then
+       self%verb = verb
+    end if
+
+    if (self%verb) then
+       write(*,'(3A)') &
+            & "<< Reading observed dispersion curve from ", &
+            & trim(rayobs_in), " >>"
+    end if
 
     open(newunit = io, file = rayobs_in, status = "old", iostat = ierr)
     if (ierr /= 0) then
-       write(0,*)"ERROR: cannot open ", trim(rayobs_in)
+       if (self%verb) then
+          write(0,*)"ERROR: cannot open ", trim(rayobs_in)
+       end if
+       call mpi_finalize(ierr)
        stop
     end if
     
@@ -99,11 +112,14 @@ contains
        line = lt%get_line()
        if (len_trim(line) /= 0) then
           read(line, *) self%n_disp
-          write(*,*)"n_disp =", self%n_disp
+          if (self%verb) then
+             write(*,'(A,I5)')"# of dispersion curves (n_disp)  =", &
+                  & self%n_disp
+          end if
           exit
        end if
     end do
-
+    
     ! allocate
     allocate(self%nf(self%n_disp), self%fmin(self%n_disp))
     allocate(self%fmax(self%n_disp))
@@ -116,13 +132,16 @@ contains
 
     do i = 1, self%n_disp
        ! get file name
+       if (self%verb) write(*,*)"-----------------"
        do 
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) filename(i)
-             write(*,*)"filename = ", trim(filename(i))
+             if (self%verb) then
+                write(*,'(2A)')"filename = ", trim(filename(i))
+             end if
              exit
           end if
        end do
@@ -133,6 +152,12 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) self%disper_phase(i), self%n_mode(i)
+             if (self%verb) then
+                write(*,'(2A)')"Phase type (disper_phase) = ", &
+                     & self%disper_phase(i)
+                write(*,'(A,I5)')"Mode (n_mode) = ", &
+                     & self%n_mode(i)
+             end if
              exit
           end if
        end do
@@ -144,6 +169,14 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) self%nf(i), self%fmin(i), self%df(i)
+             if (self%verb) then
+                write(*,'(A,I5)')"# of measurements (nf) = ", &
+                     & self%nf(i)
+                write(*,'(A,F12.5)')"Minimum frequency (fmin) = ", &
+                     & self%fmin(i)
+                write(*,'(A,F12.5)')"Frequency interval (df) = ", &
+                     & self%df(i)
+             end if
              self%fmax(i) = &
                   & self%fmin(i) + self%df(i) * (self%nf(i) - 1)
              exit
@@ -157,11 +190,19 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) self%cmin(i), self%cmax(i), self%dc(i)
+             if (self%verb) then
+                write(*,'(A,F12.5)')"Minimum phase velocity (cmin) = ", &
+                     & self%cmin(i)
+                write(*,'(A,F12.5)')"Maximum phase velocity (cmax) = ", &
+                     & self%cmax(i)
+                write(*,'(A,F12.5)')"Phase velocity interval (dc) = ", &
+                     & self%dc(i)
+             end if
              exit
           end if
        end do
 
-       
+       if (self%verb) write(*,*)"-----------------"
     end do
     close(io)
     
