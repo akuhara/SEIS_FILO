@@ -261,7 +261,10 @@ contains
     open(newunit = io, file = filename, access = 'direct', &
          & iostat = ierr, recl = 4, status = 'old')
     if (ierr /= 0) then
-       write(0,*)"ERROR: cannot open ", trim(filename)
+       if (self%verb) then
+          write(0,*)"ERROR: cannot open ", trim(filename)
+       end if
+       call mpi_finalize(ierr)
        stop
     end if
 
@@ -269,9 +272,12 @@ contains
     read(io, rec = 1) tmp    
     delta = tmp
     if (abs(delta - self%delta(i)) > 1.0e-5) then
-       write(0,*)"ERROR: sampling interval is not correct"
-       write(0,*)" Given: ", self%delta(i)
-       write(0,*)" Data : ", delta
+       if (self%verb) then
+          write(0,*)"ERROR: sampling interval is not correct"
+          write(0,*)" Given: ", self%delta(i)
+          write(0,*)" Data : ", delta
+       end if
+       call mpi_finalize(ierr)
        stop
     end if
     read(io, rec = 6) tmp
