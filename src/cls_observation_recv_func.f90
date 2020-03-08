@@ -45,8 +45,7 @@ module cls_observation_recv_func
      character(len=1), allocatable :: rf_phase(:)
      logical, allocatable          :: deconv_flag(:)
      logical, allocatable          :: correct_amp(:)
-     
-     
+     logical                       :: verb = .false.
    contains
      procedure :: read_sac => observation_recv_func_read_sac
      procedure :: get_rf_data => observation_recv_func_get_rf_data
@@ -74,22 +73,32 @@ contains
   !--------------------------------------------------------------------- 
   
   type(observation_recv_func) function &
-     & init_observation_recv_func(recv_func_in) &
+     & init_observation_recv_func(recv_func_in, verb) &
      & result(self)
     character(len=*), intent(in) :: recv_func_in
+    logical, intent(in), optional :: verb
     type(line_text) :: lt
     character(line_max) :: line
     character(line_max), allocatable :: filename(:)
     integer :: io, ierr, i
     
 
-    write(*,*)"Reading observed receiver functions from ", &
-         & trim(recv_func_in)
+    if (present(verb)) then
+       self%verb = verb
+    end if
+
+    if (self%verb) then
+       write(*,'(3A)')"<< Reading observed receiver functions from ", &
+            & trim(recv_func_in), " >>"
+    end if
 
     open(newunit = io, file = recv_func_in, status = "old", &
          & iostat = ierr)
     if (ierr /= 0) then
-       write(0,*)"ERROR: cannot open ", trim(recv_func_in)
+       if (self%verb) then
+          write(0,*)"ERROR: cannot open ", trim(recv_func_in)
+       end if
+       call mpi_finalize(ierr)
        stop
     end if
     
@@ -101,7 +110,10 @@ contains
        line = lt%get_line()
        if (len_trim(line) /= 0) then
           read(line, *) self%n_rf
-          write(*,*)"n_rf =", self%n_rf
+          if (self%verb) then
+             write(*,'(A,I5)') &
+                  & "# of receiver functions (n_rf) =", self%n_rf
+          end if
           exit
        end if
     end do
@@ -119,6 +131,7 @@ contains
 
 
     do i = 1, self%n_rf
+       if (self%verb) write(*,*)"-----------------------"
        ! get file name
        do
           read(io, '(a)')line
@@ -126,7 +139,9 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) filename(i)
-             write(*,*)"filename = ", trim(filename(i))
+             if (self%verb) then
+                write(*,'(2A)') "filename = ", trim(filename(i))
+             end if
              exit
           end if
        end do
@@ -138,7 +153,14 @@ contains
           if (len_trim(line) /= 0) then
              read(line, *) self%a_gauss(i), &
                   & self%rayp(i), self%delta(i)
-             write(*,*)self%a_gauss(i), self%rayp(i), self%delta(i)
+             if (self%verb) then
+                write(*,'(A,F12.5)') &
+                     & "Gaussian parameter (a_gauss) = ", self%a_gauss(i)
+                write(*,'(A,F12.5)') &
+                     & "Ray parameter (rayp) = ", self%rayp(i)
+                write(*,'(A,F12.5)') &
+                     & "Sampling interval (delta) = ", self%delta(i)
+             end if
              exit
           end if
        end do
@@ -149,7 +171,10 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) self%rf_phase(i)
-             write(*,*)self%rf_phase(i)
+             if (self%verb) then
+                write(*,'(2A)') &
+                     & "Phase type (rf_phase) = ", self%rf_phase(i)
+             end if
              exit
           end if
        end do
@@ -160,7 +185,12 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) self%t_start(i), self%t_end(i)
-             write(*,*)self%t_start(i), self%t_end(i)
+             if (self%verb) then
+                write(*,'(A,F12.5)') &
+                     & "Start time (t_start) = ", self%t_start(i)
+                write(*,'(A,F12.5)') &
+                     & "End time (t_end) = ", self%t_end(i)
+             end if
              exit
           end if
        end do
@@ -171,7 +201,10 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) self%sigma(i)
-             write(*,*)self%sigma(i)
+             if (self%verb) then
+                write(*,'(A,F12.5)') &
+                     & "Noise stdv. (sigma) = ", self%sigma(i)
+             end if
              exit
           end if
        end do
@@ -182,11 +215,18 @@ contains
           line = lt%get_line()
           if (len_trim(line) /= 0) then
              read(line, *) self%deconv_flag(i), self%correct_amp(i)
-             write(*,*)self%deconv_flag(i), self%correct_amp(i)
+             if (self%verb) then
+                write(*,'(A,L1)') &
+                     & "Deconvolution flag (deconv_flag) = ", &
+                     & self%deconv_flag(i)
+                write(*,'(A,L1)') &
+                     & "Correct amplitude (correct_amp) = ", &
+                     & self%correct_amp(i)
+             end if
              exit
           end if
        end do
-       
+       if (self%verb) write(*,*) "-----------------------"
     end do
     close(io)
     
@@ -201,6 +241,8 @@ contains
     do i = 1, self%n_rf
        call self%read_sac(filename(i), i)
     end do
+    
+    if (self%verb) write(*,*)
 
     return 
   end function init_observation_recv_func

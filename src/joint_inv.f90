@@ -124,13 +124,15 @@ program main
   
   ! Read observation file
   if (trim(para%get_recv_func_in()) /= "") then
-     if (verb) write(*,*)"Reading observation file"
-     obs_rf = observation_recv_func(trim(para%get_recv_func_in()))
+     obs_rf = observation_recv_func(para%get_recv_func_in(), verb)
   else
      if (verb) write(*,*)"No receiver function input"
      call obs_rf%set_n_rf(0)
   end if
   
+  call mpi_finalize(ierr)
+  stop
+
   ! Read observation file
   if (trim(para%get_disper_in()) /= "") then
      if (verb) write(*,*)"Reading observation file"
