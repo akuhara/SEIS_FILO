@@ -130,9 +130,6 @@ program main
      call obs_rf%set_n_rf(0)
   end if
   
-  call mpi_finalize(ierr)
-  stop
-
   ! Read observation file
   if (trim(para%get_disper_in()) /= "") then
      if (verb) write(*,*)"Reading observation file"
