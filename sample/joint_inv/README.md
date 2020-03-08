@@ -5,6 +5,10 @@
 `mpirun -np 20 ../../bin/joint_inv joint_inv`
 * The number after the "-np" flag represents the number of processes. Any numbers >= 1 is acceptable, but for small numbers, the convergence will be slow (i.e., requiring more numbers of iterations).
 
+## Input files
+
+* `joint_inv.in`:the main parameter file
+* `disper_obs.in`
 
 ## How to make plots
 
