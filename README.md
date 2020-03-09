@@ -3,6 +3,9 @@ __SEISmological inversion tools for Flat and Isotropic Layered structures in the
 
 Copyright (C) 2019 Takeshi Akuhara
 
+__NOTE: Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. Anythings in codes and documents can change without notification.__
+
+![plot](./img/plot.png)
 ---
 
 The SEIS_FILO program package aims to carry out transdimensional joint inversion of surface waves and receiver functions for ocean-bottom observatories. The main features are: 
@@ -27,7 +30,7 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 * __Easy to visualize__
     * Plot utilities also available
     
-__NOTE: Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. Anythings in codes and documents can change without notification.__
+
 
 
 ---
@@ -52,4 +55,4 @@ Type `make` in the `src` directory. Please edit the `Makefile` in accordance wit
 ## How to Use
 See [Wiki](https://github.com/akuhara/SEIS_FILO/wiki).
 
-![plot](./img/plot.png)
+
