@@ -9,11 +9,11 @@ Copyright (C) 2019 Takeshi Akuhara
 ![plot](./img/plot.png)
 ---
 
-## Programs included in this package
+## Quick Start
 
 * __disper_fwd__: Surface wave forward computation (phase & group velocities)
 * __recv_func_fwd__: Receiver function forward computation
-* [__joint_inv__](https://github.com/akuhara/SEIS_FILO/master/sample/joint_inv): Surface wave and receiver function joint inversion by RJMCMC
+* [__joint_inv__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/joint_inv): Surface wave and receiver function joint inversion by RJMCMC
   
 ## Install
 Type `make` in the `src` directory.
