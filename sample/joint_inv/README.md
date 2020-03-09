@@ -2,7 +2,7 @@
 
 ## How to run
 
-`mpirun -np 20 ../../bin/joint_inv joint_inv`
+`mpirun -np 20 ../../bin/joint_inv joint_inv.in`
 * The number after the "-np" flag represents the number of processes. Any numbers >= 1 is acceptable, but for small numbers, the convergence will be slow (i.e., requiring more numbers of iterations).
 
 ## Input files
