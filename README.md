@@ -2,7 +2,7 @@
 SEISmological inversion tools for Flat and Isotropic Layered structures in the Ocean
 
 # NOTE:
-Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. 
+Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. Anythings in codes and documents can change without notification.
 
 Copyright (C) 2019 Takeshi Akuhara
 
