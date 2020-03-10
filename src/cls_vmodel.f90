@@ -294,6 +294,7 @@ contains
     do 
        read(io, '(a)')line
        lt = line_text(line, ignore_space = .false.)
+       line = lt%get_line()
        if (len_trim(line) == 0) cycle
        read(line, *)nlay
        exit
@@ -304,6 +305,7 @@ contains
        do 
           read(io, '(a)')line
           lt = line_text(line, ignore_space = .false.)
+          line = lt%get_line()
           if (len_trim(line) == 0) cycle
           read(line, *) &
                & self%vp(i), self%vs(i), self%rho(i), self%h(i)

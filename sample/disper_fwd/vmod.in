@@ -5,7 +5,7 @@
 #-----------------------------------------------------------------------
 # Number of layers
 # (including ocean & bottom layers)
-        4
+         4
 #
 # Vp(km/s) Vs(km/s) Density(g/cm^3) Thickness(km)
        1.5     -3.0             1.0           2.0
@@ -16,4 +16,5 @@
 # Note
 #-----------------------------------------------------------------------
 # Set Vs < 0 for the ocean layer. This is allowed for the topmost layer.
-# Thickness of the bottom layer is ignored.
+# Thickness of the bottom layer is ignored. 
+#
