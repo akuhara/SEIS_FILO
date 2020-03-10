@@ -42,7 +42,6 @@ module cls_line_text
      procedure :: remove_space  => line_text_remove_space
      procedure :: read_value => line_text_read_value
      procedure :: get_line => line_text_get_line
-
   end type line_text
 
   interface line_text
@@ -151,5 +150,6 @@ contains
     return 
   end function line_text_get_line
 
+  !-----------------------------------------------------------------------
 
 end module cls_line_text

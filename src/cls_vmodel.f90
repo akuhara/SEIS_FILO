@@ -25,6 +25,7 @@
 !
 !=======================================================================
 module cls_vmodel
+  use cls_line_text
   implicit none 
   
   type vmodel
@@ -275,7 +276,8 @@ contains
     class(vmodel), intent(inout) :: self
     character(*), intent(in) :: vmod_in
     integer :: ierr, io, i, nlay
-    double precision :: vp, vs, rho, h
+    type(line_text) :: lt
+    character(line_max) :: line
     
     write(*,*)"Reading velocity model from ", trim(vmod_in)
     
@@ -283,19 +285,30 @@ contains
          & status = 'old')
     if (ierr /= 0) then
        write(0, *)"ERROR: cannot open ", trim(vmod_in)
-       write(0, *)"     : (vmodel_read_file)"
+       call mpi_finalize(ierr)
        stop
     end if
     
-    read(io, *)nlay
-    call self%set_nlay(nlay)
     
-    do i = 1, nlay
-       read(io, *, iostat = ierr) vp, vs, rho, h
-       call self%set_vp(i, vp)
-       call self%set_vs(i, vs)
-       call self%set_rho(i, rho)
-       call self%set_h(i, h)
+    ! Get # of layers
+    do 
+       read(io, '(a)')line
+       lt = line_text(line, ignore_space = .false.)
+       if (len_trim(line) == 0) cycle
+       read(line, *)nlay
+       exit
+    end do
+    call self%set_nlay(nlay) ! <= allocate Vp, Vs, Rho, H
+    
+    do i = 1, self%nlay
+       do 
+          read(io, '(a)')line
+          lt = line_text(line, ignore_space = .false.)
+          if (len_trim(line) == 0) cycle
+          read(line, *) &
+               & self%vp(i), self%vs(i), self%rho(i), self%h(i)
+          exit
+       end do
     end do
     close(io)
     

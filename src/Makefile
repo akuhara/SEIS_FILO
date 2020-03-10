@@ -79,6 +79,7 @@ cls_parallel.o: cls_mcmc.mod cls_trans_d_model.mod
 cls_param.o: cls_line_text.mod
 cls_observation_recv_func.o: cls_line_text.mod
 cls_observation_disper.o: cls_line_text.mod
+cls_vmodel.o: cls_line_text.mod
 mod_forward.o: cls_trans_d_model.mod cls_interpreter.mod \
                cls_observation_recv_func.mod cls_recv_func.mod \
                cls_observation_disper.mod cls_disper.mod \
