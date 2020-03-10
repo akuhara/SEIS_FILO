@@ -1,7 +1,7 @@
 # SEIS_FILO (Alpha version)
 __SEISmological inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
-Copyright (C) 2019 Takeshi Akuhara
+Copyright (C) 2019-2020 Takeshi Akuhara
 
 __NOTE: Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. Anythings in codes and documents can change without notification.__
 
@@ -42,17 +42,17 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 
   
 ## Install
-Type `make` in the `src` directory. Please edit the `Makefile` in accordance with your environment (i.e., compiler type and libarary paths). 
+Type `make` in the `src` directory. Please edit the [Makefile](https://github.com/akuhara/SEIS_FILO/tree/master/src/Makefile) in accordance with your environment (i.e., compiler type and libarary paths). 
 
 
-## Quick Start
-* __disper_fwd__: Surface wave forward computation (phase & group velocities)
-* __recv_func_fwd__: Receiver function forward computation
+## Quick Start with Sample
+* [__disper_fwd__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/disper_fwd): Surface wave forward computation (phase & group velocities)
+* [__recv_func_fwd__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/recv_func_fwd): Receiver function forward computation
 * [__joint_inv__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/joint_inv): Surface wave and receiver function joint inversion by RJMCMC
 
 ---
 
-## How to Use
+## For More Details
 See [Wiki](https://github.com/akuhara/SEIS_FILO/wiki).
 
 
