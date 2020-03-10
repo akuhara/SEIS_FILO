@@ -50,6 +50,7 @@ module cls_param
      double precision :: z_min = 0.d0
      double precision :: z_max = 70.d0
      logical :: solve_vp = .false.
+     logical :: is_sphere = .false.
      double precision :: vp_min = 4.5d0
      double precision :: vp_max = 9.0d0
      double precision :: vs_min = 2.5d0
@@ -332,6 +333,8 @@ contains
        read(val, *) self%ocean_thick 
     else if (name == "solve_vp") then
        read(val, *) self%solve_vp
+    else if (name == "is_sphere") then
+       read(val, *) self%is_sphere
     else if (name == "is_ocean") then
        read(val, *) self%is_ocean 
     else if (name == "n_bin_z") then

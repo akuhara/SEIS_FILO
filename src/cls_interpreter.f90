@@ -65,6 +65,7 @@ module cls_interpreter
      double precision :: dvp
      
      logical :: solve_vp = .true.
+     logical :: is_sphere = .false.
 
      double precision, allocatable :: wrk_vp(:), wrk_vs(:), wrk_z(:) 
      
@@ -94,7 +95,7 @@ contains
   type(interpreter) function init_interpreter(nlay_max, z_min, z_max, &
        & n_bin_z, vs_min, vs_max, n_bin_vs, vp_min, vp_max, n_bin_vp, &
        & is_ocean, ocean_thick, vp_ocean, rho_ocean, solve_vp, &
-       & vp_bottom, vs_bottom, rho_bottom) &
+       & is_sphere, vp_bottom, vs_bottom, rho_bottom) &
        & result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
@@ -107,6 +108,7 @@ contains
     double precision, intent(in), optional :: vp_bottom, &
          & vs_bottom, rho_bottom
     logical, intent(in), optional :: solve_vp
+    logical, intent(in), optional :: is_sphere
 
     self%nlay_max = nlay_max
     allocate(self%wrk_vp(nlay_max + 1))
@@ -159,6 +161,10 @@ contains
        self%rho_bottom = rho_bottom
     end if
     
+    if (present(is_sphere)) then
+       self%is_sphere = is_sphere
+    end if
+
     if (present(solve_vp)) then
        if (.not. present(vp_min)) then
           write(0,*)"ERROR: vp_min is not given"
@@ -184,6 +190,8 @@ contains
           self%vpz_mean = 0.d0
        end if
     end if
+
+    
 
     return 
   end function init_interpreter

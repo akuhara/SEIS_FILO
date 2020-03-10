@@ -32,4 +32,5 @@ module mod_const
        & (/"Birth", "Death", "Depth", "Vs   ", "Vp   "/)
   double precision, parameter :: minus_infty = -1.d300
   double precision, parameter :: eps = 1.0d-8
+  double precision, parameter :: r_earth = 6371.d0
 end module mod_const
