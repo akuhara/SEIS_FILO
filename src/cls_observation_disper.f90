@@ -450,6 +450,8 @@ contains
     character(*), intent(in) :: filename
     integer, intent(in) :: i
     integer :: io, ierr, j
+    character(line_max) :: line
+    type(line_text) :: lt
 
     open(newunit = io, file = filename, status = 'old', &
          & iostat = ierr)
@@ -459,14 +461,21 @@ contains
        stop
     end if
     do j = 1, self%nf(i)
-       read(io,*,iostat = ierr)self%c(j, i), self%sig_c(j, i), &
-            & self%u(j, i), self%sig_u(j, i)
-       if (ierr /= 0) then
-          write(0,*)"ERROR: while reading ", trim(filename), & 
-               & " of Line", j, "th data"
-          call mpi_finalize(ierr)
-          stop
-       end if
+       do
+          read(io, '(a)')line
+          lt = line_text(line, ignore_space = .false.)
+          line = lt%get_line()
+          if (len_trim(line) == 0) cycle
+          read(line,*,iostat = ierr)self%c(j, i), self%sig_c(j, i), &
+               & self%u(j, i), self%sig_u(j, i)
+          if (ierr /= 0) then
+             write(0,*)"ERROR: while reading ", trim(filename), & 
+                  & " of Line", j, "th data"
+             call mpi_finalize(ierr)
+             stop
+          end if
+          exit
+       end do
     end do
     close(io)
     

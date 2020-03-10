@@ -1,3 +1,20 @@
+#-----------------------------------------------------------------------
+# Sample Observation Data File:
+# Input to joint_inv of SEIS_FILO package
+#-----------------------------------------------------------------------
+
+# Format
+# 1st column: phase velocity (km/s)
+# 2nd       : phase velocity standard deviation (km/s)
+# 3rd       : group velocity (km/s)
+# 4th       : group velocity standard deviation (km/s)
+
+# Note
+# * Ascending order for frequency; set fmin, df, nf in observation 
+#   summary file.
+# * Any measurements with their tandard errors < 0.0 are ignored
+#
+
 4.1617 0.05 4.1284 0.05
 3.9991 0.05 3.8179 0.05
 3.8362 0.05 3.4846 0.05
