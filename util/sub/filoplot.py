@@ -271,7 +271,8 @@ class InvResult:
         df = pd.read_csv(param["obs_disper_file"],\
                          delim_whitespace=True, \
                          header=None, \
-                         names=(clabel, "c_err", ulabel, "u_err"))
+                         names=(clabel, "c_err", ulabel, "u_err"), \
+                         comment='#')
         print(f_min, f_max, del_f)
         print(np.arange(f_min, f_max, del_f))
         df[flabel] = np.arange(f_min, f_max + 0.5 * del_f, del_f)
