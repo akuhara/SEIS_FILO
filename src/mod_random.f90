@@ -26,14 +26,10 @@
 !=======================================================================
 module mod_random
   implicit none 
-  
-  double precision, parameter, private :: r_max = 2.d0 ** 32
-  integer, private :: x, y, z, w
-  integer, parameter, private :: k = 8
-  integer, parameter, private :: n = 2**k
-  double precision, parameter, private :: r = 3.6541528853610088d0
-  double precision, parameter, private :: v = 0.00492867323399d0
-  double precision, private :: xg(0:n)
+
+  integer, private :: x, y, z, w  
+  double precision, parameter, private :: r31    = 2.d0 ** 31
+  double precision, parameter, private :: r32    = 2.d0 ** 32 
   double precision, parameter, private :: pi2 = 2.d0 * acos(-1.d0)
 
 contains
@@ -64,8 +60,6 @@ contains
   double precision function rand_u()
     integer :: t
     
-    
-
     t = ieor(x, ishft(x, 11))
     x = y
     y = z
@@ -75,23 +69,34 @@ contains
          & ieor(w, ishft(w, -19)), &
          & ieor(t, ishft(t,  -8)) &
          & )
-    if (w < 0) then
-       rand_u = (dble(w) + r_max) / r_max
-    else
-       rand_u = dble(w) / r_max
-    end if
+    rand_u = (dble(w) + r31) / r32
     return 
   end function rand_u
 
   !---------------------------------------------------------------------
-  
+  ! U(0, 1)
+  double precision function rand_u2()
+    integer :: t
+    
+    t = ieor(x, ishft(x, 11))
+    x = y
+    y = z
+    z = w
+    w = &
+         & ieor( &
+         & ieor(w, ishft(w, -19)), &
+         & ieor(t, ishft(t,  -8)) &
+         & )
+    rand_u2 = (dble(w) + r31 + 0.5d0) / r32
+    return 
+  end function rand_u2
   !---------------------------------------------------------------------
   
   double precision function rand_g()
     double precision:: v1, v2
     
-    v1 = rand_u() 
-    v2 = rand_u()
+    v1 = rand_u2() 
+    v2 = rand_u2()
     rand_g = sqrt(-2.d0 * log(v1)) * cos(pi2 * v2)
 
   end function rand_g
