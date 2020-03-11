@@ -12,7 +12,7 @@
 # Note
 # * Ascending order for frequency; set fmin, df, nf in observation 
 #   summary file.
-# * Data with their tandard errors < 0.0 are ignored
+# * Data with their standard deviations < 0.0 are ignored
 #
 
 4.1617 0.05 4.1284 0.05
