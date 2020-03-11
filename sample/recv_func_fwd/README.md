@@ -7,7 +7,7 @@
 
 ## Inputs
 * [recv_func_fwd.in](https://github.com/akuhara/SEIS_FILO/edit/master/sample/recv_func_fwd/recv_func_fwd.in): main parameter file 
-* [vmodel.in](https://github.com/akuhara/SEIS_FILO/edit/master/sample/recv_func_fwd/vmodel.in): input velocity model
+* [vmod.in](https://github.com/akuhara/SEIS_FILO/edit/master/sample/recv_func_fwd/vmod.in): input velocity model
 
 
 ## Output 
