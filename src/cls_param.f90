@@ -50,11 +50,17 @@ module cls_param
      double precision :: z_min = 0.d0
      double precision :: z_max = 70.d0
      logical :: solve_vp = .false.
+     logical :: solve_rf_sig = .false.
+     logical :: solve_disper_sig = .true.
      logical :: is_sphere = .false.
      double precision :: vp_min = 4.5d0
      double precision :: vp_max = 9.0d0
      double precision :: vs_min = 2.5d0
      double precision :: vs_max = 5.0d0
+     double precision :: rf_sig_min = 0.005d0
+     double precision :: rf_sig_max = 0.1d0
+     double precision :: disper_sig_min = 0.01d0
+     double precision :: disper_sig_max = 0.2d0
      integer :: n_bin_z  = 50
      integer :: n_bin_vs = 50
      integer :: n_bin_vp = 50
@@ -63,7 +69,9 @@ module cls_param
      double precision :: dev_z  = 0.1d0
      double precision :: dev_vp = 0.04d0
      double precision :: dev_vs = 0.02d0
-
+     double precision :: dev_rf_sig = 0.02d0
+     double precision :: dev_disper_sig = 0.02d0
+     
      ! Parameters for ocean layer
      logical :: is_ocean = .false.
      double precision :: ocean_thick = 0.d0
@@ -138,15 +146,24 @@ module cls_param
      procedure :: get_dev_vs => param_get_dev_vs
      procedure :: get_dev_vp => param_get_dev_vp
      procedure :: get_dev_z => param_get_dev_z
+     procedure :: get_dev_rf_sig => param_get_dev_rf_sig
+     procedure :: get_dev_disper_sig => param_get_dev_disper_sig
      procedure :: get_vs_min => param_get_vs_min
      procedure :: get_vs_max => param_get_vs_max
      procedure :: get_vp_min => param_get_vp_min
      procedure :: get_vp_max => param_get_vp_max
      procedure :: get_z_min => param_get_z_min
      procedure :: get_z_max => param_get_z_max
+     procedure :: get_rf_sig_min => param_get_rf_sig_min
+     procedure :: get_rf_sig_max => param_get_rf_sig_max
+     procedure :: get_disper_sig_min => param_get_disper_sig_min
+     procedure :: get_disper_sig_max => param_get_disper_sig_max
+
      procedure :: get_ocean_thick => param_get_ocean_thick
 
      procedure :: get_solve_vp => param_get_solve_vp
+     procedure :: get_solve_rf_sig => param_get_solve_rf_sig
+     procedure :: get_solve_disper_sig => param_get_solve_disper_sig
      procedure :: get_is_ocean => param_get_is_ocean
      
      procedure :: get_vmod_in => param_get_vmod_in
@@ -317,6 +334,10 @@ contains
        read(val, *) self%dev_vp
     else if (name == "dev_z") then
        read(val, *) self%dev_z 
+    else if (name == "dev_rf_sig") then
+       read(val, *) self%dev_rf_sig
+    else if (name == "dev_disper_sig") then
+       read(val, *) self%dev_disper_sig
     else if (name == "vs_min") then
        read(val, *) self%vs_min
     else if (name == "vs_max") then
@@ -329,10 +350,22 @@ contains
        read(val, *) self%z_min 
     else if (name == "z_max") then
        read(val, *) self%z_max 
+    else if (name == "rf_sig_min") then
+       read(val, *) self%rf_sig_min
+    else if (name == "rf_sig_max") then
+       read(val, *) self%rf_sig_max
+    else if (name == "disper_sig_min") then
+       read(val, *) self%disper_sig_min
+    else if (name == "disper_sig_max") then
+       read(val, *) self%disper_sig_max
     else if (name == "ocean_thick") then
        read(val, *) self%ocean_thick 
     else if (name == "solve_vp") then
        read(val, *) self%solve_vp
+    else if (name == "solve_rf_sig") then
+       read(val, *)self%solve_rf_sig
+    else if (name == "solve_disper_sig") then
+       read(val, *)self%solve_disper_sig
     else if (name == "is_sphere") then
        read(val, *) self%is_sphere
     else if (name == "is_ocean") then
@@ -655,6 +688,28 @@ contains
   end function param_get_dev_z
 
   !---------------------------------------------------------------------
+
+  double precision function param_get_dev_rf_sig(self) &
+       & result(dev_rf_sig)
+    class(param), intent(in) :: self
+
+    dev_rf_sig = self%dev_rf_sig
+
+    return
+  end function param_get_dev_rf_sig
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_dev_disper_sig(self) &
+       & result(dev_disper_sig)
+    class(param), intent(in) :: self
+
+    dev_disper_sig = self%dev_disper_sig
+
+    return
+  end function param_get_dev_disper_sig
+
+  !---------------------------------------------------------------------
   
   double precision function param_get_vs_min(self) result(vs_min)
     class(param), intent(in) :: self
@@ -716,6 +771,48 @@ contains
 
   !---------------------------------------------------------------------
 
+  double precision function param_get_rf_sig_min(self) result(rf_sig_min)
+    class(param), intent(in) :: self
+
+    rf_sig_min = self%rf_sig_min
+
+    return
+  end function param_get_rf_sig_min
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_rf_sig_max(self) result(rf_sig_max)
+    class(param), intent(in) :: self
+
+    rf_sig_max = self%rf_sig_max
+
+    return
+  end function param_get_rf_sig_max
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_disper_sig_min(self) &
+       &result(disper_sig_min)
+    class(param), intent(in) :: self
+
+    disper_sig_min = self%disper_sig_min
+
+    return
+  end function param_get_disper_sig_min
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_disper_sig_max(self) &
+       & result(disper_sig_max)
+    class(param), intent(in) :: self
+
+    disper_sig_max = self%disper_sig_max
+
+    return
+  end function param_get_disper_sig_max
+
+  !---------------------------------------------------------------------
+
   double precision function param_get_ocean_thick(self) &
        & result(ocean_thick)
     class(param), intent(in) :: self
@@ -734,6 +831,26 @@ contains
     
     return 
   end function param_get_solve_vp
+  
+  !---------------------------------------------------------------------
+
+  logical function param_get_solve_rf_sig(self) result(solve_rf_sig)
+    class(param), intent(in) :: self
+
+    solve_rf_sig = self%solve_rf_sig
+    
+    return 
+  end function param_get_solve_rf_sig
+  
+  !---------------------------------------------------------------------
+
+  logical function param_get_solve_disper_sig(self) result(solve_disper_sig)
+    class(param), intent(in) :: self
+
+    solve_disper_sig = self%solve_disper_sig
+    
+    return 
+  end function param_get_solve_disper_sig
   
   !---------------------------------------------------------------------
 
