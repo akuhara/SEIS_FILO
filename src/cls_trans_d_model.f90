@@ -144,7 +144,7 @@ contains
     double precision, intent(in) :: d1, d2
     integer :: ierr
 
-    if(iparam < 1 .or. iparam > self%k_max) then
+    if(iparam < 1 .or. iparam > self%nx) then
        write(0,*) "ERROR: out of range (trans_d_model_set_birth)"
        call mpi_finalize(ierr)
        stop
@@ -178,7 +178,7 @@ contains
     double precision, intent(in) :: d1, d2
     integer :: ierr
     
-    if(iparam < 1 .or. iparam > self%k_max) then
+    if(iparam < 1 .or. iparam > self%nx) then
        write(0,*) "ERROR: out of range (trans_d_model_set_prior)"
        write(0,*) "     : iparam=", iparam
        call mpi_finalize(ierr)
@@ -213,7 +213,7 @@ contains
     double precision, intent(in) :: d1
     integer :: ierr
 
-    if(iparam < 1 .or. iparam > self%k_max) then
+    if(iparam < 1 .or. iparam > self%nx) then
        write(0,*) "ERROR: out of range (trans_d_model_set_prior)"
        write(0,*) "     : iparam=", iparam
        call mpi_finalize(ierr)

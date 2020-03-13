@@ -52,7 +52,8 @@ OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
 	 mod_const.o cls_interpreter.o cls_observation_recv_func.o \
 	 cls_param.o cls_vmodel.o cls_signal_process.o mod_sort.o \
          cls_line_text.o cls_covariance.o cls_observation_disper.o \
-	 cls_disper.o mod_output.o mod_forward.o cls_proposal.o
+	 cls_disper.o mod_output.o mod_forward.o cls_proposal.o \
+	 cls_hyper_model.o
 
 TARGET = $(DISP_FWD) $(RF_FWD) $(JOINT_INV)
 
@@ -69,7 +70,8 @@ joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
               cls_param.mod cls_observation_recv_func.mod \
               cls_recv_func.mod cls_covariance.mod cls_disper.mod \
               cls_observation_disper.mod mod_output.mod mod_forward.mod \
-              cls_proposal.mod
+              cls_proposal.mod cls_hyper_model.mod
+cls_hyper_model.o: mod_random.mod
 cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod
 cls_disper.o: cls_vmodel.mod
 cls_trans_d_model.o: mod_random.mod
