@@ -222,10 +222,10 @@ contains
     end if
     
     ! Translate trand_d_model to vmodel
-    self%wrk_z(:) = tm%get_rx(id_z)
-    self%wrk_vs(:) = tm%get_rx(id_vs)
+    self%wrk_z(:) = tm%get_x(id_z)
+    self%wrk_vs(:) = tm%get_x(id_vs)
     if (self%solve_vp) then
-       self%wrk_vp(:) = tm%get_rx(id_vp)
+       self%wrk_vp(:) = tm%get_x(id_vp)
     end if
     call quick_sort(self%wrk_z, 1, k, self%wrk_vs, self%wrk_vp)
     ! Middle layers

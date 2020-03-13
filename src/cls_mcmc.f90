@@ -83,7 +83,7 @@ contains
     self%i_iter = 0
     self%i_mod = 0
     self%log_likelihood = -1.0d300
-    self%n_proposal_type = tm%get_n_x() + 2 
+    self%n_proposal_type = tm%get_nx() + 2 
     
     allocate(self%likelihood_saved(n_iter))
     allocate(self%temp_saved(n_iter))

@@ -34,25 +34,19 @@ module cls_trans_d_model
      integer :: k_min
      integer :: k_max
      
-     integer :: n_rx = 0! Number of real parameter 
-     integer :: n_ix = 0! Number of integer parameter
-     integer :: n_x  = 0 ! Number of all parameter
+     integer :: nx  = 0 ! Number of parameters per layer
      
-     integer, allocatable :: rx_birth_type(:) ! 1: Uniform, 2: Gaussian
-     integer, allocatable :: ix_birth_type(:) ! 1: Uniform, 2: Gaussian
-     integer, allocatable :: rx_prior_type(:) ! 1: Uniform, 2: Gaussian
-     integer, allocatable :: ix_prior_type(:) ! 1: Uniform, 2: Gaussian
+     integer, allocatable :: birth_type(:) ! 1: Uniform, 2: Gaussian
+     integer, allocatable :: prior_type(:) ! 1: Uniform, 2: Gaussian
      
-     double precision, allocatable :: rx(:, :)
-     integer, allocatable          :: ix(:, :)
+     double precision, allocatable :: x(:, :)
      
-     double precision, allocatable :: rx_birth_param(:,:)
-     double precision, allocatable :: ix_birth_param(:,:)
-     double precision, allocatable :: rx_prior_param(:,:)
-     double precision, allocatable :: ix_prior_param(:,:)
-     double precision, allocatable :: rx_perturb_param(:) ! STDEV
-     double precision, allocatable :: ix_perturb_param(:) ! STDEV
+     double precision, allocatable :: birth_param(:,:)
+     double precision, allocatable :: prior_param(:,:)
+     double precision, allocatable :: perturb_param(:) ! STDEV
 
+     logical :: verb = .false.
+     
    contains
      procedure :: set_k => trans_d_model_set_k
      procedure :: set_birth => trans_d_model_set_birth
@@ -60,18 +54,13 @@ module cls_trans_d_model
      procedure :: set_perturb => trans_d_model_set_perturb
      procedure :: get_k => trans_d_model_get_k
      procedure :: get_k_max => trans_d_model_get_k_max
-     procedure :: get_n_x => trans_d_model_get_n_x
-     procedure :: get_n_rx => trans_d_model_get_n_rx
-     procedure :: get_n_ix => trans_d_model_get_n_ix
-     procedure :: get_rx => trans_d_model_get_rx
-     procedure :: get_rx_single => trans_d_model_get_rx_single
-     procedure :: get_ix => trans_d_model_get_ix
+     procedure :: get_nx => trans_d_model_get_nx
+     procedure :: get_x => trans_d_model_get_x
+     procedure :: get_x_single => trans_d_model_get_x_single
      procedure :: generate_model => trans_d_model_generate_model
      procedure :: birth => trans_d_model_birth
      procedure :: death => trans_d_model_death
      procedure :: perturb => trans_d_model_perturb
-     procedure, private :: perturb_rx => trans_d_model_perturb_rx
-     procedure, private :: perturb_ix => trans_d_model_perturb_ix
      procedure :: display => trans_d_model_display
      procedure :: finish  => trans_d_model_finish
      
@@ -86,56 +75,43 @@ contains
   !---------------------------------------------------------------------
   
   type(trans_d_model) function init_trans_d_model(k_min, k_max, &
-       & n_rx, n_ix)
+       & nx, verb) result(self)
     integer, intent(in) :: k_min, k_max
-    integer, intent(in), optional :: n_rx, n_ix
-    logical :: is_given
-
+    integer, intent(in) :: nx
+    logical, intent(in), optional :: verb
+    integer :: ierr
+    
+    if (present(verb)) then
+       self%verb = verb
+    end if
+    if (self%verb) then
+       write(*,'(A)')"<< Initialize trans-D model parameters >>"
+    end if
+    
     ! Get dimension
     if (k_max <= k_min) then
        write(0,*)"ERROR: k_max must be > k_min"
-       write(0,*)"     : k_min =", k_min, "k_max=", k_max, &
-            & "(init_trans_d_model)"
+       write(0,*)"     : k_min =", k_min, "k_max=", k_max
+       call mpi_finalize(ierr)
        stop
     end if
-    init_trans_d_model%k_min = k_min
-    init_trans_d_model%k_max = k_max
+    self%k_min = k_min
+    self%k_max = k_max
+    if (self%verb) write(*,'(A,I4)')" k_min=", k_min
+    if (self%verb) write(*,'(A,I4)')" k_max=", k_max
+
 
     ! Get number of model parameters
-    init_trans_d_model%n_rx = 0
-    init_trans_d_model%n_ix = 0
-    is_given = .false.
-    if (present(n_rx)) then
-       init_trans_d_model%n_rx = n_rx
-       allocate(init_trans_d_model%rx(k_max, n_rx))
-       allocate(init_trans_d_model%rx_birth_type(n_rx))
-       allocate(init_trans_d_model%rx_prior_type(n_rx))
-       allocate(init_trans_d_model%rx_birth_param(n_rx, 2))
-       allocate(init_trans_d_model%rx_prior_param(n_rx, 2))
-       allocate(init_trans_d_model%rx_perturb_param(n_rx))
-       is_given = .true.
-    end if
-    if (present(n_ix)) then
-       init_trans_d_model%n_ix = n_ix
-       allocate(init_trans_d_model%ix(k_max, n_ix))
-       allocate(init_trans_d_model%ix_birth_type(n_ix))
-       allocate(init_trans_d_model%ix_prior_type(n_ix))
-       allocate(init_trans_d_model%ix_birth_param(n_ix, 2))
-       allocate(init_trans_d_model%ix_prior_param(n_ix, 2))
-       allocate(init_trans_d_model%ix_perturb_param(n_ix))
-       is_given = .true.
-    end if
-    if (.not. is_given) then
-       write(0,*)"ERROR: number of model parameters must be given"
-       write(0,*)"     : (init_trans_d_model)"
-       stop
-    end if
+    self%nx = nx
+    allocate(self%x(k_max, nx))
+    allocate(self%birth_type(nx))
+    allocate(self%prior_type(nx))
+    allocate(self%birth_param(nx, 2))
+    allocate(self%prior_param(nx, 2))
+    allocate(self%perturb_param(nx))
     
-    init_trans_d_model%n_x = &
-         & init_trans_d_model%n_rx + &
-         & init_trans_d_model%n_ix
-
-    
+    if (self%verb) write(*,'(A,I4)')" nx=", nx
+    if (self%verb) write(*,*)
     return 
   end function init_trans_d_model
   
@@ -144,12 +120,15 @@ contains
   subroutine trans_d_model_set_k(self, k)
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: k
+    integer :: ierr
     
     if (k < self%k_min .or. k >= self%k_max) then
        write(0,*)"ERROR: k must be k_min <= k < k_max ", &
             & "(trans_d_model_set_k)"
        write(0,*)"     : k=", k, " k_min=", self%k_min, &
             & " k_max=", self%k_max
+       call mpi_finalize(ierr)
+       stop
     end if
 
     self%k = k
@@ -163,33 +142,30 @@ contains
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam, itype
     double precision, intent(in) :: d1, d2
+    integer :: ierr
 
     if(iparam < 1 .or. iparam > self%k_max) then
        write(0,*) "ERROR: out of range (trans_d_model_set_birth)"
-       write(0,*) "     : iparam=", iparam
+       call mpi_finalize(ierr)
        stop
     end if
 
     if (itype == 1 .and. d1 >= d2) then
        write(0,*)"ERROR: d2 must be > d1 (trans_d_model_set_birth)"
+       call mpi_finalize(ierr)
        stop
     end if
 
     if (itype /= 1 .and. itype /= 2) then
        write(0, *)"ERROR: itype (1: uniform, 2: Gaussian)"
        write(0, *)"     : (trans_d_model_set_birth)"
+       call mpi_finalize(ierr)
        stop
     end if
     
-    if (iparam <= self%n_rx) then
-       self%rx_birth_type(iparam) = itype
-       self%rx_birth_param(iparam, 1) = d1
-       self%rx_birth_param(iparam, 2) = d2
-    else
-       self%ix_birth_type(iparam - self%n_rx) = itype
-       self%ix_birth_param(iparam - self%n_rx, 1) = d1
-       self%ix_birth_param(iparam - self%n_rx, 2) = d2
-    end if
+    self%birth_type(iparam) = itype
+    self%birth_param(iparam, 1) = d1
+    self%birth_param(iparam, 2) = d2
     
     return 
   end subroutine trans_d_model_set_birth
@@ -200,33 +176,31 @@ contains
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam, itype
     double precision, intent(in) :: d1, d2
-
+    integer :: ierr
+    
     if(iparam < 1 .or. iparam > self%k_max) then
        write(0,*) "ERROR: out of range (trans_d_model_set_prior)"
        write(0,*) "     : iparam=", iparam
+       call mpi_finalize(ierr)
        stop
     end if
 
     if (itype == 1 .and. d1 >= d2) then
        write(0,*)"ERROR: d2 must be > d1 (trans_d_model_set_prior)"
+       call mpi_finalize(ierr)
        stop
     end if
 
     if (itype /= 1 .and. itype /= 2) then
        write(0, *)"ERROR: itype (1: uniform, 2: Gaussian)"
        write(0, *)"     : (trans_d_model_set_prior)"
+       call mpi_finalize(ierr)
        stop
     end if
     
-    if (iparam <= self%n_rx) then
-       self%rx_prior_type(iparam) = itype
-       self%rx_prior_param(iparam, 1) = d1
-       self%rx_prior_param(iparam, 2) = d2
-    else
-       self%ix_prior_type(iparam - self%n_rx) = itype
-       self%ix_prior_param(iparam - self%n_rx, 1) = d1
-       self%ix_prior_param(iparam - self%n_rx, 2) = d2
-    end if
+    self%prior_type(iparam) = itype
+    self%prior_param(iparam, 1) = d1
+    self%prior_param(iparam, 2) = d2
     
     return 
   end subroutine trans_d_model_set_prior
@@ -237,18 +211,16 @@ contains
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam
     double precision, intent(in) :: d1
+    integer :: ierr
 
     if(iparam < 1 .or. iparam > self%k_max) then
        write(0,*) "ERROR: out of range (trans_d_model_set_prior)"
        write(0,*) "     : iparam=", iparam
+       call mpi_finalize(ierr)
        stop
     end if
     
-    if (iparam <= self%n_rx) then
-       self%rx_perturb_param(iparam) = d1
-    else
-       self%ix_perturb_param(iparam - self%n_rx) = d1
-    end if
+    self%perturb_param(iparam) = d1
     
     return 
   end subroutine trans_d_model_set_perturb
@@ -275,69 +247,37 @@ contains
 
   !---------------------------------------------------------------------
 
-  integer function trans_d_model_get_n_x(self) result(n_x)
+  integer function trans_d_model_get_nx(self) result(nx)
     class(trans_d_model), intent(in) :: self
     
-    n_x = self%n_x
+    nx = self%nx
 
     return 
-  end function trans_d_model_get_n_x
+  end function trans_d_model_get_nx
 
-  !---------------------------------------------------------------------
-
-  integer function trans_d_model_get_n_rx(self) result(n_rx)
-    class(trans_d_model), intent(in) :: self
-    
-    n_rx = self%n_rx
-    
-    return 
-  end function trans_d_model_get_n_rx
-
-  !---------------------------------------------------------------------
-
-  integer function trans_d_model_get_n_ix(self) result(n_ix)
-    class(trans_d_model), intent(in) :: self
-    
-    n_ix = self%n_ix
-
-    return 
-  end function trans_d_model_get_n_ix
-  
   !---------------------------------------------------------------------
   
-  function trans_d_model_get_rx(self, iparam) result(rx)
+  function trans_d_model_get_x(self, iparam) result(x)
     class(trans_d_model), intent(in) :: self
     integer, intent(in) :: iparam
-    double precision :: rx(self%k_max)
+    double precision :: x(self%k_max)
     
-    rx = self%rx(1:self%k_max, iparam)
+    x = self%x(1:self%k_max, iparam)
     
     return 
-  end function trans_d_model_get_rx
+  end function trans_d_model_get_x
 
   !---------------------------------------------------------------------
   
-  double precision function trans_d_model_get_rx_single(self, k, &
-       & iparam) result(rx)
+  double precision function trans_d_model_get_x_single(self, k, &
+       & iparam) result(x)
     class(trans_d_model), intent(in) :: self
     integer, intent(in) :: k, iparam
     
-    rx = self%rx(k, iparam)
+    x = self%x(k, iparam)
 
     return 
-  end function trans_d_model_get_rx_single
-
-  !---------------------------------------------------------------------
-
-  function trans_d_model_get_ix(self, iparam) result(ix)
-    class(trans_d_model), intent(in) :: self
-    integer, intent(in) :: iparam
-    integer :: ix(self%k_max)
-    
-    ix = self%ix(1:self%k_max, iparam)
-    
-    return 
-  end function trans_d_model_get_ix
+  end function trans_d_model_get_x_single
 
   !---------------------------------------------------------------------
 
@@ -376,52 +316,29 @@ contains
        return
     end if
     k2 = self%k + 1
-    do i = 1, self%n_rx
-       if (self%rx_birth_type(i) == 1) then
-          self%rx(k2, i) = &
-               & self%rx_birth_param(i, 1) + &
-               & rand_u() * (self%rx_birth_param(i, 2) - &
-               & self%rx_birth_param(i, 1))
+    do i = 1, self%nx
+       if (self%birth_type(i) == 1) then
+          self%x(k2, i) = &
+               & self%birth_param(i, 1) + &
+               & rand_u() * (self%birth_param(i, 2) - &
+               & self%birth_param(i, 1))
 
-       else if (self%rx_birth_type(i) == 2) then
-          self%rx(k2, i) = &
-               & self%rx_birth_param(i, 1) + &
-               & rand_g() * self%rx_birth_param(i, 2)
+       else if (self%birth_type(i) == 2) then
+          self%x(k2, i) = &
+               & self%birth_param(i, 1) + &
+               & rand_g() * self%birth_param(i, 2)
        end if
        ! check prior bounds
-       if (self%rx_prior_type(i) == 1) then
-          if(self%rx(k2, i) < self%rx_prior_param(i, 1) .or. &
-               & self%rx(k2, i) > self%rx_prior_param(i, 2)) then
+       if (self%prior_type(i) == 1) then
+          if(self%x(k2, i) < self%prior_param(i, 1) .or. &
+               & self%x(k2, i) > self%prior_param(i, 2)) then
              is_ok = .false.
              return
           end if
        end if
     end do
     
-    do i = 1, self%n_ix
-       if (self%ix_birth_type(i) == 1) then
-          self%ix(k2, i) = &
-               & nint(self%ix_birth_param(i, 1)) + &
-               & int(rand_u() * &
-               & (nint(self%ix_birth_param(i, 2)) - &
-               & nint(self%ix_birth_param(i, 1)))&
-               &)
-       else if (self%ix_birth_type(i) == 2) then
-          self%ix(k2, i) = &
-               & nint( &
-               & self%ix_birth_param(i, 1) + &
-               & rand_g() * self%ix_birth_param(i, 2))
-       end if
-       ! Check prior bounds
-       if (self%ix_prior_type(i) == 1) then
-          if(self%ix(k2, i) < nint(self%ix_prior_param(i, 1)) .or. &
-               & self%ix(k2, i) >= nint(self%ix_prior_param(i, 2))) then
-             is_ok = .false.
-             return 
-          end if
-       end if
-    end do
-
+    ! Final check
     if (is_ok) then
        self%k = k2
     end if
@@ -448,14 +365,9 @@ contains
     end if
     
 
-    do i = 1, self%n_rx
+    do i = 1, self%nx
        do j = k_target, self%k
-          self%rx(j,  i) = self%rx(j + 1, i) 
-       end do
-    end do
-    do i = 1, self%n_ix
-       do j = k_target, self%k
-          self%ix(j,  i) = self%ix(j + 1, i) 
+          self%x(j,  i) = self%x(j + 1, i) 
        end do
     end do
     
@@ -464,98 +376,99 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine trans_d_model_perturb(self, iparam, is_ok, log_prior_ratio)
-    class(trans_d_model), intent(inout) :: self
-    integer, intent(in) :: iparam
-    logical, intent(out) :: is_ok
-    double precision, intent(out) :: log_prior_ratio
-    
-    if (iparam <= self%n_rx) then
-       call self%perturb_rx(iparam, &
-            & self%rx_perturb_param(iparam), is_ok, log_prior_ratio)
-    else
-       call self%perturb_ix(iparam - self%n_rx, &
-            & self%ix_perturb_param(iparam), is_ok, log_prior_ratio)
-    end if
-    
-    return 
-  end subroutine trans_d_model_perturb
+  !subroutine trans_d_model_perturb(self, iparam, is_ok, log_prior_ratio)
+  !  class(trans_d_model), intent(inout) :: self
+  !  integer, intent(in) :: iparam
+  !  logical, intent(out) :: is_ok
+  !  double precision, intent(out) :: log_prior_ratio
+  !  
+  !  if (iparam <= self%n_rx) then
+  !     call self%perturb_rx(iparam, &
+  !          & self%rx_perturb_param(iparam), is_ok, log_prior_ratio)
+  !  else
+  !     call self%perturb_ix(iparam - self%n_rx, &
+  !          & self%ix_perturb_param(iparam), is_ok, log_prior_ratio)
+  !  end if
+  !  
+  !  return 
+  !end subroutine trans_d_model_perturb
   
   !---------------------------------------------------------------------
 
-  subroutine trans_d_model_perturb_rx(self, iparam, dev, is_ok, &
+  subroutine trans_d_model_perturb(self, iparam, is_ok, &
        & log_prior_ratio)
     class(trans_d_model), intent(inout) :: self
     integer, intent(in) :: iparam
-    double precision, intent(in) :: dev
     logical, intent(out) :: is_ok
     double precision, intent(out) :: log_prior_ratio
+    double precision :: dev
     integer :: k_target
     double precision :: x_new, x_old, mu, sig
 
+    dev = self%perturb_param(iparam)
     k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
 
-    x_old = self%rx(k_target, iparam)
+    x_old = self%x(k_target, iparam)
     x_new = x_old + rand_g() * dev
-    self%rx(k_target, iparam) = x_new
+    self%x(k_target, iparam) = x_new
     
     is_ok = .true.
-    if (self%rx_prior_type(iparam) == 1) then
-       if (self%rx(k_target, iparam) < &
-            & self%rx_prior_param(iparam, 1) .or. &
-            & self%rx(k_target, iparam) > &
-            & self%rx_prior_param(iparam, 2)) then
+    if (self%prior_type(iparam) == 1) then
+       if (self%x(k_target, iparam) < &
+            & self%prior_param(iparam, 1) .or. &
+            & self%x(k_target, iparam) > &
+            & self%prior_param(iparam, 2)) then
           is_ok = .false.
        end if
        log_prior_ratio = 0.d0
-    else if (self%rx_prior_type(iparam) == 2) then
-       mu = self%rx_prior_param(iparam, 1)
-       sig = self%rx_prior_param(iparam, 2)
+    else if (self%prior_type(iparam) == 2) then
+       mu = self%prior_param(iparam, 1)
+       sig = self%prior_param(iparam, 2)
        log_prior_ratio = -((x_new - mu)**2 - (x_old - mu)**2) / &
             & (2.d0 * sig * sig)
     end if
     
     
     return 
-  end subroutine trans_d_model_perturb_rx
+  end subroutine trans_d_model_perturb
 
   !---------------------------------------------------------------------
 
-  subroutine trans_d_model_perturb_ix(self, iparam, dev, is_ok, &
-       & log_prior_ratio)
-    class(trans_d_model), intent(inout) :: self
-    integer, intent(in) :: iparam
-    double precision, intent(in) :: dev
-    logical, intent(out) :: is_ok
-    double precision, intent(out) :: log_prior_ratio
-    integer :: k_target
-    double precision :: mu, sig
-    integer :: x_new, x_old
-    
-    k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
-    
-    x_old = self%ix(k_target, iparam)
-    x_new = x_old + nint(rand_g() * dev)
-    self%ix(k_target, iparam) = x_new
-    
-    is_ok = .true.
-    if (self%ix_prior_type(iparam) == 1) then
-       if (self%ix(k_target, iparam) < &
-            & self%ix_prior_param(iparam, 1) .or. &
-            & self%ix(k_target, iparam) > &
-            & self%ix_prior_param(iparam, 2)) then
-          is_ok = .false.
-       end if
-       log_prior_ratio = 0.d0
-    else if (self%ix_prior_type(iparam) == 2) then
-       mu = self%ix_prior_param(iparam, 1)
-       sig = self%ix_prior_param(iparam, 2)
-       log_prior_ratio = -((x_new - mu)**2 - (x_old - mu)**2) / &
-            & (2.d0 * sig * sig)
-    end if
-    
-    return 
-  end subroutine trans_d_model_perturb_ix
+  !subroutine trans_d_model_perturb_ix(self, iparam, dev, is_ok, &
+  !     & log_prior_ratio)
+  !  class(trans_d_model), intent(inout) :: self
+  !  integer, intent(in) :: iparam
+  !  double precision, intent(in) :: dev
+  !  logical, intent(out) :: is_ok
+  !  double precision, intent(out) :: log_prior_ratio
+  !  integer :: k_target
+  !  double precision :: mu, sig
+  !  integer :: x_new, x_old
+  !  
+  !  k_target = self%k_min + int(rand_u()*((self%k + 1) - self%k_min))
+  !  
+  !  x_old = self%ix(k_target, iparam)
+  !  x_new = x_old + nint(rand_g() * dev)
+  !  self%ix(k_target, iparam) = x_new
+  !  
+  !  is_ok = .true.
+  !  if (self%ix_prior_type(iparam) == 1) then
+  !     if (self%ix(k_target, iparam) < &
+  !          & self%ix_prior_param(iparam, 1) .or. &
+  !          & self%ix(k_target, iparam) > &
+  !          & self%ix_prior_param(iparam, 2)) then
+  !        is_ok = .false.
+  !     end if
+  !     log_prior_ratio = 0.d0
+  !  else if (self%ix_prior_type(iparam) == 2) then
+  !     mu = self%ix_prior_param(iparam, 1)
+  !     sig = self%ix_prior_param(iparam, 2)
+  !     log_prior_ratio = -((x_new - mu)**2 - (x_old - mu)**2) / &
+  !          & (2.d0 * sig * sig)
+  !  end if
+  !  
+  !  return 
+  !end subroutine trans_d_model_perturb_ix
 
 
 
@@ -567,21 +480,14 @@ contains
     write(*,*)
     write(*,*)"k = ", self%k
     
-    do i = 1, self%n_rx
+    do i = 1, self%nx
        write(*,*)"------------------------------"
-       write(*,*)"Real parameter", i
+       write(*,*)"Parameter", i
        do j = 1, self%k
-          write(*,*)j, self%rx(j, i)
+          write(*,*)j, self%x(j, i)
        end do
     end do
 
-    do i = 1, self%n_ix
-       write(*,*)"------------------------------"
-       write(*,*)"Integer prameter", i
-       do j = 1, self%k
-          write(*,*)j, self%ix(j, i)
-       end do
-    end do
     write(*,*)
     
     return 
@@ -596,22 +502,13 @@ contains
     self%k_min = 0
     self%k_max = 0
     
-    if (self%n_rx > 0) then
-       deallocate(self%rx)
-       deallocate(self%rx_birth_type)
-       deallocate(self%rx_prior_type)
-       deallocate(self%rx_birth_param)
-       deallocate(self%rx_prior_param)
-       deallocate(self%rx_perturb_param)
-    end if
-    if (self%n_ix > 0) then
-       deallocate(self%ix)
-       deallocate(self%ix_birth_type)
-       deallocate(self%ix_prior_type)
-       deallocate(self%ix_birth_param)
-       deallocate(self%ix_prior_param)
-       deallocate(self%ix_perturb_param)
-    end if
+    deallocate(self%x)
+    deallocate(self%birth_type)
+    deallocate(self%prior_type)
+    deallocate(self%birth_param)
+    deallocate(self%prior_param)
+    deallocate(self%perturb_param)
+    
     
     return
   end subroutine trans_d_model_finish

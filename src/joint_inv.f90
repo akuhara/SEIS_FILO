@@ -42,7 +42,7 @@ program main
   use cls_proposal
   implicit none 
 
-  integer :: n_rx
+  integer :: nx
   logical :: verb
   integer :: i, j, k, ierr, n_proc, rank, n_arg
   integer :: n_mod
@@ -178,46 +178,49 @@ program main
        & verb             = verb                         &
        &) 
 
-  call mpi_finalize(ierr)
-  stop
   ! Set model parameter & generate initial sample
-  if (verb) write(*,*)"Setting model parameters"
   if (para%get_solve_vp()) then
-     n_rx = 3
+     nx = 3
   else 
-     n_rx = 2
+     nx = 2
   end if
+  tm = trans_d_model( &
+       & k_min = para%get_k_min(), &
+       & k_max = para%get_k_max(), &
+       & nx    = nx,               &
+       & verb  = verb              &
+       & )
+  call tm%set_prior(id_vs, id_uni, &
+       & para%get_vs_min(), para%get_vs_max())
+  call tm%set_prior(id_z,  id_uni, &
+       & para%get_z_min(), para%get_z_max())
+  call tm%set_birth(id_vs, id_uni, &
+       & para%get_vs_min(), para%get_vs_max())
+  call tm%set_birth(id_z,  id_uni, &
+       & para%get_z_min(), para%get_z_max())
+  call tm%set_perturb(id_vs, para%get_dev_vs())
+  call tm%set_perturb(id_z,  para%get_dev_z())
+  if (para%get_solve_vp()) then
+     call tm%set_prior(id_vp, id_uni, &
+          & para%get_vp_min(), para%get_vp_max()) 
+     call tm%set_birth(id_vp, id_uni, &
+          & para%get_vp_min(), para%get_vp_max())
+     call tm%set_perturb(id_vp, para%get_dev_vp())
+  end if
+  
   do i = 1, para%get_n_chain()
-
-     tm = init_trans_d_model( &
-          & k_min = para%get_k_min(), &
-          & k_max = para%get_k_max(), &
-          & n_rx=n_rx)
-     call tm%set_prior(id_vs, id_uni, &
-          & para%get_vs_min(), para%get_vs_max())
-     call tm%set_prior(id_z,  id_uni, &
-          & para%get_z_min(), para%get_z_max())
-     call tm%set_birth(id_vs, id_uni, &
-          & para%get_vs_min(), para%get_vs_max())
-     call tm%set_birth(id_z,  id_uni, &
-          & para%get_z_min(), para%get_z_max())
-     call tm%set_perturb(id_vs, para%get_dev_vs())
-
-     call tm%set_perturb(id_z,  para%get_dev_z())
-     if (para%get_solve_vp()) then
-        call tm%set_prior(id_vp, id_uni, &
-             & para%get_vp_min(), para%get_vp_max()) 
-        call tm%set_birth(id_vp, id_uni, &
-             & para%get_vp_min(), para%get_vp_max())
-        call tm%set_perturb(id_vp, para%get_dev_vp())
-     end if
-     
-
      call tm%generate_model()
      call pt%set_tm(i, tm)
-     call tm%finish()
   end do
-  
+  if (verb) then
+     do i = 1, para%get_n_chain()
+        tm = pt%get_tm(i)
+        call tm%display()
+     end do
+  end if
+
+  call mpi_finalize(ierr)
+  stop
 
   ! Set forward computation (recv_func)
   tm = pt%get_tm(1)

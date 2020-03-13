@@ -455,7 +455,7 @@ contains
    
     mc = self%get_mc(1)
     tm = mc%get_tm()
-    nparam = tm%get_n_x()
+    nparam = tm%get_nx()
     n = nparam + 2
     allocate(n_accept_all(n), n_propose_all(n))
     allocate(n_accept_sum(n), n_propose_sum(n))
