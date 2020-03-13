@@ -84,34 +84,34 @@ contains
     end if
 
     self%n_proposal = 4 ! Birth, Death, Depth, & Vs
-    self%i_birth = 0
-    self%i_death = 1
-    self%i_depth = 2
-    self%i_vs    = 3
+    self%i_birth = 1
+    self%i_death = 2
+    self%i_depth = 3
+    self%i_vs    = 4
     
     self%solve_vp = solve_vp
     if (self%solve_vp) then
-       self%i_vp = self%n_proposal
        self%n_proposal = self%n_proposal + 1
+       self%i_vp = self%n_proposal
     end if
     
     self%solve_rf_sig = solve_rf_sig
     self%n_rf = n_rf
     if (self%solve_rf_sig .and. self%n_rf > 0) then
-       self%i_rf_sig = self%n_proposal
        self%n_proposal = self%n_proposal + 1
+       self%i_rf_sig = self%n_proposal
     end if
 
     self%solve_disper_sig = solve_disper_sig
     self%n_disp = n_disp
     if (self%solve_disper_sig .and. self%n_disp > 0) then
-       self%i_disper_sig = self%n_proposal
        self%n_proposal = self%n_proposal + 1
+       self%i_disper_sig = self%n_proposal
     end if
 
     ! Make label
     allocate(self%label(self%n_proposal))
-    do i = 0, self%n_proposal - 1
+    do i = 1, self%n_proposal
        if (i == self%i_birth) then
           self%label(i) = "Birth"
        else if (i == self%i_death) then
@@ -128,7 +128,14 @@ contains
           self%label(i) = "Dispersion sigma"
        end if
     end do
-    
+
+    if (self%verb) then
+       write(*,'(a)')" Proposal type"
+       do i = 1, self%n_proposal
+          write(*,'(I3,4x,A)')i, self%label(i)
+       end do
+       write(*,*)
+    end if
     
     return 
   end function init_proposal

@@ -39,6 +39,7 @@ program main
   use cls_observation_disper
   use mod_output
   use mod_forward
+  use cls_proposal
   implicit none 
 
   integer :: n_rx
@@ -60,6 +61,7 @@ program main
   type(covariance), allocatable :: cov(:)
   type(disper), allocatable :: disp(:), disp_tmp(:)
   type(observation_disper) :: obs_disp
+  type(proposal) :: prop
   character(200) :: filename, param_file
   
   ! Initialize MPI 
@@ -166,7 +168,18 @@ program main
        & vs_bottom = para%get_vs_bottom(), &
        & rho_bottom = para%get_rho_bottom())
 
-  
+  ! Set proposal
+  prop = proposal( &
+       & solve_vp         = para%get_solve_vp(),         &
+       & solve_rf_sig     = para%get_solve_rf_sig(),     &
+       & solve_disper_sig = para%get_solve_disper_sig(), &
+       & n_rf             = obs_rf%get_n_rf(),           &
+       & n_disp           = obs_disp%get_n_disp(),       &
+       & verb             = verb                         &
+       &) 
+
+  call mpi_finalize(ierr)
+  stop
   ! Set model parameter & generate initial sample
   if (verb) write(*,*)"Setting model parameters"
   if (para%get_solve_vp()) then
