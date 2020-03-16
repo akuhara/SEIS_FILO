@@ -158,19 +158,16 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine hyper_model_perturb(self, iparam, is_ok, &
-       & log_prior_ratio)
+  subroutine hyper_model_perturb(self, is_ok)
     class(hyper_model), intent(inout) :: self
-    integer, intent(in) :: iparam
     logical, intent(out) :: is_ok
-    double precision, intent(out) :: log_prior_ratio
-    double precision :: dev
+    integer :: iparam
+
     double precision :: x_new, x_old
 
-    dev = self%perturb_param(iparam)
-    
+    iparam = 1 + int(rand_u() * self%nx)
     x_old = self%x(iparam)
-    x_new = x_old + rand_g() * dev
+    x_new = x_old + rand_g() * self%perturb_param(iparam)
     self%x(iparam) = x_new
     
     is_ok = .true.
@@ -179,7 +176,6 @@ contains
          & self%x(iparam) > self%prior_param(iparam, 2)) then
        is_ok = .false.
     end if
-    log_prior_ratio = 0.d0
     
     return 
   end subroutine hyper_model_perturb

@@ -35,6 +35,9 @@ module cls_mcmc
      private
      
      type(trans_d_model) :: tm
+     type(hyper_model) :: hyp_rf, hyp_disp
+     type(proposal) :: prop
+     
      integer :: n_iter
      integer :: n_mod
      integer :: i_mod
@@ -75,23 +78,28 @@ contains
 
   !---------------------------------------------------------------------
   
-  type(mcmc) function init_mcmc(tm, n_iter) result(self)
+  type(mcmc) function init_mcmc(tm, hyp_disp, hyp_rf, &
+       & prop, n_iter) result(self)
     type(trans_d_model), intent(in) :: tm
+    type(hyper_model), intent(in) :: hyp_rf, hyp_disp
+    type(proposal), intent(in) :: prop
     integer, intent(in) :: n_iter
     
     
     self%tm = tm
+    self%hyp_disp = hyp_disp
+    self%hyp_rf = hyp_rf
+    self%prop = prop
     self%n_iter = n_iter
     self%i_iter = 0
     self%i_mod = 0
     self%log_likelihood = -1.0d300
-    self%n_proposal_type = tm%get_nx() + 2 
-    
+    self%n_proposal_type = self%prop%get_n_proposal()
     allocate(self%likelihood_saved(n_iter))
     allocate(self%temp_saved(n_iter))
     allocate(self%k_saved(n_iter))
-    allocate(self%n_propose(self%n_proposal_type))
-    allocate(self%n_accept(self%n_proposal_type))
+    allocate(self%n_propose(self%prop%get_n_proposal()))
+    allocate(self%n_accept(prop%get_n_proposal()))
     self%n_propose = 0
     self%n_accept = 0
 
@@ -100,40 +108,55 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine mcmc_propose_model(self, tm_proposed, is_ok, &
-      & log_prior_ratio, log_proposal_ratio)
+  subroutine mcmc_propose_model(self, tm_proposed, hyp_disp_proposed, &
+       & hyp_rf_proposed, is_ok, &
+       & log_prior_ratio, log_proposal_ratio)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(out) :: tm_proposed
+    type(hyper_model), intent(out) :: hyp_disp_proposed
+    type(hyper_model), intent(out) :: hyp_rf_proposed
     double precision, intent(out) :: log_prior_ratio
     double precision, intent(out) :: log_proposal_ratio
     
     logical, intent(out) :: is_ok
-    integer :: iparam
+    integer :: itype
 
-    self%i_proposal_type = int(rand_u() * (self%n_proposal_type))
+    itype = int(rand_u() * self%prop%get_n_proposal()) + 1
+    self%i_proposal_type = itype
     tm_proposed = self%tm
-    if (self%i_proposal_type == 0) then
+    hyp_disp_proposed = self%hyp_disp
+    hyp_rf_proposed = self%hyp_rf
+    if (   itype == self%prop%get_i_vs() .or. &
+         & itype == self%prop%get_i_vp() .or. &
+         & itype == self%prop%get_i_depth()) then
+       ! Perturbation of Trans-D model
+       call tm_proposed%perturb(itype, is_ok, log_prior_ratio)
+       log_proposal_ratio = 0.d0
+    else if (itype == self%prop%get_i_birth()) then
        ! Birth
        call tm_proposed%birth(is_ok)
        ! prior & proposal ratio 
        ! (can be ignored if birth prorposal from prior distribution)
        log_prior_ratio = 0.d0
        log_proposal_ratio = 0.d0
-    else if (self%i_proposal_type == 1) then
+    else if (itype == self%prop%get_i_death()) then
        ! Death
        call tm_proposed%death(is_ok)
        log_prior_ratio = 0.d0
        log_proposal_ratio = 0.0
-    else
-       ! Perturbation
-       iparam = self%i_proposal_type - 1
-       call tm_proposed%perturb(iparam, is_ok, log_prior_ratio)
-       log_proposal_ratio = 0.d0
+    else if (itype == self%prop%get_i_rf_sig()) then
+       call hyp_rf_proposed%perturb(is_ok)
+       log_prior_ratio = 0.d0
+       log_proposal_ratio = 0.0
+    else if (itype == self%prop%get_i_disper_sig()) then
+       call hyp_disp_proposed%perturb(is_ok)
+       log_prior_ratio = 0.d0
+       log_proposal_ratio = 0.0
     end if
-
+    
     ! Count proposal
-    self%n_propose(self%i_proposal_type + 1) = &
-         & self%n_propose(self%i_proposal_type + 1) + 1
+    self%n_propose(itype) = &
+         & self%n_propose(itype) + 1
     
     return
   end subroutine mcmc_propose_model
@@ -163,8 +186,8 @@ contains
        ! Accept model
        self%tm = tm
        self%log_likelihood = log_likelihood
-       self%n_accept(self%i_proposal_type + 1) = &
-         & self%n_accept(self%i_proposal_type + 1) + 1
+       self%n_accept(self%i_proposal_type) = &
+         & self%n_accept(self%i_proposal_type) + 1
     end if
 
     ! Adds iteration counter

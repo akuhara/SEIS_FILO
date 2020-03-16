@@ -62,7 +62,7 @@ program main
   type(disper), allocatable :: disp(:), disp_tmp(:)
   type(observation_disper) :: obs_disp
   type(proposal) :: prop
-  type(hyper_model) :: hyp_rf, hyp_disp
+  type(hyper_model) :: hyp_rf, hyp_disp, hyp_rf_tmp, hyp_disp_tmp
   character(200) :: filename, param_file
   
   ! Initialize MPI 
@@ -191,9 +191,9 @@ program main
        & nx    = n_td,               &
        & verb  = verb              &
        & )
-  call tm%set_prior(id_vs, id_uni, &
+  call tm%set_prior(prop%get_i_vs(), id_uni, &
        & para%get_vs_min(), para%get_vs_max())
-  call tm%set_prior(id_z,  id_uni, &
+  call tm%set_prior(prop%get_i_depth(),  id_uni, &
        & para%get_z_min(), para%get_z_max())
   call tm%set_birth(id_vs, id_uni, &
        & para%get_vs_min(), para%get_vs_max())
@@ -253,8 +253,7 @@ program main
      if (verb) call hyp_disp%display()
   end if
   
-  call mpi_finalize(ierr)
-  stop
+
 
   ! Set forward computation (recv_func)
   tm = pt%get_tm(1)
@@ -296,7 +295,13 @@ program main
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
      ! Set transdimensional model
-     mc = init_mcmc(pt%get_tm(i), para%get_n_iter())
+     mc = mcmc( &
+          & tm       = pt%get_tm(i),     &
+          & hyp_disp = hyp_disp,         &
+          & hyp_rf   = hyp_rf,           &
+          & prop     = prop,             &
+          & n_iter   = para%get_n_iter() &
+          & )
      ! Set temperatures
      if (i <= para%get_n_cool()) then
         call mc%set_temp(1.d0)
@@ -309,7 +314,10 @@ program main
      call pt%set_mc(i, mc)
   end do
   
-  ! Main
+
+  !---------------------------------------------------------------------
+  ! Main MCMC loop
+  !---------------------------------------------------------------------
   do i = 1, para%get_n_iter()
      ! MCMC step
      do j = 1, para%get_n_chain()
@@ -317,19 +325,21 @@ program main
         mc = pt%get_mc(j)
 
         ! Proposal
-        call mc%propose_model(tm_tmp, is_ok, log_prior_ratio, &
+        call mc%propose_model(tm_tmp, hyp_disp_tmp, hyp_rf_tmp, &
+             & is_ok, log_prior_ratio, &
              & log_proposal_ratio)
 
         ! Forward computation
         rf_tmp = rf
         disp_tmp = disp
         if (is_ok) then
-           call forward_recv_func(tm_tmp, intpr, obs_rf, &
-                & rf_tmp, cov, log_likelihood)
-           call forward_disper(tm_tmp, intpr, obs_disp, &
-                & disp_tmp, log_likelihood2)
-           log_likelihood = &
-                log_likelihood + log_likelihood2
+           !call forward_recv_func(tm_tmp, intpr, obs_rf, &
+           !     & rf_tmp, cov, log_likelihood)
+           !call forward_disper(tm_tmp, intpr, obs_disp, &
+           !     & disp_tmp, log_likelihood2)
+           !log_likelihood = &
+           !     log_likelihood + log_likelihood2
+           log_likelihood = 0.d0
         else
            log_likelihood = minus_infty
         end if

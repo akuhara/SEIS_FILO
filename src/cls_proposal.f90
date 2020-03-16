@@ -36,13 +36,13 @@ module cls_proposal
      integer :: n_disp
     
      integer :: n_proposal
-     integer :: i_birth
-     integer :: i_death
-     integer :: i_depth
-     integer :: i_vs
-     integer :: i_vp
-     integer :: i_rf_sig
-     integer :: i_disper_sig
+     integer :: i_birth = -999
+     integer :: i_death = -999
+     integer :: i_depth = -999
+     integer :: i_vs    = -999
+     integer :: i_vp    = -999
+     integer :: i_rf_sig = -999
+     integer :: i_disper_sig = -999
      
      character(16), allocatable :: label(:)
      logical :: verb = .false.
@@ -83,11 +83,10 @@ contains
        write(*,'(a)')"<< Initialize proposals >>"
     end if
 
-    self%n_proposal = 4 ! Birth, Death, Depth, & Vs
-    self%i_birth = 1
-    self%i_death = 2
-    self%i_depth = 3
-    self%i_vs    = 4
+    self%n_proposal = 1 ! Birth, Death, Depth, & Vs
+    self%i_depth = self%n_proposal
+    self%n_proposal = self%n_proposal + 1
+    self%i_vs    = self%n_proposal
     
     self%solve_vp = solve_vp
     if (self%solve_vp) then
@@ -95,6 +94,12 @@ contains
        self%i_vp = self%n_proposal
     end if
     
+    self%n_proposal = self%n_proposal + 1
+    self%i_birth = self%n_proposal
+
+    self%n_proposal = self%n_proposal + 1
+    self%i_death = self%n_proposal
+
     self%solve_rf_sig = solve_rf_sig
     self%n_rf = n_rf
     if (self%solve_rf_sig .and. self%n_rf > 0) then
