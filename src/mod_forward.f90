@@ -80,18 +80,19 @@ contains
        do i = 1, obs%get_nf(j)
           if (disp(j)%get_c(i) == 0.d0 .or. &
                & disp(j)%get_u(i) == 0.d0) then
+             ! Failer in root search
              log_likelihood = minus_infty
              exit all_disp
           end if
-          if (obs%get_sig_c(i,j) > 0.d0) then
+          if (obs%get_c_use(i,j)) then
              log_likelihood = log_likelihood &
                   & - (disp(j)%get_c(i) - obs%get_c(i,j)) ** 2 &
-                  & / (obs%get_sig_c(i,j) ** 2)
+                  & / (obs%get_sig_c(j) ** 2)
           end if
-          if (obs%get_sig_u(i,j) > 0.d0) then
+          if (obs%get_u_use(i,j)) then
              log_likelihood = log_likelihood &
                   & - (disp(j)%get_u(i) - obs%get_u(i,j)) ** 2 &
-                  & / (obs%get_sig_u(i,j) ** 2)
+                  & / (obs%get_sig_u(j) ** 2)
           end if
        end do
     end do all_disp

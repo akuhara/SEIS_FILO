@@ -39,6 +39,8 @@ module cls_observation_recv_func
      double precision, allocatable :: delta(:)
      double precision, allocatable :: sigma(:)
      double precision, allocatable :: dev_sigma(:)
+     double precision, allocatable :: sigma_min(:)
+     double precision, allocatable :: sigma_max(:)
      double precision, allocatable :: rf_data(:,:)
      double precision, allocatable :: t_start(:)
      double precision, allocatable :: t_end(:)
@@ -122,6 +124,8 @@ contains
     allocate(self%a_gauss(self%n_rf), self%rayp(self%n_rf), &
          & self%delta(self%n_rf))
     allocate(self%sigma(self%n_rf), self%dev_sigma(self%n_rf))
+    allocate(self%sigma_min(self%n_rf))
+    allocate(self%sigma_max(self%n_rf))
     allocate(self%t_start(self%n_rf), self%t_end(self%n_rf))
     allocate(self%n_smp(self%n_rf))
     allocate(self%rf_phase(self%n_rf))
@@ -199,14 +203,18 @@ contains
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
-          if (len_trim(line) /= 0) then
-             read(line, *) self%sigma(i)
-             if (self%verb) then
-                write(*,'(A,F12.5)') &
-                     & "Noise stdv. (sigma) = ", self%sigma(i)
-             end if
-             exit
+          if (len_trim(line) == 0) cycle
+          read(line, *) self%sigma_min(i), self%sigma_max(i), &
+               & self%dev_sigma(i)
+          if (self%verb) then
+             write(*,'(A,F12.5)') &
+                  & "Min. sigma (sigma_min) = ", self%sigma_min(i)
+             write(*,'(A,F12.5)') &
+                  & "Max. sigma (sigma_max) = ", self%sigma_max(i)
+             write(*,'(A,F12.5)') &
+                  & "Stdv. sigma (dev_sigma) = ", self%dev_sigma(i)
           end if
+          exit
        end do
        ! deconv_flag, correct_amp
        do
