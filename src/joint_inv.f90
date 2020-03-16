@@ -42,7 +42,7 @@ program main
   use cls_proposal
   implicit none 
 
-  integer :: nx
+  integer :: n_td
   logical :: verb
   integer :: i, j, k, ierr, n_proc, rank, n_arg
   integer :: n_mod
@@ -62,6 +62,7 @@ program main
   type(disper), allocatable :: disp(:), disp_tmp(:)
   type(observation_disper) :: obs_disp
   type(proposal) :: prop
+  type(hyper_model) :: hyp_rf, hyp_disp
   character(200) :: filename, param_file
   
   ! Initialize MPI 
@@ -140,9 +141,6 @@ program main
      call obs_disp%set_n_disp(0)
   end if
   
-  call mpi_finalize(ierr)
-  stop
-
   ! Covariance matrix
   if (verb) write(*,*)"Constructing covariance matrix"
   allocate(cov(obs_rf%get_n_rf()))
@@ -181,16 +179,16 @@ program main
        & verb             = verb                         &
        &) 
 
-  ! Set model parameter & generate initial sample
+  ! Set transdimensional model prameters
   if (para%get_solve_vp()) then
-     nx = 3
+     n_td = 3 ! Vs, Vp, z
   else 
-     nx = 2
+     n_td = 2  ! Vs, z
   end if
   tm = trans_d_model( &
        & k_min = para%get_k_min(), &
        & k_max = para%get_k_max(), &
-       & nx    = nx,               &
+       & nx    = n_td,               &
        & verb  = verb              &
        & )
   call tm%set_prior(id_vs, id_uni, &
@@ -210,6 +208,7 @@ program main
           & para%get_vp_min(), para%get_vp_max())
      call tm%set_perturb(id_vp, para%get_dev_vp())
   end if
+
   
   do i = 1, para%get_n_chain()
      call tm%generate_model()
@@ -222,6 +221,38 @@ program main
      end do
   end if
 
+  ! Set hyper parameters
+  if (para%get_solve_rf_sig()) then
+     hyp_rf = hyper_model(             &
+          & nx    = obs_rf%get_n_rf(), &
+          & verb  = verb               &
+          & )
+     do i = 1, obs_rf%get_n_rf()
+        call hyp_rf%set_prior(i, &
+             & obs_rf%get_sigma_min(i), obs_rf%get_sigma_max(i))
+        call hyp_rf%set_perturb(i, obs_rf%get_dev_sigma(i))
+     end do
+     call hyp_rf%generate_model()
+     if (verb) call hyp_rf%display()
+  end if
+
+  if (para%get_solve_disper_sig()) then
+     hyp_disp = hyper_model(                   &
+          & nx    = obs_disp%get_n_disp() * 2, &
+          & verb  = verb                       &
+          & )
+     do i = 1, obs_disp%get_n_disp()
+        call hyp_disp%set_prior(2*i - 1, &
+             & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_max(i))
+        call hyp_disp%set_perturb(2*i - 1, obs_disp%get_dev_sig_c(i))
+        call hyp_disp%set_prior(2*i, &
+             & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_max(i))
+        call hyp_disp%set_perturb(2*i, obs_disp%get_dev_sig_u(i))
+     end do
+     call hyp_disp%generate_model()
+     if (verb) call hyp_disp%display()
+  end if
+  
   call mpi_finalize(ierr)
   stop
 

@@ -27,6 +27,8 @@
 module cls_mcmc
   use mod_random
   use cls_trans_d_model
+  use cls_proposal
+  use cls_hyper_model
   implicit none 
   
   type mcmc 

@@ -75,7 +75,8 @@ cls_hyper_model.o: mod_random.mod
 cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod
 cls_disper.o: cls_vmodel.mod
 cls_trans_d_model.o: mod_random.mod
-cls_mcmc.o: mod_random.mod cls_trans_d_model.mod 
+cls_mcmc.o: mod_random.mod cls_trans_d_model.mod cls_hyper_model.mod \
+            cls_proposal.mod
 cls_interpreter.o: cls_trans_d_model.mod cls_vmodel.mod mod_sort.mod \
                    mod_const.mod
 cls_parallel.o: cls_mcmc.mod cls_trans_d_model.mod

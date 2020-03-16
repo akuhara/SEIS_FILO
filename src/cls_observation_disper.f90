@@ -62,6 +62,12 @@ module cls_observation_disper
      procedure :: get_u_array => observation_disper_get_u_array
      procedure :: get_sig_c => observation_disper_get_sig_c
      procedure :: get_sig_u => observation_disper_get_sig_u
+     procedure :: get_sig_c_min => observation_disper_get_sig_c_min
+     procedure :: get_sig_u_min => observation_disper_get_sig_u_min
+     procedure :: get_sig_c_max => observation_disper_get_sig_c_max
+     procedure :: get_sig_u_max => observation_disper_get_sig_u_max
+     procedure :: get_dev_sig_c => observation_disper_get_dev_sig_c
+     procedure :: get_dev_sig_u => observation_disper_get_dev_sig_u
      procedure :: get_c_use => observation_disper_get_c_use
      procedure :: get_u_use => observation_disper_get_u_use
      
@@ -430,6 +436,78 @@ contains
     
     return 
   end function observation_disper_get_sig_u
+
+  !---------------------------------------------------------------------
+  
+  double precision function observation_disper_get_sig_c_min(self, i) &
+       & result(sig_c_min)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_c_min = self%sig_c_min(i)
+    
+    return 
+  end function observation_disper_get_sig_c_min
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_sig_u_min(self, i) &
+       & result(sig_u_min)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_u_min = self%sig_u_min(i)
+    
+    return 
+  end function observation_disper_get_sig_u_min
+
+  !---------------------------------------------------------------------
+  
+  double precision function observation_disper_get_sig_c_max(self, i) &
+       & result(sig_c_max)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_c_max = self%sig_c_max(i)
+    
+    return 
+  end function observation_disper_get_sig_c_max
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_sig_u_max(self, i) &
+       & result(sig_u_max)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_u_max = self%sig_u_max(i)
+    
+    return 
+  end function observation_disper_get_sig_u_max
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_dev_sig_c(self, i) &
+       & result(dev_sig_c)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    dev_sig_c = self%dev_sig_c(i)
+    
+    return 
+  end function observation_disper_get_dev_sig_c
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_dev_sig_u(self, i) &
+       & result(dev_sig_u)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    dev_sig_u = self%dev_sig_u(i)
+    
+    return 
+  end function observation_disper_get_dev_sig_u
 
   !---------------------------------------------------------------------
 
