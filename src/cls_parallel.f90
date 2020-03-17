@@ -413,7 +413,6 @@ contains
     integer :: io, i, n, ierr
    
     n = size(label)
-    write(*,*)n
     allocate(n_accept_all(n), n_propose_all(n))
     allocate(n_accept_sum(n), n_propose_sum(n))
     n_accept_all(:) = 0

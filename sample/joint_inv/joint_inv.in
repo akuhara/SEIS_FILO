@@ -32,7 +32,7 @@ dev_vp = 0.03
 dev_z  = 0.03
 
 # Observation file
-#recv_func_in = recv_func.in
+recv_func_in = recv_func.in
 disper_in    = disper.in
 
 # Output binning

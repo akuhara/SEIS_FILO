@@ -218,7 +218,7 @@ program main
   
 
   ! Set hyper parameters
-  if (para%get_solve_rf_sig()) then
+  if (obs_rf%get_n_rf() > 0) then
      hyp_rf = hyper_model(             &
           & nx    = obs_rf%get_n_rf(), &
           & verb  = verb               &
@@ -230,7 +230,7 @@ program main
      end do
   end if
 
-  if (para%get_solve_disper_sig()) then
+  if (obs_disp%get_n_disp() > 0) then
      hyp_disp = hyper_model(                   &
           & nx    = obs_disp%get_n_disp() * 2, &
           & verb  = verb                       &
@@ -246,13 +246,14 @@ program main
   end if
   
   ! Set forward computation (recv_func)
-  call tm%generate_model()
-  vm = intpr%get_vmodel(tm)
-  allocate(rf(obs_rf%get_n_rf()), rf_tmp(obs_rf%get_n_rf()))
-  do i = 1, obs_rf%get_n_rf()
-     rf(i) = recv_func( &
-          & vm = vm, &
-          & n = obs_rf%get_n_smp(i) * 2, &
+  if (obs_rf%get_n_rf() > 0) then
+     call tm%generate_model()
+     vm = intpr%get_vmodel(tm)
+     allocate(rf(obs_rf%get_n_rf()), rf_tmp(obs_rf%get_n_rf()))
+     do i = 1, obs_rf%get_n_rf()
+        rf(i) = recv_func( &
+             & vm = vm, &
+             & n = obs_rf%get_n_smp(i) * 2, &
           & delta = obs_rf%get_delta(i), &
           & rayp = obs_rf%get_rayp(i), &
           & a_gauss = obs_rf%get_a_gauss(i), &
@@ -261,27 +262,29 @@ program main
           & t_pre = -obs_rf%get_t_start(i), &
           & correct_amp = obs_rf%get_correct_amp(i) &
           & )
-     
-  end do
+        
+     end do
+  end if
   
   ! Set forward computation (disper)
-  call tm%generate_model()
-  vm = intpr%get_vmodel(tm)
-  allocate(disp(obs_disp%get_n_disp()), &
-       & disp_tmp(obs_disp%get_n_disp()))
-  do i = 1, obs_disp%get_n_disp()
-     disp(i) = disper(vm=vm, &
-          & fmin=obs_disp%get_fmin(i), &
-          & fmax=obs_disp%get_fmax(i), &
-          & df=obs_disp%get_df(i), &
-          & cmin=obs_disp%get_cmin(i), &
-          & cmax=obs_disp%get_cmax(i), &
-          & dc=obs_disp%get_dc(i), &
-          & n_mode = obs_disp%get_n_mode(i), &
-          & disper_phase = obs_disp%get_disper_phase(i) &
-          & )
-  end do
-  
+  if (obs_disp%get_n_disp() > 0) then
+     call tm%generate_model()
+     vm = intpr%get_vmodel(tm)
+     allocate(disp(obs_disp%get_n_disp()), &
+          & disp_tmp(obs_disp%get_n_disp()))
+     do i = 1, obs_disp%get_n_disp()
+        disp(i) = disper(vm=vm, &
+             & fmin=obs_disp%get_fmin(i), &
+             & fmax=obs_disp%get_fmax(i), &
+             & df=obs_disp%get_df(i), &
+             & cmin=obs_disp%get_cmin(i), &
+             & cmax=obs_disp%get_cmax(i), &
+             & dc=obs_disp%get_dc(i), &
+             & n_mode = obs_disp%get_n_mode(i), &
+             & disper_phase = obs_disp%get_disper_phase(i) &
+             & )
+     end do
+  end if
     
   ! Initialize parallel chains
   pt = parallel(                       &
@@ -294,8 +297,12 @@ program main
   do i = 1, para%get_n_chain()
      ! Generate random model
      call tm%generate_model()
-     call hyp_rf%generate_model()
-     call hyp_disp%generate_model()
+     if (obs_rf%get_n_rf() > 0) then
+        call hyp_rf%generate_model()
+     end if
+     if (obs_disp%get_n_disp() > 0) then
+        call hyp_disp%generate_model()
+     end if
 
 
      ! Set transdimensional model
@@ -335,10 +342,17 @@ program main
 
         ! Forward computation
         if (is_ok) then
-           call forward_recv_func(tm_tmp, hyp_rf_tmp, intpr, obs_rf, &
-                & rf, cov, log_likelihood)
-           call forward_disper(tm_tmp, hyp_disp_tmp, intpr, obs_disp, &
-                & disp, log_likelihood2)
+           log_likelihood = 0.d0
+           log_likelihood2 = 0.d0
+           if (obs_rf%get_n_rf() > 0) then
+              call forward_recv_func(tm_tmp, hyp_rf_tmp, intpr, obs_rf, &
+                   & rf, cov, log_likelihood)
+           end if
+           if (obs_disp%get_n_disp() > 0) then
+              call forward_disper(tm_tmp, hyp_disp_tmp, intpr, obs_disp, &
+                   & disp, log_likelihood2)
+           end if
+           !write(*,*)"VDVD", log_likelihood, log_likelihood2
            log_likelihood = &
                 log_likelihood + log_likelihood2
            !log_likelihood = 0.d0

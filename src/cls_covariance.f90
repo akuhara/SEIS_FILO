@@ -89,7 +89,12 @@ contains
     end do
     self%r_inv(:, :) = &
          & matmul(matmul(transpose(vt),diag),transpose(u))
-    
+    !self%r_inv(:,:) = 0.d0
+    !do i = 1, n
+    !   self%r_inv(i,i) = 1.d0
+    !end do
+    !self%log_det_r = 0.d0
+
     ! Check2
 !    tmp = matmul(self%r_inv, r_mat)
 !    do i = 1, n

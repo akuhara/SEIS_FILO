@@ -30,7 +30,7 @@ contains
     type(covariance), intent(in) :: cov(:)
     double precision, intent(out) :: log_likelihood
     double precision, allocatable :: misfit(:), phi1(:)
-    double precision :: phi, s
+    double precision :: phi, s, rms
     type(vmodel) :: vm
     integer :: i, j, n
 
@@ -41,14 +41,18 @@ contains
        call rf(i)%compute()
     end do
     
-  ! calc misfit
+    !write(*,*)"AFFFFFFFFFFFFFFFFF", obs%get_n_rf()
+
+    ! calc misfit
     log_likelihood = 0.d0
     do i = 1, obs%get_n_rf()
        n = obs%get_n_smp(i)
        s = hyp%get_x(i)
        allocate(misfit(n), phi1(n))
+       rms = 0.d0
        do  j = 1, n
           misfit(j) = obs%get_rf_data(j, i) - rf(i)%get_rf_data(j)
+          rms = rms + misfit(j) ** 2
        end do
        phi1 = matmul(misfit, cov(i)%get_inv())
        phi = dot_product(phi1, misfit)
@@ -58,6 +62,7 @@ contains
        deallocate(misfit, phi1)
     end do
     
+    !write(*,*)"?????????????????????", log_likelihood, phi, rms, n, cov(1)%get_log_det_r(), s
     
     return 
   end subroutine forward_recv_func
@@ -90,6 +95,7 @@ contains
     ll_u = 0.d0
     nc = 0
     nu = 0
+    !write(*,*)"**********************", obs%get_n_disp()
     all_disp: do j = 1, obs%get_n_disp()
        sc = hyp%get_x(2*j-1)
        su = hyp%get_x(2*j)
