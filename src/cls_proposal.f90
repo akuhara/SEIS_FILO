@@ -57,6 +57,7 @@ module cls_proposal
      procedure :: get_i_rf_sig => proposal_get_i_rf_sig
      procedure :: get_i_disper_sig => proposal_get_i_disper_sig
      procedure :: get_label => proposal_get_label
+     procedure :: get_labels => proposal_get_labels
      
   end type proposal
 
@@ -236,6 +237,18 @@ contains
 
     return 
   end function proposal_get_label
+
+  !---------------------------------------------------------------------
+  
+  function proposal_get_labels(self) &
+       & result(labels)
+    class(proposal), intent(in) :: self
+    character(16) :: labels(self%n_proposal)
+    
+    labels(:) = self%label(:)
+
+    return 
+  end function proposal_get_labels
 
   !---------------------------------------------------------------------
   

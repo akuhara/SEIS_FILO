@@ -26,6 +26,7 @@
 !=======================================================================
 module cls_interpreter
   use cls_trans_d_model
+  use cls_hyper_model
   use cls_vmodel
   use mod_sort
   use mod_const
@@ -46,10 +47,16 @@ module cls_interpreter
      integer :: n_bin_z
      integer :: n_bin_vs
      integer :: n_bin_vp
+     integer :: n_bin_sig
+
+     integer :: n_disp
+     integer :: n_rf
 
      integer, allocatable :: n_vsz(:, :)
      integer, allocatable :: n_vpz(:, :)
      integer, allocatable :: n_layers(:)
+     integer, allocatable :: n_rf_sig(:, :)
+     integer, allocatable :: n_disp_sig(:,:)
 
      double precision, allocatable :: vsz_mean(:)
      double precision, allocatable :: vpz_mean(:)
@@ -72,6 +79,8 @@ module cls_interpreter
    contains
      procedure :: get_vmodel => interpreter_get_vmodel
      procedure :: save_model => interpreter_save_model
+     procedure :: save_rf_sigma => interpreter_save_rf_sigma
+     procedure :: save_disp_sigma => interpreter_save_disp_sigma
      procedure :: get_n_bin_z => interpreter_get_n_bin_z
      procedure :: get_n_bin_vs => interpreter_get_n_bin_vs
      procedure :: get_n_bin_vp => interpreter_get_n_bin_vp
@@ -80,6 +89,9 @@ module cls_interpreter
      procedure :: get_vpz_mean => interpreter_get_vpz_mean
      procedure :: get_vsz_mean => interpreter_get_vsz_mean
      procedure :: get_n_layers => interpreter_get_n_layers
+     procedure :: get_n_rf_sig => interpreter_get_n_rf_sig
+     procedure :: get_n_disp_sig => interpreter_get_n_disp_sig
+     
      procedure :: get_dvs => interpreter_get_dvs
      procedure :: get_dvp => interpreter_get_dvp
      procedure :: get_dz => interpreter_get_dz
@@ -93,22 +105,26 @@ contains
 
   !---------------------------------------------------------------------
   type(interpreter) function init_interpreter(nlay_max, z_min, z_max, &
-       & n_bin_z, vs_min, vs_max, n_bin_vs, vp_min, vp_max, n_bin_vp, &
+       & n_bin_z, vs_min, vs_max, n_bin_vs, n_disp, n_rf, n_bin_sig, &
+       & vp_min, vp_max, n_bin_vp, &
        & is_ocean, ocean_thick, vp_ocean, rho_ocean, solve_vp, &
        & is_sphere, vp_bottom, vs_bottom, rho_bottom) &
        & result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
     integer, intent(in), optional :: n_bin_vp
+    integer, intent(in) :: n_disp, n_rf, n_bin_sig
     double precision, intent(in) :: z_min, z_max, vs_min, vs_max
     double precision, intent(in), optional :: vp_min, vp_max
     logical, intent(in), optional :: is_ocean
+
     double precision, intent(in), optional :: ocean_thick, &
          & vp_ocean, rho_ocean
     double precision, intent(in), optional :: vp_bottom, &
          & vs_bottom, rho_bottom
     logical, intent(in), optional :: solve_vp
     logical, intent(in), optional :: is_sphere
+
 
     self%nlay_max = nlay_max
     allocate(self%wrk_vp(nlay_max + 1))
@@ -122,6 +138,9 @@ contains
     self%vs_min  = vs_min
     self%vs_max  = vs_max
     self%n_bin_vs = n_bin_vs
+    self%n_disp = n_disp
+    self%n_rf   = n_rf
+    self%n_bin_sig = n_bin_sig
     
     self%dz  = (z_max - 0.d0) / dble(n_bin_z)
     self%dvs = (vs_max - vs_min) / dble(n_bin_vs)
@@ -132,6 +151,10 @@ contains
     self%n_layers = 0
     allocate(self%vsz_mean(n_bin_z))
     self%vsz_mean = 0.d0
+    allocate(self%n_rf_sig(self%n_bin_sig, self%n_rf))
+    self%n_rf_sig(:,:) = 0
+    allocate(self%n_disp_sig(self%n_bin_sig, self%n_disp * 2))
+    self%n_disp_sig(:,:) = 0
 
     if (present(is_ocean)) then
        self%is_ocean = is_ocean
@@ -338,7 +361,31 @@ contains
 
     return 
   end function interpreter_get_n_layers
-  
+
+  !---------------------------------------------------------------------
+
+  function interpreter_get_n_rf_sig(self, i) result(n_rf_sig)
+    class(interpreter), intent(in) :: self
+    integer, intent(in) :: i
+    integer :: n_rf_sig(self%n_bin_sig)
+    
+    n_rf_sig(:) = self%n_rf_sig(:, i)
+
+    return 
+  end function interpreter_get_n_rf_sig
+
+  !---------------------------------------------------------------------
+
+  function interpreter_get_n_disp_sig(self, i) result(n_disp_sig)
+    class(interpreter), intent(in) :: self
+    integer, intent(in) :: i
+    integer :: n_disp_sig(self%n_bin_sig)
+    
+    n_disp_sig(:) = self%n_disp_sig(:, i)
+
+    return 
+  end function interpreter_get_n_disp_sig
+
   !---------------------------------------------------------------------
 
   subroutine interpreter_save_model(self, tm)
@@ -393,6 +440,47 @@ contains
 
   !---------------------------------------------------------------------
 
+  subroutine interpreter_save_rf_sigma(self, hyp)
+    class(interpreter), intent(inout) :: self
+    type(hyper_model), intent(in) :: hyp
+    integer :: iobs, isig
+    double precision :: del_sig
+    
+
+    do iobs = 1, hyp%get_nx()
+       del_sig = (hyp%get_prior_param(iobs, 2) - &
+            & hyp%get_prior_param(iobs, 1)) / self%n_bin_sig
+       
+       isig = int((hyp%get_x(iobs) - hyp%get_prior_param(iobs, 1)) / &
+            & del_sig) + 1
+       self%n_rf_sig(isig, iobs) = self%n_rf_sig(isig, iobs) + 1
+    end do
+    
+    return 
+  end subroutine interpreter_save_rf_sigma
+
+  !---------------------------------------------------------------------
+
+  subroutine interpreter_save_disp_sigma(self, hyp)
+    class(interpreter), intent(inout) :: self
+    type(hyper_model), intent(in) :: hyp
+    integer :: iobs, isig
+    double precision :: del_sig
+    
+
+    do iobs = 1, hyp%get_nx()
+       del_sig = (hyp%get_prior_param(iobs, 2) - &
+            & hyp%get_prior_param(iobs, 1)) / self%n_bin_sig
+       
+       isig = int((hyp%get_x(iobs) - hyp%get_prior_param(iobs, 1)) / &
+            & del_sig) + 1
+       self%n_disp_sig(isig, iobs) = self%n_disp_sig(isig, iobs) + 1
+    end do
+    
+    return 
+  end subroutine interpreter_save_disp_sigma
+
+  !---------------------------------------------------------------------
   integer function interpreter_get_n_bin_z(self) result(n_bin_z)
     class(interpreter), intent(in) ::self
 

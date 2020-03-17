@@ -47,6 +47,7 @@ module cls_observation_disper
      integer, allocatable :: n_mode(:)
      character(1), allocatable :: disper_phase(:)
      logical :: verb = .false.
+     
 
    contains
      procedure :: get_nf => observation_disper_get_nf
@@ -150,7 +151,6 @@ contains
     allocate(self%dev_sig_c(self%n_disp))
     allocate(self%dev_sig_u(self%n_disp))
 
-
     do i = 1, self%n_disp
        ! get file name
        if (self%verb) write(*,*)"-----------------"
@@ -234,8 +234,8 @@ contains
                   & "Min. sigma of phase velocity (sig_c_min) = ", &
                   & self%sig_c_min(i)
              write(*,'(A,F12.5)') &
-                  & "Max. sigma of phase velocity (sig_c_min) = ", &
-                  & self%sig_c_min(i)
+                  & "Max. sigma of phase velocity (sig_c_max) = ", &
+                  & self%sig_c_max(i)
              write(*,'(A,F12.5)')"Stdev. sigma of phase velocity " &
                   & // "(dev_sig_c) = ", &
                   & self%dev_sig_c(i)
@@ -256,8 +256,8 @@ contains
                   & "Min. sigma of phase velocity (sig_u_min) = ", &
                   & self%sig_u_min(i)
              write(*,'(A,F12.5)') &
-                  & "Max. sigma of phase velocity (sig_u_min) = ", &
-                  & self%sig_u_min(i)
+                  & "Max. sigma of phase velocity (sig_u_max) = ", &
+                  & self%sig_u_max(i)
              write(*,'(A,F12.5)')"Stdev. sigma of phase velocity " &
                   & // "(dev_sig_u) = ", &
                   & self%dev_sig_u(i)

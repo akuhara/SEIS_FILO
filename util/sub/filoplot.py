@@ -348,12 +348,12 @@ class InvResult:
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          index_col=0)
     
-        if param["solve_vp"].lower() == ".true.":
-            df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
-        elif param["solve_vp"].lower() == "t":
-            df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
-        else:
-            df.index = ['Birth', 'Death', 'Depth', 'Vs']
+        #if param["solve_vp"].lower() == ".true.":
+        #    df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        #elif param["solve_vp"].lower() == "t":
+        #    df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        #else:
+        #    df.index = ['Birth', 'Death', 'Depth', 'Vs']
         
         df.columns = ['Proposed', 'Accepted']
         df.plot(kind='bar', ax=ax)

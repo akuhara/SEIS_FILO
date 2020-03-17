@@ -198,11 +198,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_vp)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_vp)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     vp = self%vp(i)
     
     return 
@@ -214,11 +214,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_vs)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_vs)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     vs = self%vs(i)
     
     return 
@@ -230,11 +230,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_rho)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_rho)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     rho = self%rho(i)
     
     return 
@@ -246,11 +246,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_h)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_h)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     h = self%h(i)
     
     return 

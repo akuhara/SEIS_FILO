@@ -57,6 +57,8 @@ module cls_mcmc
      procedure :: judge_model   => mcmc_judge_model
      procedure :: one_step_summary => mcmc_one_step_summary
      procedure :: get_tm  => mcmc_get_tm
+     procedure :: get_hyp_disp => mcmc_get_hyp_disp
+     procedure :: get_hyp_rf => mcmc_get_hyp_rf
      procedure :: get_is_accepted => mcmc_get_is_accepted
      procedure :: get_n_iter => mcmc_get_n_iter
      procedure :: set_temp => mcmc_set_temp
@@ -163,10 +165,11 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc_judge_model(self, tm, log_likelihood, &
-       & log_prior_ratio, log_proposal_ratio)
+  subroutine mcmc_judge_model(self, tm, hyp_disp, hyp_rf, &
+       & log_likelihood, log_prior_ratio, log_proposal_ratio)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
+    type(hyper_model), intent(in) :: hyp_disp, hyp_rf
     double precision, intent(in) :: log_likelihood, log_prior_ratio, &
          & log_proposal_ratio
     double precision :: ratio
@@ -185,6 +188,8 @@ contains
     if (self%is_accepted) then
        ! Accept model
        self%tm = tm
+       self%hyp_rf = hyp_rf
+       self%hyp_disp = hyp_disp
        self%log_likelihood = log_likelihood
        self%n_accept(self%i_proposal_type) = &
          & self%n_accept(self%i_proposal_type) + 1
@@ -225,6 +230,26 @@ contains
 
   !---------------------------------------------------------------------
 
+  type(hyper_model) function mcmc_get_hyp_disp(self) result(hyp_disp)
+    class(mcmc), intent(in) :: self
+    
+    hyp_disp = self%hyp_disp
+
+    return 
+  end function mcmc_get_hyp_disp
+
+  !---------------------------------------------------------------------
+
+  type(hyper_model) function mcmc_get_hyp_rf(self) result(hyp_rf)
+    class(mcmc), intent(in) :: self
+    
+    hyp_rf = self%hyp_rf
+    
+    return 
+  end function mcmc_get_hyp_rf
+  
+  !---------------------------------------------------------------------
+  
   logical function mcmc_get_is_accepted(self) result(is_accepted)
     class(mcmc), intent(in) :: self
     

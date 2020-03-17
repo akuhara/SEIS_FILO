@@ -5,8 +5,12 @@ module cls_covariance
      private
      integer :: n
      double precision, allocatable :: r_inv(:, :)
+     double precision :: log_det_r
+     double precision :: cnd = 1.d-5
+     logical :: verb = .false.
    contains
      procedure :: get_inv => covariance_get_inv
+     procedure :: get_log_det_r => covariance_get_log_det_r
   end type covariance
  
   interface covariance
@@ -17,17 +21,28 @@ contains
   
   !---------------------------------------------------------------------
 
-  type(covariance) function init_covariance(n, a_gauss, delta) &
+  type(covariance) function init_covariance(n, a_gauss, delta, verb) &
        & result(self)
     integer, intent(in) :: n
     double precision, intent(in) :: a_gauss
     double precision, intent(in) :: delta
+    logical, intent(in), optional :: verb
     double precision :: r_mat(n, n), s(n), u(n, n), vt(n, n)
     double precision, allocatable :: work(:)
     double precision :: diag(n, n), tmp(n, n)
     double precision :: dummy(1, 1)
     double precision :: r, r_tmp
     integer :: i, j, lwork, ierr
+
+    
+
+    if (present(verb)) then
+       self%verb = verb
+    end if
+    
+    if (self%verb) then
+       write(*,'(A)')"<< Initialize covariance matrix >> "
+    end if
     
     self%n = n
     allocate(self%r_inv(n, n))
@@ -38,10 +53,6 @@ contains
     do i = 1, n
        do j = 1, n
           r_tmp = r ** ((i - j) ** 2)
-          !if (r_tmp < 1.d-8) then
-          !   r_tmp = 0.d0
-          !end if
-          
           r_mat(j, i) = r_tmp
        end do
     end do
@@ -67,9 +78,11 @@ contains
     end if
     
     diag(:,:) = 0.d0
+    self%log_det_r = 0.d0
     do i = 1, n
-       if (s(i) > 1.0d-3) then
+       if (s(i) / s(1) > self%cnd) then
           diag(i, i) = 1.d0 / s(i)
+          self%log_det_r = self%log_det_r + log(s(i))
        else
           diag(i,i) = 0.d0
        end if
@@ -104,6 +117,18 @@ contains
     
     return 
   end function covariance_get_inv
+  
+  !---------------------------------------------------------------------
+
+  double precision function covariance_get_log_det_r(self) &
+       & result(log_det_r)
+    class(covariance), intent(in) :: self
+
+    
+    log_det_r = self%log_det_r
+    
+    return 
+  end function covariance_get_log_det_r
   
   !---------------------------------------------------------------------
   

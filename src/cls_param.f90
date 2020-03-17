@@ -64,6 +64,7 @@ module cls_param
      integer :: n_bin_z  = 50
      integer :: n_bin_vs = 50
      integer :: n_bin_vp = 50
+     integer :: n_bin_sig = 50
      
      ! Parameters for random perturbation
      double precision :: dev_z  = 0.1d0
@@ -132,6 +133,7 @@ module cls_param
      procedure :: get_n_bin_z => param_get_n_bin_z
      procedure :: get_n_bin_vs => param_get_n_bin_vs
      procedure :: get_n_bin_vp => param_get_n_bin_vp
+     procedure :: get_n_bin_sig => param_get_n_bin_sig
      procedure :: get_n_bin_c => param_get_n_bin_c
      
      procedure :: get_temp_high => param_get_temp_high
@@ -376,6 +378,8 @@ contains
        read(val, *) self%n_bin_vs
     else if (name == "n_bin_vp") then
        read(val, *) self%n_bin_vp
+    else if (name == "n_bin_sig") then
+       read(val, *) self%n_bin_sig
     else if (name == "n_bin_c") then
        read(val, *) self%n_bin_c
     else if (name == "n_smp") then
@@ -556,6 +560,16 @@ contains
     
     return 
   end function param_get_n_bin_vp
+
+  !---------------------------------------------------------------------
+
+  integer function param_get_n_bin_sig(self) result(n_bin_sig)
+    class(param), intent(in) :: self
+    
+    n_bin_sig = self%n_bin_sig
+    
+    return 
+  end function param_get_n_bin_sig
 
   !---------------------------------------------------------------------
 

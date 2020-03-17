@@ -24,44 +24,32 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-!> Module to perform parallel tempering MCMC
-!> @author 
-!> Takeshi Akuhara
+
 module cls_parallel
-  use cls_trans_d_model
   use cls_mcmc
   implicit none 
   include 'mpif.h'
 
-  !---------------------------------------------------------------------
-  ! Parallel
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Class to control between-chain interaction 
-  !! (i.e., parallel tempering)
-  !! @param n_proc  # of MCMC chains 
-  !! @param rank    Process ID
-  !! @param n_cahin # of MCMC chains per process
-  !! @param mc      A struct that contains MCMC chain property
-  !!                (see cls_mcmc.f90 for details)
-  !! @param tm      A structure that contains 
-  !!                transdimensional model parameters and related 
-  !!                setting (see cls_trans_d_model.f90 for details)  
-  !---------------------------------------------------------------------
   type parallel
      private
      integer :: n_proc 
      integer :: rank   
      integer :: n_chain
      type(mcmc), allocatable :: mc(:) 
-     type(trans_d_model), &
-          & allocatable :: tm(:) 
+     !type(trans_d_model), allocatable :: tm(:) 
+     !type(hyper_model), allocatable :: hyp_rf(:)
+     !type(hyper_model), allocatable :: hyp_disp(:)
      logical :: verb = .false.
    contains
-     procedure :: set_tm => parallel_set_tm 
-     procedure :: get_tm => parallel_get_tm
+     !procedure :: set_tm => parallel_set_tm 
+     !procedure :: get_tm => parallel_get_tm
+     !procedure :: set_hyp_rf => parallel_set_hyp_rf
+     !procedure :: set_hyp_disp => parallel_set_hyp_disp
+     !procedure :: get_hyp_rf => parallel_get_hyp_rf
+     !procedure :: get_hyp_disp => parallel_get_hyp_disp
      procedure :: set_mc => parallel_set_mc
      procedure :: get_mc => parallel_get_mc
+
      procedure :: get_rank => parallel_get_rank
      procedure :: swap_temperature => parallel_swap_temperature
      procedure :: select_pair => parallel_select_pair
@@ -80,16 +68,7 @@ module cls_parallel
 contains
   
   !---------------------------------------------------------------------
-  ! init_parallel
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Constructor of class 'parallel', which allocates memory for 'tm(:)'
-  !! and 'mc(:)'.
-  !! @param[in] n_proc   # of processes
-  !! @param[in] rank     Process ID
-  !! @param[in] n_chains # of MCMC chain per process
-  !! @return Object
-  !---------------------------------------------------------------------
+  
   type(parallel) function init_parallel(n_proc, rank, n_chain, verb) &
        & result(self)
     integer, intent(in) :: n_proc, rank, n_chain
@@ -107,7 +86,9 @@ contains
     self%rank = rank
     self%n_chain = n_chain
     
-    allocate(self%tm(n_chain))
+    !allocate(self%tm(n_chain))
+    !allocate(self%hyp_rf(n_chain))
+    !allocate(self%hyp_disp(n_chain))
     allocate(self%mc(n_chain))
 
     if (self%verb) then
@@ -120,104 +101,116 @@ contains
     return 
   end function init_parallel
   
+ !!---------------------------------------------------------------------
+ !
+ !subroutine parallel_set_tm(self, i, tm)
+ !  class(parallel), intent(inout) :: self 
+ !  integer, intent(in) :: i 
+ !  type(trans_d_model), intent(in) :: tm 
+ !  !integer :: ierr
+ !  !if (i < 0 .or. i > self%n_chain) then
+ !  !   write(0, *)"ERROR: in valid i (parallel_set_tm)"
+ !  !   call mpi_finalize(ierr)
+ !  !   stop
+ !  !end if
+ !  self%tm(i) = tm
+ !  
+ !  return 
+ !end subroutine parallel_set_tm
+ !
+ !!---------------------------------------------------------------------
+ !
+ !type(trans_d_model) function parallel_get_tm(self, i) result(tm)
+ !  class(parallel), intent(inout) :: self
+ !  integer, intent(in) :: i
+ !  !integer :: ierr
+ !  !if (i < 0 .or. i > self%n_chain) then
+ !  !   write(0, *)"ERROR: in valid i (parallel_get_tm)"
+ !  !   call mpi_finalize(ierr)
+ !  !   stop
+ !  !end if
+ !
+ !  tm = self%tm(i)
+ !
+ !  return 
+ !end function parallel_get_tm
+ !
+ !!---------------------------------------------------------------------
+  
+  !subroutine parallel_set_hyp_rf(self, i, hyp_rf)
+  !  class(parallel), intent(inout) :: self 
+  !  integer, intent(in) :: i 
+  !  type(hyper_model), intent(in) :: hyp_rf
+  !  
+  !  self%hyp_rf(i) = hyp_rf
+  !  
+  !  return 
+  !end subroutine parallel_set_hyp_rf
+  !
   !---------------------------------------------------------------------
-  ! parallel_set_tm 
+  !
+  !subroutine parallel_set_hyp_disp(self, i, hyp_disp)
+  !  class(parallel), intent(inout) :: self 
+  !  integer, intent(in) :: i 
+  !  type(hyper_model), intent(in) :: hyp_disp
+  !  
+  !  self%hyp_disp(i) = hyp_disp
+  !  
+  !  return 
+  !end subroutine parallel_set_hyp_disp
+  !
+  !
   !---------------------------------------------------------------------
-  !> @brief
-  !! Set trandimensional model parameters for 'i'th MCMC chain
-  !! @param[inout] self Object
-  !! @param[in]    i    MCMC chain ID
-  !! @param[in]    tm   A structure that contains 
-  !!                    transdimensional model parameters and related 
-  !!                    settings
-  !!                    (see cls_trans_d_model.f90 for details)  
+  !
+  !type(hyper_model) function parallel_get_hyp_rf(self, i) result(hyp_rf)
+  !  class(parallel), intent(inout) :: self
+  !  integer, intent(in) :: i
+  !  
+  !  hyp_rf = self%hyp_rf(i)
+  !
+  !  return 
+  !end function parallel_get_hyp_rf
+  !
   !---------------------------------------------------------------------
-  subroutine parallel_set_tm(self, i, tm)
-    class(parallel), intent(inout) :: self 
-    integer, intent(in) :: i 
-    type(trans_d_model), intent(in) :: tm 
-    integer :: ierr
-    if (i < 0 .or. i > self%n_chain) then
-       write(0, *)"ERROR: in valid i (parallel_set_tm)"
-       call mpi_finalize(ierr)
-       stop
-    end if
-    self%tm(i) = tm
-    
-    return 
-  end subroutine parallel_set_tm
+  !
+  !type(hyper_model) function parallel_get_hyp_disp(self, i) &
+  !     & result(hyp_disp)
+  !  class(parallel), intent(inout) :: self
+  !  integer, intent(in) :: i
+  !  
+  !  hyp_disp = self%hyp_disp(i)
+  !
+  !  return 
+  !end function parallel_get_hyp_disp
 
   !---------------------------------------------------------------------
-  ! parallel_get_tm
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Get trandimensional model parameters of 'i'th MCMC chain
-  !! @param[in]    self Object
-  !! @param[in]    i    MCMC chain ID
-  !!                    
-  !! @return       A structure that contains 
-  !!               transdimensional model parameters and related 
-  !!               settings (see cls_trans_d_model.f90 for details)  
-  !---------------------------------------------------------------------
-  type(trans_d_model) function parallel_get_tm(self, i) result(tm)
-    class(parallel), intent(inout) :: self
-    integer, intent(in) :: i
-    integer :: ierr
-    if (i < 0 .or. i > self%n_chain) then
-       write(0, *)"ERROR: in valid i (parallel_get_tm)"
-       call mpi_finalize(ierr)
-       stop
-    end if
 
-    tm = self%tm(i)
-
-    return 
-  end function parallel_get_tm
-
-  !---------------------------------------------------------------------
-  ! parallel_set_mc
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Set MCMC properties of 'i'th chain
-  !! @param[inout] self Object
-  !! @param[in]    i    MCMC chain ID
-  !! @param[in]    mc   A structure that contains MCMC properties
-  !!                    (see cls_mcmc.f90 for details)
-  !---------------------------------------------------------------------
   subroutine parallel_set_mc(self, i, mc)
     class(parallel), intent(inout) :: self
     integer, intent(in) :: i
     type(mcmc), intent(in) :: mc
-    integer :: ierr
-    if (i < 0 .or. i > self%n_chain) then
-       write(0, *)"ERROR: in valid i (parallel_set_mc)"
-       call mpi_finalize(ierr)
-       stop
-    end if
+    !integer :: ierr
+    !if (i < 0 .or. i > self%n_chain) then
+    !   write(0, *)"ERROR: in valid i (parallel_set_mc)"
+    !   call mpi_finalize(ierr)
+    !   stop
+    !end if
     self%mc(i) = mc
     
     return 
   end subroutine parallel_set_mc
 
   !---------------------------------------------------------------------
-  ! parallel_get_mc
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Get MCMC properties of 'i'th chain
-  !! @param[in] self Object
-  !! @param[in] i    MCMC chain ID
-  !! @return         A structure that contains MCMC properties
-  !!                 (see cls_mcmc.f90 for details)
-  !---------------------------------------------------------------------
+
   type(mcmc) function parallel_get_mc(self, i) result(mc)
     class(parallel), intent(inout) :: self
     integer, intent(in) :: i
-    integer :: ierr
-    if (i < 0 .or. i > self%n_chain) then
-       write(0, *)"ERROR: in valid i (parallel_get_mc)"
-       call mpi_finalize(ierr) 
-       stop
-    end if
+    !integer :: ierr
+    !if (i < 0 .or. i > self%n_chain) then
+    !   write(0, *)"ERROR: in valid i (parallel_get_mc)"
+    !   call mpi_finalize(ierr) 
+    !   stop
+    !end if
 
     mc = self%mc(i)
 
@@ -225,13 +218,7 @@ contains
   end function parallel_get_mc
     
   !---------------------------------------------------------------------
-  ! parallel_get_rank
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Get process ID
-  !! @param[in] self Object
-  !! @return    process ID     
-  !---------------------------------------------------------------------
+
   integer function parallel_get_rank(self) result(rank)
     class(parallel), intent(in) :: self
 
@@ -241,15 +228,7 @@ contains
   end function parallel_get_rank
 
   !---------------------------------------------------------------------
-  ! parallel_swap_temperature
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Judge whether a temperature swap should occucr or not. 
-  !! If the swap proposal is accepted, 
-  !! this routine also perform the swap
-  !! @param[inout] self Object
-  !! @param[in]    verb Verbose flag      
-  !---------------------------------------------------------------------
+
   subroutine parallel_swap_temperature(self, verb)
     class(parallel), intent(inout) :: self
     logical, intent(in), optional :: verb
@@ -344,13 +323,7 @@ contains
   end subroutine parallel_swap_temperature
     
   !---------------------------------------------------------------------
-  ! parallel_select_pair
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Select pair of MCMC chains randomly
-  !! @param[in] self Object
-  !! @return    Process ID 1, Process ID 2, Chain ID 1, Chain ID 2
-  !---------------------------------------------------------------------
+
   function parallel_select_pair(self) result(ipack)
     class(parallel), intent(in) :: self
     integer :: ipack(4)
@@ -375,14 +348,7 @@ contains
   end function parallel_select_pair
 
   !---------------------------------------------------------------------
-  ! parallel_output_history
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Output likelihood/temperature history of MCMC chains
-  !! @param[in] self     Object
-  !! @param[in] filename Output file name
-  !! @param[in] mode     Output mode (l: likelihood, t: temperature)
-  !---------------------------------------------------------------------
+
   subroutine parallel_output_history(self, filename, mode)
     class(parallel), intent(in) :: self
     character(*), intent(in) :: filename
@@ -437,30 +403,21 @@ contains
   end subroutine parallel_output_history
   
   !---------------------------------------------------------------------
-  ! parallel_output_proposal
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Output # of proposed and accepted models for each proposal type
-  !! @param[inout] self     Object
-  !! @param[in]    filename Output file name
-  !---------------------------------------------------------------------
-  subroutine parallel_output_proposal(self, filename)
+
+  subroutine parallel_output_proposal(self, filename, label)
     class(parallel), intent(inout) :: self
-    character(*), intent(in) :: filename
+    character(*), intent(in) :: filename, label(:)
     type(mcmc) :: mc
-    type(trans_d_model) :: tm
     integer, allocatable :: n_accept_all(:), n_propose_all(:)
     integer, allocatable :: n_accept_sum(:), n_propose_sum(:)
-    integer :: io, i, nparam, n, ierr
+    integer :: io, i, n, ierr
    
-    mc = self%get_mc(1)
-    tm = mc%get_tm()
-    nparam = tm%get_nx()
-    n = nparam + 2
+    n = size(label)
+    write(*,*)n
     allocate(n_accept_all(n), n_propose_all(n))
     allocate(n_accept_sum(n), n_propose_sum(n))
-    n_accept_all = 0
-    n_propose_all = 0
+    n_accept_all(:) = 0
+    n_propose_all(:) = 0
 
     ! Gather within the same node
     do i = 1, self%n_chain
@@ -478,7 +435,8 @@ contains
        open(newunit = io, file = filename, status = "unknown", &
             & iostat = ierr)
        do i = 1, n
-          write(io, *)i, n_propose_sum(i), n_accept_sum(i)
+          write(io, '(A,2I10)')'"' // label(i) // '"', &
+               & n_propose_sum(i), n_accept_sum(i)
        end do
        close(io)
     end if
@@ -487,16 +445,7 @@ contains
   end subroutine parallel_output_proposal
   
   !---------------------------------------------------------------------
-  ! judge_swap
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Judge wether swap proposal is accepted or not
-  !! @param[in]  temp1       Temperature of 1st MCMC chain
-  !! @param[in]  temp2       Temperature of 2nd MCMC chain
-  !! @param[in]  l1          Log-likelihood of 1st MCMC chain
-  !! @param[in]  l2          Log-likelihood of 2nd MCMC chain
-  !! @param[out] is_accepted Whether accepted or not
-  !---------------------------------------------------------------------
+
   subroutine judge_swap(temp1, temp2, l1, l2, is_accepted)
     double precision, intent(in) :: temp1, temp2, l1, l2
     logical, intent(out) :: is_accepted
@@ -515,16 +464,7 @@ contains
   end subroutine judge_swap
   
   !---------------------------------------------------------------------
-  ! pack_pair_info
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Pack MCMC chain ID info. for sending it via MPI communication
-  !! @param[in]  rank1  Process ID 1
-  !! @param[in]  rank2  Process ID 2
-  !! @param[in]  chain1 Chain ID 1
-  !! @param[in]  chain2 Chain ID 2 
-  !! @return            Integer array to be passed to mpi_send
-  !---------------------------------------------------------------------
+
   function pack_pair_info(rank1, rank2, chain1, chain2) result(ipack)
     integer, intent(in) :: rank1, rank2, chain1, chain2
     integer :: ipack(4)
@@ -538,16 +478,7 @@ contains
   end function pack_pair_info
 
   !---------------------------------------------------------------------
-  ! unpack_pair_info
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Unpack MCMC chain ID info. that is received via MPI communication
-  !! @param[in]  ipack  Integer array that is received via mpi_recv
-  !! @param[out] rank1  Process ID 1 
-  !! @param[out] rank2  Process ID 2
-  !! @param[out] chain1 Chain ID 1
-  !! @param[out] chain2 Chain ID 2
-  !---------------------------------------------------------------------
+
   subroutine unpack_pair_info(ipack, rank1, rank2, chain1, chain2)
     integer, intent(in) ::ipack(4)
     integer, intent(out) :: rank1, rank2, chain1, chain2
@@ -561,15 +492,7 @@ contains
   end subroutine unpack_pair_info
   
   !---------------------------------------------------------------------
-  ! pack_mc_info
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Pack MCMC chain info. for sending it via MPI communication
-  !! @param[in]  temp        Temperature of MCMC chain
-  !! @param[out] likelihood  Log-likelihood of MCMC chain
-  !! @return                 Double precision array to be sent 
-  !!                         via mpi_send
-  !---------------------------------------------------------------------
+
   function pack_mc_info(temp, likelihood) result(rpack)
     double precision, intent(in) :: temp, likelihood
     double precision :: rpack(2)
@@ -581,15 +504,7 @@ contains
   end function pack_mc_info
 
   !---------------------------------------------------------------------
-  ! unpack_mc_info
-  !---------------------------------------------------------------------
-  !> @brief
-  !! Unpack MCMC chain info. that is recieved via MPI communication
-  !! @param[in]  rpack       Double precision array that is received by
-  !!                          mpi_recv
-  !! @param[out] temp        Temperature of MCMC chain
-  !! @param[out] likelihood  Log-likelihood of MCMC chain
-  !---------------------------------------------------------------------
+
   subroutine unpack_mc_info(rpack, temp, likelihood)
     double precision, intent(in) :: rpack(2)
     double precision, intent(out) :: temp, likelihood

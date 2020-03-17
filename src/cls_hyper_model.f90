@@ -42,6 +42,7 @@ module cls_hyper_model
    contains
      procedure :: set_prior => hyper_model_set_prior
      procedure :: set_perturb => hyper_model_set_perturb
+     procedure :: get_prior_param => hyper_model_get_prior_param
      procedure :: get_nx => hyper_model_get_nx
      procedure :: get_x => hyper_model_get_x
      procedure :: generate_model => hyper_model_generate_model
@@ -120,6 +121,18 @@ contains
     return 
   end subroutine hyper_model_set_perturb
   
+  !---------------------------------------------------------------------
+
+  double precision function hyper_model_get_prior_param(self, &
+       & iparam, j) result(prior_param)
+    class(hyper_model), intent(in) :: self
+    integer, intent(in) :: iparam, j
+
+    prior_param = self%prior_param(iparam, j)
+    
+    return 
+  end function hyper_model_get_prior_param
+
   !---------------------------------------------------------------------
 
   integer function hyper_model_get_nx(self) result(nx)
