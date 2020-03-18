@@ -374,7 +374,6 @@ program main
         if (i > para%get_n_burn() .and. &
              & mod(i, para%get_n_corr()) == 0 .and. &
              & mc%get_temp() < 1.d0 + eps) then
-
            
            ! V-Z
            call intpr%save_model(mc%get_tm())
@@ -382,7 +381,6 @@ program main
            ! Sigma
            call intpr%save_disp_sigma(mc%get_hyp_disp())
            call intpr%save_rf_sigma(mc%get_hyp_rf())
-
 
            ! Synthetic data 
            do k = 1, obs_rf%get_n_rf()

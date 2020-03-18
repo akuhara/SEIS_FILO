@@ -47,7 +47,6 @@ contains
     self%n = n
     allocate(self%r_inv(n, n))
 
-    
     r = exp(-a_gauss**2 * delta**2)
     r_mat(:,:) = 0.d0
     do i = 1, n
@@ -80,9 +79,10 @@ contains
     diag(:,:) = 0.d0
     self%log_det_r = 0.d0
     do i = 1, n
+       self%log_det_r = self%log_det_r + log(s(i))
        if (s(i) / s(1) > self%cnd) then
           diag(i, i) = 1.d0 / s(i)
-          self%log_det_r = self%log_det_r + log(s(i))
+    
        else
           diag(i,i) = 0.d0
        end if
@@ -107,8 +107,12 @@ contains
 !          write(998,*)i, j, tmp(j,i), self%r_inv(j, i)
 !      end do
 !    end do
-
-
+    if (self%verb) then
+       write(*,'(A,F12.5)') &
+            & "Log-determinant of R matrix:", self%log_det_r
+       write(*,*)
+    end if
+    
     return 
   end function init_covariance
 
