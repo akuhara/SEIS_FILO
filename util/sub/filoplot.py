@@ -302,12 +302,13 @@ class InvResult:
                 if count == 1:
                     continue
 
-                if (count - 2) // 4 + 1 == curve_id:
-                    iloc = (count - 2) % 4
+                if (count - 2) // 6 + 1 == curve_id:
+                    iloc = (count - 2) % 6
                     if iloc == 0:
                         self._param["obs_disper_file"] = tmp_line
                     elif iloc == 2:
                         item = tmp_line.split(" ")
+                        print("nf, fmin, df" + tmp_line)
                         self._param["nf"]   = item[0]
                         self._param["fmin"] = item[1]
                         self._param["df"]   = item[2]
