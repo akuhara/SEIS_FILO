@@ -41,7 +41,6 @@ contains
        call rf(i)%compute()
     end do
     
-    !write(*,*)"AFFFFFFFFFFFFFFFFF", obs%get_n_rf()
 
     ! calc misfit
     log_likelihood = 0.d0
@@ -62,7 +61,6 @@ contains
        deallocate(misfit, phi1)
     end do
     
-    !write(*,*)"?????????????????????", log_likelihood, phi, rms, n, cov(1)%get_log_det_r(), s
     
     return 
   end subroutine forward_recv_func
@@ -77,7 +75,7 @@ contains
     type(observation_disper), intent(in) :: obs
     type(disper), intent(inout) :: disp(:)
     double precision, intent(out) :: log_likelihood
-    double precision :: ll_c, ll_u
+    double precision :: misfit_c, misfit_u
     type(vmodel) :: vm
     double precision :: sc, su
     integer :: i, j, nc, nu
@@ -90,13 +88,12 @@ contains
     end do
     
     ! calc misfit
-    !log_likelihood = 0.d0
-    ll_c = 0.d0
-    ll_u = 0.d0
-    nc = 0
-    nu = 0
-    !write(*,*)"**********************", obs%get_n_disp()
+    log_likelihood = 0.d0
     all_disp: do j = 1, obs%get_n_disp()
+       misfit_c = 0.d0
+       misfit_u = 0.d0
+       nc = 0
+       nu = 0
        sc = hyp%get_x(2*j-1)
        su = hyp%get_x(2*j)
        do i = 1, obs%get_nf(j)
@@ -107,22 +104,24 @@ contains
              return 
           end if
           if (obs%get_c_use(i,j)) then
-             ll_c = ll_c &
+             misfit_c = misfit_c &
                   & + (disp(j)%get_c(i) - obs%get_c(i,j)) ** 2
              nc = nc + 1
           end if
           if (obs%get_u_use(i,j)) then
-             ll_u = ll_u &
+             misfit_u = misfit_u &
                   & + (disp(j)%get_u(i) - obs%get_u(i,j)) ** 2 
              nu = nu + 1
           end if
        end do
+       log_likelihood = log_likelihood  &
+            & - 0.5d0 * misfit_c / (sc * sc) &
+            & - nc * log_2pi_half - nc * log(sc)
+       log_likelihood = log_likelihood  &
+            & - 0.5d0 * misfit_u / (su * su) &
+            & - nu * log_2pi_half - nu * log(su)
     end do all_disp
-    ll_c = -0.5d0 * ll_c / (sc * sc) - nc * log_2pi_half - nc * log(sc)
-    ll_u = -0.5d0 * ll_u / (su * su) - nu * log_2pi_half - nu * log(su)
-    
-    log_likelihood = ll_c + ll_u
-    
+
     
     return 
   end subroutine forward_disper

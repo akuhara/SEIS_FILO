@@ -360,7 +360,7 @@ contains
        i0 = 1
     end if
     
-    call self%init_propagation(c)
+    call self%init_propagation(c, is_ok)
     do i = nlay-1, i0, -1
        self%y = matmul(self%solid_propagator(i, omega, c), self%y)
     end do

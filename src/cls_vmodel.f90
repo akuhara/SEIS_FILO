@@ -172,9 +172,9 @@ contains
        write(0,*) "     : i=", i
        stop
     end if
-    if (h < 0 .and. i /= self%nlay) then
+    if (h < 0.d0 .and. i /= self%nlay) then
        write(0,*) "ERROR: invalid thickness (set_h)"
-       write(0,*) "     : h=", h
+       write(0,*) "     : h=", h, ", i=", i
        stop
     end if
     self%h(i) = h

@@ -165,13 +165,14 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc_judge_model(self, tm, hyp_disp, hyp_rf, &
+  subroutine mcmc_judge_model(self, tm, hyp_disp, hyp_rf, prior_ok, &
        & log_likelihood, log_prior_ratio, log_proposal_ratio)
     class(mcmc), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp_disp, hyp_rf
     double precision, intent(in) :: log_likelihood, log_prior_ratio, &
          & log_proposal_ratio
+    logical, intent(in) :: prior_ok
     double precision :: ratio
     double precision :: r
     
@@ -183,6 +184,10 @@ contains
     r = log(rand_u())
     if (r <= ratio) then
        self%is_accepted = .true.
+    end if
+
+    if (.not. prior_ok) then
+       self%is_accepted = .false.
     end if
 
     if (self%is_accepted) then
