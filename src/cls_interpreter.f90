@@ -263,7 +263,6 @@ contains
        end if
        ! Thickness
        if (i == 1) then
-          write(*,*)self%wrk_z(i) - self%z_min, "A", self%wrk_z(i), self%z_min
           call vm%set_h(i+i1, self%wrk_z(i) - self%z_min)
        else if (i == k) then
           ! deepest layer

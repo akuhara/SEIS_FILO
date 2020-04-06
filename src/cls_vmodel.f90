@@ -100,16 +100,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: vp
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_vp)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (vp < 0) then
-       write(0,*) "ERROR: invalid Vp (set_vp)"
-       write(0,*) "     : Vp=", vp
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_vp)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (vp < 0) then
+    !   write(0,*) "ERROR: invalid Vp (set_vp)"
+    !   write(0,*) "     : Vp=", vp
+    !   stop
+    !end if
     self%vp(i) = vp
 
     return 
@@ -122,16 +122,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: vs
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_vs)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (vs < 0 .and. i /= 1) then
-       write(0,*) "ERROR: invalid Vs (set_vs)"
-       write(0,*) "     : Vs=", vs
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_vs)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (vs < 0 .and. i /= 1) then
+    !   write(0,*) "ERROR: invalid Vs (set_vs)"
+    !   write(0,*) "     : Vs=", vs
+    !   stop
+    !end if
     self%vs(i) = vs
 
     return 
@@ -144,16 +144,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: rho
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_rho)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (rho < 0) then
-       write(0,*) "ERROR: invalid density (set_rho)"
-       write(0,*) "     : rho=", rho
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_rho)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (rho < 0) then
+    !   write(0,*) "ERROR: invalid density (set_rho)"
+    !   write(0,*) "     : rho=", rho
+    !   stop
+    !end if
 
     self%rho(i) = rho
 
@@ -167,16 +167,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: h
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_h)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (h < 0.d0 .and. i /= self%nlay) then
-       write(0,*) "ERROR: invalid thickness (set_h)"
-       write(0,*) "     : h=", h, ", i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_h)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (h < 0.d0 .and. i /= self%nlay) then
+    !   write(0,*) "ERROR: invalid thickness (set_h)"
+    !   write(0,*) "     : h=", h, ", i=", i
+    !   stop
+    !end if
     self%h(i) = h
 
     return 
