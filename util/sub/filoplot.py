@@ -333,7 +333,7 @@ class InvResult:
         file = "likelihood.history"
         df = pd.read_csv(file, delim_whitespace=True, header=None)
         df.plot(ax=ax, legend=None, linewidth=0.6)
-        ax.set_ylim([-3000,0])
+        ax.set_ylim([-3000,200])
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Log-likelihood")
         

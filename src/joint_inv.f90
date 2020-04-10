@@ -42,7 +42,7 @@ program main
   use cls_proposal
   implicit none 
 
-  integer :: n_td
+  integer :: n_td, io_vmod_all
   logical :: verb
   integer :: i, j, k, ierr, n_proc, rank, n_arg
   integer :: n_mod
@@ -329,6 +329,14 @@ program main
   !---------------------------------------------------------------------
   ! 2. MCMC 
   !---------------------------------------------------------------------
+  write(filename,'("vmod_out.",I3.3)') rank
+  open(newunit = io_vmod_all, file = filename, iostat = ierr, &
+       & status = "replace")
+  if (ierr /=0) then
+     write(0,*)"ERROR: cannot create: ", trim(filename)
+     call mpi_finalize(ierr)
+     stop
+  end if
   do i = 1, para%get_n_iter()
      ! MCMC step
      do j = 1, para%get_n_chain()
@@ -352,10 +360,8 @@ program main
               call forward_disper(tm_tmp, hyp_disp_tmp, intpr, obs_disp, &
                    & disp, log_likelihood2)
            end if
-           !write(*,*)"VDVD", log_likelihood, log_likelihood2
            log_likelihood = &
                 log_likelihood + log_likelihood2
-           !log_likelihood = 0.d0
         else
            log_likelihood = minus_infty
         end if
@@ -390,13 +396,19 @@ program main
               call disp(k)%save_syn()
            end do
            
+           ! V model
+           vm = intpr%get_vmodel(mc%get_tm())
+           write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
+           call vm%display(io_vmod_all)
+           
         end if
      end do
      
      ! Swap temperture
      call pt%swap_temperature(verb=.true.)
   end do
-  
+  close(io_vmod_all)
+
   !---------------------------------------------------------------------
   ! 3. Output
   !---------------------------------------------------------------------

@@ -26,6 +26,7 @@
 !=======================================================================
 module cls_vmodel
   use cls_line_text
+  use, intrinsic :: iso_fortran_env
   implicit none 
   
   type vmodel
@@ -258,12 +259,18 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine vmodel_display(self)
+  subroutine vmodel_display(self, io)
     class(vmodel), intent(inout) :: self
-    integer :: i
+    integer, intent(in), optional :: io
+    integer :: i,  i_unit
+    
+    i_unit = output_unit
+    if (present(io)) then
+       i_unit = io
+    end if
 
     do i = 1, self%nlay
-       write(*,'(I5, 4F8.3)') i, self%vp(i), self%vs(i), &
+       write(i_unit,'(I5, 4F10.3)') i, self%vp(i), self%vs(i), &
             & self%rho(i), self%h(i)
     end do
     

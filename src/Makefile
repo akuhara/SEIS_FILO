@@ -4,8 +4,8 @@
 
 # Example 1. GNU fortran for debug
 FC     = mpifort
-FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized 
-         -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check -pg
+FFLAGS = -pg -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized 
+         -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check 
 
 
 # Example 2. GNU fortran for fast computation
