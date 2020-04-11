@@ -1,7 +1,7 @@
 # MCMC iteration
-n_iter = 20000
-n_corr = 100	
-n_burn = 10000
+n_iter = 2000
+n_corr = 10	
+n_burn = 1000
 
 # Parallel temerping
 n_chain   = 5
@@ -12,6 +12,8 @@ temp_high = 30.0
 # Inversion setting
 solve_vp    = .false.
 is_ocean    = .true.
+solve_rf_sig = .true.
+solve_disper_sig = .true.
 ocean_thick = 1.0
 
 # MCMC prior

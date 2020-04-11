@@ -36,12 +36,18 @@ module cls_observation_disper
      double precision, allocatable :: fmin(:), df(:), fmax(:)
      double precision, allocatable :: c(:,:) ! phase velocity
      double precision, allocatable :: u(:,:) ! group velocity
-     double precision, allocatable :: sig_c(:,:) ! uncertainties in c
-     double precision, allocatable :: sig_u(:,:) ! uncertainties in u
+     double precision, allocatable :: sig_c(:) ! uncertainties in c
+     double precision, allocatable :: sig_u(:) ! uncertainties in u
      double precision, allocatable :: cmin(:), cmax(:), dc(:)
+     double precision, allocatable :: sig_c_min(:), sig_u_min(:)
+     double precision, allocatable :: sig_c_max(:), sig_u_max(:)
+     double precision, allocatable :: dev_sig_c(:), dev_sig_u(:)
+     
+     logical, allocatable :: c_use(:,:), u_use(:,:)
      integer, allocatable :: n_mode(:)
      character(1), allocatable :: disper_phase(:)
      logical :: verb = .false.
+     
 
    contains
      procedure :: get_nf => observation_disper_get_nf
@@ -56,9 +62,16 @@ module cls_observation_disper
      procedure :: get_u => observation_disper_get_u
      procedure :: get_u_array => observation_disper_get_u_array
      procedure :: get_sig_c => observation_disper_get_sig_c
-     procedure :: get_sig_c_array => observation_disper_get_sig_c_array
      procedure :: get_sig_u => observation_disper_get_sig_u
-     procedure :: get_sig_u_array => observation_disper_get_sig_u_array
+     procedure :: get_sig_c_min => observation_disper_get_sig_c_min
+     procedure :: get_sig_u_min => observation_disper_get_sig_u_min
+     procedure :: get_sig_c_max => observation_disper_get_sig_c_max
+     procedure :: get_sig_u_max => observation_disper_get_sig_u_max
+     procedure :: get_dev_sig_c => observation_disper_get_dev_sig_c
+     procedure :: get_dev_sig_u => observation_disper_get_dev_sig_u
+     procedure :: get_c_use => observation_disper_get_c_use
+     procedure :: get_u_use => observation_disper_get_u_use
+     
      procedure :: get_n_disp => observation_disper_get_n_disp
      procedure :: set_n_disp => observation_disper_set_n_disp
      procedure :: get_disper_phase &
@@ -129,6 +142,14 @@ contains
     allocate(self%dc(self%n_disp))
     allocate(filename(self%n_disp))
     allocate(self%n_mode(self%n_disp))
+    allocate(self%sig_c(self%n_disp))
+    allocate(self%sig_u(self%n_disp))
+    allocate(self%sig_c_min(self%n_disp))
+    allocate(self%sig_u_min(self%n_disp))
+    allocate(self%sig_c_max(self%n_disp))
+    allocate(self%sig_u_max(self%n_disp))
+    allocate(self%dev_sig_c(self%n_disp))
+    allocate(self%dev_sig_u(self%n_disp))
 
     do i = 1, self%n_disp
        ! get file name
@@ -167,20 +188,19 @@ contains
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
-          if (len_trim(line) /= 0) then
-             read(line, *) self%nf(i), self%fmin(i), self%df(i)
-             if (self%verb) then
-                write(*,'(A,I5)')"# of measurements (nf) = ", &
-                     & self%nf(i)
-                write(*,'(A,F12.5)')"Minimum frequency (fmin) = ", &
-                     & self%fmin(i)
-                write(*,'(A,F12.5)')"Frequency interval (df) = ", &
-                     & self%df(i)
-             end if
-             self%fmax(i) = &
-                  & self%fmin(i) + self%df(i) * (self%nf(i) - 1)
-             exit
+          if (len_trim(line) == 0) cycle
+          read(line, *) self%nf(i), self%fmin(i), self%df(i)
+          if (self%verb) then
+             write(*,'(A,I5)')"# of measurements (nf) = ", &
+                  & self%nf(i)
+             write(*,'(A,F12.5)')"Minimum frequency (fmin) = ", &
+                  & self%fmin(i)
+             write(*,'(A,F12.5)')"Frequency interval (df) = ", &
+                  & self%df(i)
           end if
+          self%fmax(i) = &
+               & self%fmin(i) + self%df(i) * (self%nf(i) - 1)
+          exit
        end do
        
        ! cmin, cmax, dc
@@ -188,31 +208,73 @@ contains
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
-          if (len_trim(line) /= 0) then
-             read(line, *) self%cmin(i), self%cmax(i), self%dc(i)
-             if (self%verb) then
-                write(*,'(A,F12.5)')"Minimum phase velocity (cmin) = ", &
-                     & self%cmin(i)
-                write(*,'(A,F12.5)')"Maximum phase velocity (cmax) = ", &
-                     & self%cmax(i)
-                write(*,'(A,F12.5)')"Phase velocity interval (dc) = ", &
-                     & self%dc(i)
-             end if
-             exit
+          if (len_trim(line) == 0) cycle
+          read(line, *) self%cmin(i), self%cmax(i), self%dc(i)
+          if (self%verb) then
+             write(*,'(A,F12.5)')"Minimum phase velocity (cmin) = ", &
+                  & self%cmin(i)
+             write(*,'(A,F12.5)')"Maximum phase velocity (cmax) = ", &
+                  & self%cmax(i)
+             write(*,'(A,F12.5)')"Phase velocity interval (dc) = ", &
+                  & self%dc(i)
           end if
+          exit
+       end do
+       
+       ! sig_c_min, sig_c_max, dev_sig_c
+       do 
+          read(io, '(a)')line
+          lt = line_text(line, ignore_space=.false.)
+          line = lt%get_line()
+          if (len_trim(line) == 0) cycle
+          read(line, *) self%sig_c_min(i), self%sig_c_max(i), &
+               & self%dev_sig_c(i)
+          if (self%verb) then
+             write(*,'(A,F12.5)') &
+                  & "Min. sigma of phase velocity (sig_c_min) = ", &
+                  & self%sig_c_min(i)
+             write(*,'(A,F12.5)') &
+                  & "Max. sigma of phase velocity (sig_c_max) = ", &
+                  & self%sig_c_max(i)
+             write(*,'(A,F12.5)')"Stdev. sigma of phase velocity " &
+                  & // "(dev_sig_c) = ", &
+                  & self%dev_sig_c(i)
+          end if
+          exit
+       end do
+
+       ! sig_u_min, sig_u_max, dev_sig_u
+       do 
+          read(io, '(a)')line
+          lt = line_text(line, ignore_space=.false.)
+          line = lt%get_line()
+          if (len_trim(line) == 0) cycle
+          read(line, *) self%sig_u_min(i), self%sig_u_max(i), &
+               & self%dev_sig_u(i)
+          if (self%verb) then
+             write(*,'(A,F12.5)') &
+                  & "Min. sigma of phase velocity (sig_u_min) = ", &
+                  & self%sig_u_min(i)
+             write(*,'(A,F12.5)') &
+                  & "Max. sigma of phase velocity (sig_u_max) = ", &
+                  & self%sig_u_max(i)
+             write(*,'(A,F12.5)')"Stdev. sigma of phase velocity " &
+                  & // "(dev_sig_u) = ", &
+                  & self%dev_sig_u(i)
+          end if
+          exit
        end do
 
        if (self%verb) write(*,*)"-----------------"
     end do
     close(io)
     
-    ! allocate data array
+    ! Read data files
     allocate(self%c(maxval(self%nf(:)), self%n_disp))
     allocate(self%u(maxval(self%nf(:)), self%n_disp))
-    allocate(self%sig_c(maxval(self%nf(:)), self%n_disp))
-    allocate(self%sig_u(maxval(self%nf(:)), self%n_disp))
+    allocate(self%c_use(maxval(self%nf(:)), self%n_disp))
+    allocate(self%u_use(maxval(self%nf(:)), self%n_disp))
     
-    ! Read data files
     do i = 1, self%n_disp
        call self%read_data(filename(i), i)
     end do
@@ -353,51 +415,123 @@ contains
   
   !---------------------------------------------------------------------
 
-  double precision function observation_disper_get_sig_c(self, i, j) &
+  double precision function observation_disper_get_sig_c(self, i) &
        & result(sig_c)
     class(observation_disper), intent(in) :: self
-    integer, intent(in) :: i, j
+    integer, intent(in) :: i
     
-    sig_c = self%sig_c(i, j)
+    sig_c = self%sig_c(i)
     
     return 
   end function observation_disper_get_sig_c
 
   !---------------------------------------------------------------------
-  
-  function observation_disper_get_sig_c_array(self, i) result(sig_c)
-    class(observation_disper), intent(in) :: self
-    integer, intent(in) :: i
-    double precision :: sig_c(self%nf(i))
 
-    sig_c(:) = self%sig_c(:, i)
-    
-    return 
-  end function observation_disper_get_sig_c_array
-
-  !---------------------------------------------------------------------
-
-  double precision function observation_disper_get_sig_u(self, i, j) &
+  double precision function observation_disper_get_sig_u(self, i) &
        & result(sig_u)
     class(observation_disper), intent(in) :: self
-    integer, intent(in) :: i, j
+    integer, intent(in) :: i
     
-    sig_u = self%sig_u(i, j)
+    sig_u = self%sig_u(i)
     
     return 
   end function observation_disper_get_sig_u
 
   !---------------------------------------------------------------------
-
-  function observation_disper_get_sig_u_array(self, i) result(sig_u)
+  
+  double precision function observation_disper_get_sig_c_min(self, i) &
+       & result(sig_c_min)
     class(observation_disper), intent(in) :: self
     integer, intent(in) :: i
-    double precision :: sig_u(self%nf(i))
-
-    sig_u(:) = self%sig_u(:, i)
+    
+    sig_c_min = self%sig_c_min(i)
     
     return 
-  end function observation_disper_get_sig_u_array
+  end function observation_disper_get_sig_c_min
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_sig_u_min(self, i) &
+       & result(sig_u_min)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_u_min = self%sig_u_min(i)
+    
+    return 
+  end function observation_disper_get_sig_u_min
+
+  !---------------------------------------------------------------------
+  
+  double precision function observation_disper_get_sig_c_max(self, i) &
+       & result(sig_c_max)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_c_max = self%sig_c_max(i)
+    
+    return 
+  end function observation_disper_get_sig_c_max
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_sig_u_max(self, i) &
+       & result(sig_u_max)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_u_max = self%sig_u_max(i)
+    
+    return 
+  end function observation_disper_get_sig_u_max
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_dev_sig_c(self, i) &
+       & result(dev_sig_c)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    dev_sig_c = self%dev_sig_c(i)
+    
+    return 
+  end function observation_disper_get_dev_sig_c
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_dev_sig_u(self, i) &
+       & result(dev_sig_u)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    dev_sig_u = self%dev_sig_u(i)
+    
+    return 
+  end function observation_disper_get_dev_sig_u
+
+  !---------------------------------------------------------------------
+
+  logical function observation_disper_get_c_use(self, i, j) &
+       & result(c_use)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i, j
+    
+    c_use = self%c_use(i, j)
+    
+    return 
+  end function observation_disper_get_c_use
+
+  !---------------------------------------------------------------------
+
+  logical function observation_disper_get_u_use(self, i, j) &
+       & result(u_use)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i, j
+    
+    u_use = self%u_use(i, j)
+    
+    return 
+  end function observation_disper_get_u_use
 
   !---------------------------------------------------------------------
 
@@ -466,8 +600,8 @@ contains
           lt = line_text(line, ignore_space = .false.)
           line = lt%get_line()
           if (len_trim(line) == 0) cycle
-          read(line,*,iostat = ierr)self%c(j, i), self%sig_c(j, i), &
-               & self%u(j, i), self%sig_u(j, i)
+          read(line,*,iostat = ierr)self%c(j, i), self%c_use(j, i), &
+               & self%u(j, i), self%u_use(j, i)
           if (ierr /= 0) then
              write(0,*)"ERROR: while reading ", trim(filename), & 
                   & " of Line", j, "th data"

@@ -8,23 +8,29 @@ module mod_forward
   use cls_vmodel
   use mod_const, only: minus_infty
   use cls_covariance
+  use cls_hyper_model
   
   implicit none 
   
+  
+  double precision, parameter, private :: log_2pi_half &
+       & = 0.5d0 * log(2.d0 * acos(-1.d0)) 
   
 contains
   
   !---------------------------------------------------------------------
   
-  subroutine forward_recv_func(tm, intpr, obs, rf, cov, log_likelihood)
+  subroutine forward_recv_func(tm, hyp, intpr, obs, rf, cov, &
+       & log_likelihood)
     type(trans_d_model), intent(in) :: tm
+    type(hyper_model), intent(in) :: hyp
     type(interpreter), intent(inout) :: intpr
     type(observation_recv_func), intent(in) :: obs
     type(recv_func), intent(inout) :: rf(:)
     type(covariance), intent(in) :: cov(:)
     double precision, intent(out) :: log_likelihood
     double precision, allocatable :: misfit(:), phi1(:)
-    double precision :: phi, s
+    double precision :: phi, s, rms
     type(vmodel) :: vm
     integer :: i, j, n
 
@@ -35,19 +41,23 @@ contains
        call rf(i)%compute()
     end do
     
-  ! calc misfit
+
+    ! calc misfit
     log_likelihood = 0.d0
     do i = 1, obs%get_n_rf()
        n = obs%get_n_smp(i)
-       s = obs%get_sigma(i)
+       s = hyp%get_x(i)
        allocate(misfit(n), phi1(n))
+       rms = 0.d0
        do  j = 1, n
           misfit(j) = obs%get_rf_data(j, i) - rf(i)%get_rf_data(j)
+          rms = rms + misfit(j) ** 2
        end do
        phi1 = matmul(misfit, cov(i)%get_inv())
        phi = dot_product(phi1, misfit)
        log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
-            & - dble(n) * log(s)
+            & - n * log_2pi_half - n * log(s) &
+            & - 0.5d0 * cov(i)%get_log_det_r()
        deallocate(misfit, phi1)
     end do
     
@@ -57,15 +67,18 @@ contains
 
   !-----------------------------------------------------------------------
   
-  subroutine forward_disper(tm, intpr, obs, disp, log_likelihood)
+  subroutine forward_disper(tm, hyp, intpr, obs, disp, log_likelihood)
     implicit none 
     type(trans_d_model), intent(in) :: tm
+    type(hyper_model), intent(in) :: hyp
     type(interpreter), intent(inout) :: intpr
     type(observation_disper), intent(in) :: obs
     type(disper), intent(inout) :: disp(:)
     double precision, intent(out) :: log_likelihood
+    double precision :: misfit_c, misfit_u
     type(vmodel) :: vm
-    integer :: i, j
+    double precision :: sc, su
+    integer :: i, j, nc, nu
     
     ! calculate synthetic dispersion curves
     vm = intpr%get_vmodel(tm)
@@ -77,25 +90,38 @@ contains
     ! calc misfit
     log_likelihood = 0.d0
     all_disp: do j = 1, obs%get_n_disp()
+       misfit_c = 0.d0
+       misfit_u = 0.d0
+       nc = 0
+       nu = 0
+       sc = hyp%get_x(2*j-1)
+       su = hyp%get_x(2*j)
        do i = 1, obs%get_nf(j)
           if (disp(j)%get_c(i) == 0.d0 .or. &
                & disp(j)%get_u(i) == 0.d0) then
+             ! Failer in root search
              log_likelihood = minus_infty
-             exit all_disp
+             return 
           end if
-          if (obs%get_sig_c(i,j) > 0.d0) then
-             log_likelihood = log_likelihood &
-                  & - (disp(j)%get_c(i) - obs%get_c(i,j)) ** 2 &
-                  & / (obs%get_sig_c(i,j) ** 2)
+          if (obs%get_c_use(i,j)) then
+             misfit_c = misfit_c &
+                  & + (disp(j)%get_c(i) - obs%get_c(i,j)) ** 2
+             nc = nc + 1
           end if
-          if (obs%get_sig_u(i,j) > 0.d0) then
-             log_likelihood = log_likelihood &
-                  & - (disp(j)%get_u(i) - obs%get_u(i,j)) ** 2 &
-                  & / (obs%get_sig_u(i,j) ** 2)
+          if (obs%get_u_use(i,j)) then
+             misfit_u = misfit_u &
+                  & + (disp(j)%get_u(i) - obs%get_u(i,j)) ** 2 
+             nu = nu + 1
           end if
        end do
+       log_likelihood = log_likelihood  &
+            & - 0.5d0 * misfit_c / (sc * sc) &
+            & - nc * log_2pi_half - nc * log(sc)
+       log_likelihood = log_likelihood  &
+            & - 0.5d0 * misfit_u / (su * su) &
+            & - nu * log_2pi_half - nu * log(su)
     end do all_disp
-    log_likelihood = 0.5d0 * log_likelihood
+
     
     return 
   end subroutine forward_disper

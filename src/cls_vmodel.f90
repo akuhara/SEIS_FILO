@@ -26,6 +26,7 @@
 !=======================================================================
 module cls_vmodel
   use cls_line_text
+  use, intrinsic :: iso_fortran_env
   implicit none 
   
   type vmodel
@@ -100,16 +101,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: vp
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_vp)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (vp < 0) then
-       write(0,*) "ERROR: invalid Vp (set_vp)"
-       write(0,*) "     : Vp=", vp
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_vp)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (vp < 0) then
+    !   write(0,*) "ERROR: invalid Vp (set_vp)"
+    !   write(0,*) "     : Vp=", vp
+    !   stop
+    !end if
     self%vp(i) = vp
 
     return 
@@ -122,16 +123,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: vs
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_vs)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (vs < 0 .and. i /= 1) then
-       write(0,*) "ERROR: invalid Vs (set_vs)"
-       write(0,*) "     : Vs=", vs
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_vs)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (vs < 0 .and. i /= 1) then
+    !   write(0,*) "ERROR: invalid Vs (set_vs)"
+    !   write(0,*) "     : Vs=", vs
+    !   stop
+    !end if
     self%vs(i) = vs
 
     return 
@@ -144,16 +145,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: rho
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_rho)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (rho < 0) then
-       write(0,*) "ERROR: invalid density (set_rho)"
-       write(0,*) "     : rho=", rho
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_rho)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (rho < 0) then
+    !   write(0,*) "ERROR: invalid density (set_rho)"
+    !   write(0,*) "     : rho=", rho
+    !   stop
+    !end if
 
     self%rho(i) = rho
 
@@ -167,16 +168,16 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: h
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (set_h)"
-       write(0,*) "     : i=", i
-       stop
-    end if
-    if (h < 0 .and. i /= self%nlay) then
-       write(0,*) "ERROR: invalid thickness (set_h)"
-       write(0,*) "     : h=", h
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (set_h)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
+    !if (h < 0.d0 .and. i /= self%nlay) then
+    !   write(0,*) "ERROR: invalid thickness (set_h)"
+    !   write(0,*) "     : h=", h, ", i=", i
+    !   stop
+    !end if
     self%h(i) = h
 
     return 
@@ -198,11 +199,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_vp)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_vp)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     vp = self%vp(i)
     
     return 
@@ -214,11 +215,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_vs)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_vs)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     vs = self%vs(i)
     
     return 
@@ -230,11 +231,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_rho)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_rho)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     rho = self%rho(i)
     
     return 
@@ -246,11 +247,11 @@ contains
     class(vmodel), intent(inout) :: self
     integer, intent(in) :: i
     
-    if(i < 1 .or. i > self%nlay) then
-       write(0,*) "ERROR: out of range (get_h)"
-       write(0,*) "     : i=", i
-       stop
-    end if
+    !if(i < 1 .or. i > self%nlay) then
+    !   write(0,*) "ERROR: out of range (get_h)"
+    !   write(0,*) "     : i=", i
+    !   stop
+    !end if
     h = self%h(i)
     
     return 
@@ -258,12 +259,18 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine vmodel_display(self)
+  subroutine vmodel_display(self, io)
     class(vmodel), intent(inout) :: self
-    integer :: i
+    integer, intent(in), optional :: io
+    integer :: i,  i_unit
+    
+    i_unit = output_unit
+    if (present(io)) then
+       i_unit = io
+    end if
 
     do i = 1, self%nlay
-       write(*,'(I5, 4F8.3)') i, self%vp(i), self%vs(i), &
+       write(i_unit,'(I5, 4F10.3)') i, self%vp(i), self%vs(i), &
             & self%rho(i), self%h(i)
     end do
     

@@ -39,6 +39,8 @@ module cls_observation_recv_func
      double precision, allocatable :: delta(:)
      double precision, allocatable :: sigma(:)
      double precision, allocatable :: dev_sigma(:)
+     double precision, allocatable :: sigma_min(:)
+     double precision, allocatable :: sigma_max(:)
      double precision, allocatable :: rf_data(:,:)
      double precision, allocatable :: t_start(:)
      double precision, allocatable :: t_end(:)
@@ -58,6 +60,12 @@ module cls_observation_recv_func
      procedure :: get_a_gauss => observation_recv_func_get_a_gauss
      procedure :: get_rf_phase => observation_recv_func_get_rf_phase
      procedure :: get_sigma => observation_recv_func_get_sigma
+     procedure :: get_sigma_min => &
+          & observation_recv_func_get_sigma_min
+     procedure :: get_sigma_max => &
+          & observation_recv_func_get_sigma_max
+     procedure :: get_dev_sigma => &
+          & observation_recv_func_get_dev_sigma
      procedure :: get_deconv_flag => &
           & observation_recv_func_get_deconv_flag
      procedure :: get_correct_amp => &
@@ -122,6 +130,8 @@ contains
     allocate(self%a_gauss(self%n_rf), self%rayp(self%n_rf), &
          & self%delta(self%n_rf))
     allocate(self%sigma(self%n_rf), self%dev_sigma(self%n_rf))
+    allocate(self%sigma_min(self%n_rf))
+    allocate(self%sigma_max(self%n_rf))
     allocate(self%t_start(self%n_rf), self%t_end(self%n_rf))
     allocate(self%n_smp(self%n_rf))
     allocate(self%rf_phase(self%n_rf))
@@ -199,14 +209,18 @@ contains
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
-          if (len_trim(line) /= 0) then
-             read(line, *) self%sigma(i)
-             if (self%verb) then
-                write(*,'(A,F12.5)') &
-                     & "Noise stdv. (sigma) = ", self%sigma(i)
-             end if
-             exit
+          if (len_trim(line) == 0) cycle
+          read(line, *) self%sigma_min(i), self%sigma_max(i), &
+               & self%dev_sigma(i)
+          if (self%verb) then
+             write(*,'(A,F12.5)') &
+                  & "Min. sigma (sigma_min) = ", self%sigma_min(i)
+             write(*,'(A,F12.5)') &
+                  & "Max. sigma (sigma_max) = ", self%sigma_max(i)
+             write(*,'(A,F12.5)') &
+                  & "Stdv. sigma (dev_sigma) = ", self%dev_sigma(i)
           end if
+          exit
        end do
        ! deconv_flag, correct_amp
        do
@@ -410,6 +424,42 @@ contains
     return 
   end function observation_recv_func_get_sigma
   
+  !---------------------------------------------------------------------
+  
+  double precision function &
+       & observation_recv_func_get_sigma_min(self, i) result(sigma_min)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sigma_min = self%sigma_min(i)
+    
+    return 
+  end function observation_recv_func_get_sigma_min
+  
+  !---------------------------------------------------------------------
+  
+  double precision function &
+       & observation_recv_func_get_sigma_max(self, i) result(sigma_max)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sigma_max = self%sigma_max(i)
+    
+    return 
+  end function observation_recv_func_get_sigma_max
+
+  !---------------------------------------------------------------------
+
+  double precision function &
+       & observation_recv_func_get_dev_sigma(self, i) result(dev_sigma)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    dev_sigma = self%dev_sigma(i)
+    
+    return 
+  end function observation_recv_func_get_dev_sigma
+
   !---------------------------------------------------------------------
 
   logical function observation_recv_func_get_deconv_flag(self, i) &

@@ -1,3 +1,8 @@
+#------------------------------------------------
+# Observation summary file for disersion data:
+# Sample input to joint_inv of SEIS_FILO
+# by Takeshi Akuhara
+#------------------------------------------------
 # n_disp
 1
 #------------------------------------------------
@@ -5,8 +10,12 @@
 # disper_phase, n_mode
 # nf, fmin, df
 # cmin, cmax, dc
+# sig_c_min, sig_c_max, dev_sig_c
+# sig_u_min, sig_u_max, dev_sig_u
 #------------------------------------------------
 rayleigh.0th
 R 0
 17 0.01 0.05
 0.7 4.5 0.05
+0.005 0.1 0.01
+0.005 0.1 0.01

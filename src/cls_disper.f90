@@ -349,6 +349,7 @@ contains
     class(disper), intent(inout) :: self
     double precision, intent(in) :: omega, c
     double precision, intent(out) :: rslt
+    logical :: is_ok
     integer :: i, nlay, i0
     
     nlay = self%vmodel%get_nlay()
@@ -359,7 +360,7 @@ contains
        i0 = 1
     end if
     
-    call self%init_propagation(c)
+    call self%init_propagation(c, is_ok)
     do i = nlay-1, i0, -1
        self%y = matmul(self%solid_propagator(i, omega, c), self%y)
     end do
@@ -378,10 +379,11 @@ contains
   
   !---------------------------------------------------------------------
   
-  subroutine disper_init_propagation(self, c)
+  subroutine disper_init_propagation(self, c, is_ok)
     class(disper), intent(inout) :: self
     integer :: nlay
     double precision, intent(in) :: c
+    logical, intent(out) :: is_ok
 
     double precision :: vp, vs, rho, ra, rb, gm
 
@@ -390,12 +392,15 @@ contains
     vp = self%vmodel%get_vp(nlay)
     vs = self%vmodel%get_vs(nlay)
     rho = self%vmodel%get_rho(nlay)
-    
+
+    is_ok = .true.
+
     if (c > vp .or. c > vs) then
        write(0,*)"ERROR: phase velocity must be lower than Vp or Vs "
        write(0,*)"     : at the model bottom (disper_init_propagation)"
        write(0,*)"     : vp=", vp, "vs=", vs, "c=", c
-       stop
+       is_ok = .false.
+       return
     end if
     ra = sqrt(1.d0 - (c / vp) ** 2)
     rb = sqrt(1.d0 - (c / vs) ** 2)

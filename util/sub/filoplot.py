@@ -233,16 +233,19 @@ class InvResult:
         self._read_dispersion_obs(obs_file, curve_id)
 
         clabel = "Phase velocity (km/s)"
+        c_used = "Phase velocity is used?"
         ulabel = "Group velocity (km/s)"
+        u_used = "Group velocity is used?"
         if mode == "c":
             ppd_file = "syn_phase" + str(curve_id).zfill(3) + ".ppd"
             vlabel = clabel
+            used_label = c_used
         elif mode == "u":
             ppd_file = "syn_group" + str(curve_id).zfill(3) + ".ppd"
             vlabel = ulabel
+            used_label = u_used
         flabel = "Frequency (Hz)"
         plabel = "Posterior probability"
-        print(ppd_file)
         df = pd.read_csv(ppd_file, delim_whitespace=True, header=None, \
                          names=(flabel, vlabel, plabel))
         v_min = float(param["cmin"])
@@ -252,33 +255,38 @@ class InvResult:
         del_f = float(param["df"])
         nf    = int(param["nf"])
         f_max = f_min + (nf -1) * del_f
-        print(v_min, v_max, del_v, f_min, del_f, nf, f_max)
         v, f = np.mgrid[slice(v_min - 0.5 * del_v, \
-                              v_max + 0.5 *  del_v, \
+                              v_max + 1.5 * del_v, \
                               del_v), \
                         slice(f_min - 0.5 * del_f, \
-                              f_max + 0.5 * del_f, \
+                              f_max + 1.5 * del_f, \
                               del_f)]
         data = df.pivot(vlabel, flabel, plabel)
-        
-        mappable = ax.pcolor(f, v, data, cmap='hot_r')
-        ax.set_xlabel(flabel)
-        ax.set_ylabel(vlabel)
-        cbar = fig.colorbar(mappable, ax=ax)
-        cbar.ax.set_ylabel(plabel)
-        
+
         # Observation
         df = pd.read_csv(param["obs_disper_file"],\
                          delim_whitespace=True, \
                          header=None, \
-                         names=(clabel, "c_err", ulabel, "u_err"), \
+                         names=(clabel, c_used, ulabel, u_used), \
                          comment='#')
-        print(f_min, f_max, del_f)
-        print(np.arange(f_min, f_max, del_f))
-        df[flabel] = np.arange(f_min, f_max + 0.5 * del_f, del_f)
-
-        df.plot.scatter(flabel, vlabel, ax=ax, s=5, marker=".", \
-                        c="blue")
+        df[flabel] = np.arange(f_min, f_max + del_f, del_f)
+        df_obs = df[df[used_label] == "T"]
+        print(len(df_obs))
+        # Draw
+        if len(df_obs) > 0:
+            mappable = ax.pcolor(f, v, data, cmap='hot_r')
+            ax.set_xlabel(flabel)
+            ax.set_ylabel(vlabel)
+            cbar = fig.colorbar(mappable, ax=ax)
+            cbar.ax.set_ylabel(plabel)
+            df_obs.plot.scatter(flabel, vlabel, ax=ax, s=40, \
+                                marker=".", c="blue")
+        else:
+            ax.text(0.5, 0.5, "N/A", size=40, \
+                    horizontalalignment="center", \
+                    verticalalignment="center")
+            ax.set_xlabel(flabel)
+            ax.set_ylabel(vlabel)
 
     #---------------------------------------------------------------       
     def _read_dispersion_obs(self, obs_file, curve_id):
@@ -302,8 +310,8 @@ class InvResult:
                 if count == 1:
                     continue
 
-                if (count - 2) // 4 + 1 == curve_id:
-                    iloc = (count - 2) % 4
+                if (count - 2) // 6 + 1 == curve_id:
+                    iloc = (count - 2) % 6
                     if iloc == 0:
                         self._param["obs_disper_file"] = tmp_line
                     elif iloc == 2:
@@ -325,7 +333,7 @@ class InvResult:
         file = "likelihood.history"
         df = pd.read_csv(file, delim_whitespace=True, header=None)
         df.plot(ax=ax, legend=None, linewidth=0.6)
-        ax.set_ylim([-3000,0])
+        ax.set_ylim([-3000,200])
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Log-likelihood")
         
@@ -348,12 +356,12 @@ class InvResult:
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          index_col=0)
     
-        if param["solve_vp"].lower() == ".true.":
-            df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
-        elif param["solve_vp"].lower() == "t":
-            df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
-        else:
-            df.index = ['Birth', 'Death', 'Depth', 'Vs']
+        #if param["solve_vp"].lower() == ".true.":
+        #    df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        #elif param["solve_vp"].lower() == "t":
+        #    df.index = ['Birth', 'Death', 'Depth', 'Vs', 'Vp']
+        #else:
+        #    df.index = ['Birth', 'Death', 'Depth', 'Vs']
         
         df.columns = ['Proposed', 'Accepted']
         df.plot(kind='bar', ax=ax)

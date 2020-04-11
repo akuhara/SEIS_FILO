@@ -4,8 +4,8 @@
 
 # Example 1. GNU fortran for debug
 FC     = mpifort
-FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized \
-         -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check
+FFLAGS = -pg -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized 
+         -ffpe-trap=invalid,zero,overflow -fbacktrace -fno-range-check 
 
 
 # Example 2. GNU fortran for fast computation
@@ -52,7 +52,8 @@ OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
 	 mod_const.o cls_interpreter.o cls_observation_recv_func.o \
 	 cls_param.o cls_vmodel.o cls_signal_process.o mod_sort.o \
          cls_line_text.o cls_covariance.o cls_observation_disper.o \
-	 cls_disper.o mod_output.o mod_forward.o
+	 cls_disper.o mod_output.o mod_forward.o cls_proposal.o \
+	 cls_hyper_model.o
 
 TARGET = $(DISP_FWD) $(RF_FWD) $(JOINT_INV)
 
@@ -68,14 +69,17 @@ joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
               cls_mcmc.mod mod_const.mod cls_interpreter.mod \
               cls_param.mod cls_observation_recv_func.mod \
               cls_recv_func.mod cls_covariance.mod cls_disper.mod \
-              cls_observation_disper.mod mod_output.mod mod_forward.mod
+              cls_observation_disper.mod mod_output.mod mod_forward.mod \
+              cls_proposal.mod cls_hyper_model.mod 
+cls_hyper_model.o: mod_random.mod
 cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod
 cls_disper.o: cls_vmodel.mod
 cls_trans_d_model.o: mod_random.mod
-cls_mcmc.o: mod_random.mod cls_trans_d_model.mod 
+cls_mcmc.o: mod_random.mod cls_trans_d_model.mod cls_hyper_model.mod \
+            cls_proposal.mod
 cls_interpreter.o: cls_trans_d_model.mod cls_vmodel.mod mod_sort.mod \
-                   mod_const.mod
-cls_parallel.o: cls_mcmc.mod cls_trans_d_model.mod
+                   mod_const.mod cls_hyper_model.mod
+cls_parallel.o: cls_mcmc.mod 
 cls_param.o: cls_line_text.mod
 cls_observation_recv_func.o: cls_line_text.mod
 cls_observation_disper.o: cls_line_text.mod
@@ -83,7 +87,9 @@ cls_vmodel.o: cls_line_text.mod
 mod_forward.o: cls_trans_d_model.mod cls_interpreter.mod \
                cls_observation_recv_func.mod cls_recv_func.mod \
                cls_observation_disper.mod cls_disper.mod \
-               cls_vmodel.mod mod_const.mod cls_covariance.mod
+               cls_vmodel.mod mod_const.mod cls_covariance.mod \
+	       cls_hyper_model.mod
+mod_output.o: cls_parallel.mod 
 
 $(DISP_FWD): $(OBJS_DISP_FWD)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
