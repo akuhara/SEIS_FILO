@@ -223,11 +223,18 @@ program main
           & nx    = obs_rf%get_n_rf(), &
           & verb  = verb               &
           & )
-     do i = 1, obs_rf%get_n_rf()
-        call hyp_rf%set_prior(i, &
-             & obs_rf%get_sigma_min(i), obs_rf%get_sigma_max(i))
-        call hyp_rf%set_perturb(i, obs_rf%get_dev_sigma(i))
-     end do
+     if (para%get_solve_rf_sig()) then
+        do i = 1, obs_rf%get_n_rf()
+           call hyp_rf%set_prior(i, &
+                & obs_rf%get_sigma_min(i), obs_rf%get_sigma_max(i))
+           call hyp_rf%set_perturb(i, obs_rf%get_dev_sigma(i))
+        end do
+     else 
+        do i = 1, obs_rf%get_n_rf()
+           call hyp_rf%set_prior(i, &
+                & obs_rf%get_sigma_min(i), obs_rf%get_sigma_min(i))
+        end do
+     end if
   end if
 
   if (obs_disp%get_n_disp() > 0) then
@@ -235,14 +242,25 @@ program main
           & nx    = obs_disp%get_n_disp() * 2, &
           & verb  = verb                       &
           & )
-     do i = 1, obs_disp%get_n_disp()
-        call hyp_disp%set_prior(2*i - 1, &
-             & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_max(i))
-        call hyp_disp%set_perturb(2*i - 1, obs_disp%get_dev_sig_c(i))
-        call hyp_disp%set_prior(2*i, &
-             & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_max(i))
-        call hyp_disp%set_perturb(2*i, obs_disp%get_dev_sig_u(i))
-     end do
+     if (para%get_solve_disper_sig()) then
+        do i = 1, obs_disp%get_n_disp()
+           call hyp_disp%set_prior(2*i - 1, &
+                & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_max(i))
+           call hyp_disp%set_perturb(2*i - 1, obs_disp%get_dev_sig_c(i))
+           call hyp_disp%set_prior(2*i, &
+                & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_max(i))
+           call hyp_disp%set_perturb(2*i, obs_disp%get_dev_sig_u(i))
+        end do
+     else
+        do i = 1, obs_disp%get_n_disp()
+           call hyp_disp%set_prior(2*i - 1, &
+                & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_min(i))
+           call hyp_disp%set_prior(2*i, &
+                & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_min(i))
+           !call hyp_disp%set_x(2*i - 1, obs_disp%get_sig_c_min(i))
+           !call hyp_disp%set_x(2*i    , obs_disp%get_sig_u_min(i))
+        end do
+     end if
   end if
   
   ! Set forward computation (recv_func)
@@ -385,8 +403,12 @@ program main
            call intpr%save_model(mc%get_tm())
 
            ! Sigma
-           call intpr%save_disp_sigma(mc%get_hyp_disp())
-           call intpr%save_rf_sigma(mc%get_hyp_rf())
+           if (para%get_solve_disper_sig()) then
+              call intpr%save_disp_sigma(mc%get_hyp_disp())
+           end if
+           if (para%get_solve_rf_sig()) then
+              call intpr%save_rf_sigma(mc%get_hyp_rf())
+           end if
 
            ! Synthetic data 
            do k = 1, obs_rf%get_n_rf()

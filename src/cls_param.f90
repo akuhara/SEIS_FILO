@@ -50,8 +50,8 @@ module cls_param
      double precision :: z_min = 0.d0
      double precision :: z_max = 70.d0
      logical :: solve_vp = .false.
-     logical :: solve_rf_sig = .false.
-     logical :: solve_disper_sig = .false.
+     logical :: solve_rf_sig = .true.
+     logical :: solve_disper_sig = .true.
      logical :: is_sphere = .false.
      double precision :: vp_min = 4.5d0
      double precision :: vp_max = 9.0d0

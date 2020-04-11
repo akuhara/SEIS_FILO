@@ -45,6 +45,7 @@ module cls_hyper_model
      procedure :: get_prior_param => hyper_model_get_prior_param
      procedure :: get_nx => hyper_model_get_nx
      procedure :: get_x => hyper_model_get_x
+     procedure :: set_x => hyper_model_set_x
      procedure :: generate_model => hyper_model_generate_model
      procedure :: perturb => hyper_model_perturb
      procedure :: display => hyper_model_display
@@ -97,8 +98,8 @@ contains
        stop
     end if
 
-    if (d1 >= d2) then
-       write(0,*)"ERROR: d2 must be > d1 (hyper_model_set_prior)"
+    if (d1 > d2) then
+       write(0,*)"ERROR: d2 must be >= d1 (hyper_model_set_prior)"
        call mpi_finalize(ierr)
        stop
     end if
@@ -153,6 +154,18 @@ contains
     
     return 
   end function hyper_model_get_x
+
+  !---------------------------------------------------------------------
+
+  subroutine hyper_model_set_x(self, iparam, x)
+    class(hyper_model), intent(inout) :: self
+    integer, intent(in) :: iparam
+    double precision, intent(in) :: x
+
+    self%x(iparam) = x
+    
+    return 
+  end subroutine hyper_model_set_x
 
   !---------------------------------------------------------------------
 

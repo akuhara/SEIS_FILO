@@ -12,8 +12,8 @@ temp_high = 30.0
 # Inversion setting
 solve_vp    = .false.
 is_ocean    = .true.
-solve_rf_sig = .true.
-solve_disper_sig = .true.
+solve_rf_sig = .false.
+solve_disper_sig = .false.
 ocean_thick = 1.0
 
 # MCMC prior
