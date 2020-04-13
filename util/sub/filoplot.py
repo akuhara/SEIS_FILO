@@ -256,10 +256,10 @@ class InvResult:
         nf    = int(param["nf"])
         f_max = f_min + (nf -1) * del_f
         v, f = np.mgrid[slice(v_min - 0.5 * del_v, \
-                              v_max + 1.5 * del_v, \
+                              v_max + del_v, \
                               del_v), \
                         slice(f_min - 0.5 * del_f, \
-                              f_max + 1.5 * del_f, \
+                              f_max + del_f, \
                               del_f)]
         data = df.pivot(vlabel, flabel, plabel)
 
@@ -269,9 +269,9 @@ class InvResult:
                          header=None, \
                          names=(clabel, c_used, ulabel, u_used), \
                          comment='#')
-        df[flabel] = np.arange(f_min, f_max + del_f, del_f)
+        df[flabel] = np.arange(f_min, f_max + 0.5 * del_f, del_f)
         df_obs = df[df[used_label] == "T"]
-        print(len(df_obs))
+        
         # Draw
         if len(df_obs) > 0:
             mappable = ax.pcolor(f, v, data, cmap='hot_r')
