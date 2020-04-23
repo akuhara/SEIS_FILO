@@ -450,13 +450,15 @@ contains
     logical, intent(out) :: is_accepted
     double precision :: del_s
     double precision :: r
+    double precision, parameter :: eps = epsilon(1.d0)
     
     del_s = (l2 - l1) * (1.d0 / temp1 - 1.d0 / temp2)
     is_accepted = .false.
-    r = log(rand_u())
-
-    if(r <= del_s) then
-       is_accepted = .true.
+    r = rand_u()
+    if (r >= eps) then
+       if(log(r) <= del_s) then
+          is_accepted = .true.
+       end if
     end if
     
     return 

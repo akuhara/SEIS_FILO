@@ -182,7 +182,7 @@ contains
     ratio = ratio + log_prior_ratio + log_proposal_ratio
     
     r = rand_u()
-    if (r > eps) then
+    if (r >= eps) then
        if (log(r) <= ratio) then
           self%is_accepted = .true.
        end if
