@@ -175,17 +175,19 @@ contains
     logical, intent(in) :: prior_ok
     double precision :: ratio
     double precision :: r
+    double precision, parameter :: eps = epsilon(1.d0)
     
     self%is_accepted = .false.
-
     ratio = (log_likelihood - self%log_likelihood) / self%temp
     ratio = ratio + log_prior_ratio + log_proposal_ratio
-    !write(*,*)log_likelihood, self%log_likelihood
-    r = log(rand_u())
-    if (r <= ratio) then
-       self%is_accepted = .true.
+    
+    r = rand_u()
+    if (r > eps) then
+       if (log(r) <= ratio) then
+          self%is_accepted = .true.
+       end if
     end if
-
+       
     if (.not. prior_ok) then
        self%is_accepted = .false.
     end if

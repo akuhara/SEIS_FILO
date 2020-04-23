@@ -383,7 +383,7 @@ program main
         else
            log_likelihood = minus_infty
         end if
-
+        
         ! Judege
         call mc%judge_model(tm_tmp, hyp_disp_tmp, hyp_rf_tmp, is_ok, &
              & log_likelihood, log_prior_ratio, log_proposal_ratio)

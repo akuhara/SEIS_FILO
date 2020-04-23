@@ -38,7 +38,7 @@ disper_in    = disper.in
 # Output binning
 n_bin_z  = 50
 n_bin_vp = 25 
-n_bin_vs = 25 
+n_bin_vs = 25
 
 # Random number seeds
 i_seed1 = 11111111  
