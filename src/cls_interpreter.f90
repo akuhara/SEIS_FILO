@@ -77,7 +77,7 @@ module cls_interpreter
      double precision, allocatable :: wrk_vp(:), wrk_vs(:), wrk_z(:) 
      
    contains
-     procedure :: get_vmodel => interpreter_get_vmodel
+     procedure :: construct_vmodel => interpreter_construct_vmodel
      procedure :: save_model => interpreter_save_model
      procedure :: save_rf_sigma => interpreter_save_rf_sigma
      procedure :: save_disp_sigma => interpreter_save_disp_sigma
@@ -221,15 +221,19 @@ contains
 
   !---------------------------------------------------------------------
   
-  type(vmodel) function interpreter_get_vmodel(self, tm) result(vm)
+  subroutine interpreter_construct_vmodel(self, tm, vm, is_ok)
     class(interpreter), intent(inout) :: self
     type(trans_d_model), intent(in) :: tm
+    type(vmodel), intent(out) :: vm
+    logical, intent(out) :: is_ok
+    double precision :: thick
     integer :: i, i1, k
-
     
     k = tm%get_k()
     vm = init_vmodel()
 
+    is_ok = .true.
+    
     ! Set ocean layer
     if (self%is_ocean) then
        call vm%set_nlay(k + 2) ! k middle layers + 1 ocean layer + 
@@ -263,15 +267,23 @@ contains
        end if
        ! Thickness
        if (i == 1) then
-          call vm%set_h(i+i1, self%wrk_z(i) - self%z_min)
+          thick = self%wrk_z(i) - self%z_min
+          !call vm%set_h(i+i1, self%wrk_z(i) - self%z_min)
        else if (i == k) then
           ! deepest layer
-          call vm%set_h(i+i1, self%z_max - self%wrk_z(i-1))
+          thick = self%z_max - self%wrk_z(i-1)
+          !call vm%set_h(i+i1, self%z_max - self%wrk_z(i-1))
        else 
           ! others
-          !write(*,*)self%wrk_z(i) - self%wrk_z(i-1), "B"
-          call vm%set_h(i+i1, self%wrk_z(i) - self%wrk_z(i-1))
+          thick = self%wrk_z(i) - self%wrk_z(i-1)
+          !call vm%set_h(i+i1, self%wrk_z(i) - self%wrk_z(i-1))
        end if
+       if (thick <= 0.d0) then
+          is_ok = .false.
+          return
+       end if
+       call vm%set_h(i+i1, thick)
+
        ! Density
        call vm%vp2rho_brocher(i+i1)
     end do
@@ -304,7 +316,7 @@ contains
     !call vm%display()
     
     return 
-  end function interpreter_get_vmodel
+  end subroutine interpreter_construct_vmodel
 
   !---------------------------------------------------------------------
 
@@ -394,8 +406,9 @@ contains
     integer :: nlay
     integer :: ilay, iz, iz1, iz2, iv
     double precision :: tmpz, z, vp, vs
+    logical :: is_ok
     
-    vm = self%get_vmodel(tm)
+    call self%construct_vmodel(tm, vm, is_ok)
     nlay = vm%get_nlay()
     
     self%n_layers(tm%get_k()) = self%n_layers(tm%get_k()) + 1
@@ -411,8 +424,6 @@ contains
           z = (iz - 1) * self%dz
           vp = vm%get_vp(ilay)
           vs = vm%get_vs(ilay)
-          
-          !write(*,*)vp, vs, z
           
           iv = int((vs - self%vs_min) / self%dvs) + 1
           if (iv < 1) then

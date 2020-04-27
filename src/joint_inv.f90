@@ -49,7 +49,7 @@ program main
   double precision :: log_likelihood, temp, log_likelihood2
   double precision :: log_prior_ratio, log_proposal_ratio
   double precision :: del_amp
-  logical :: is_ok
+  logical :: is_ok, is_ok2
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
   type(interpreter) :: intpr
@@ -266,7 +266,7 @@ program main
   ! Set forward computation (recv_func)
   if (obs_rf%get_n_rf() > 0) then
      call tm%generate_model()
-     vm = intpr%get_vmodel(tm)
+     call intpr%construct_vmodel(tm, vm, is_ok)
      allocate(rf(obs_rf%get_n_rf()), rf_tmp(obs_rf%get_n_rf()))
      do i = 1, obs_rf%get_n_rf()
         rf(i) = recv_func( &
@@ -287,7 +287,7 @@ program main
   ! Set forward computation (disper)
   if (obs_disp%get_n_disp() > 0) then
      call tm%generate_model()
-     vm = intpr%get_vmodel(tm)
+     call intpr%construct_vmodel(tm, vm, is_ok)
      allocate(disp(obs_disp%get_n_disp()), &
           & disp_tmp(obs_disp%get_n_disp()))
      do i = 1, obs_disp%get_n_disp()
@@ -372,11 +372,11 @@ program main
            log_likelihood2 = 0.d0
            if (obs_rf%get_n_rf() > 0) then
               call forward_recv_func(tm_tmp, hyp_rf_tmp, intpr, obs_rf, &
-                   & rf, cov, log_likelihood)
+                   & rf, cov, log_likelihood, is_ok2)
            end if
            if (obs_disp%get_n_disp() > 0) then
               call forward_disper(tm_tmp, hyp_disp_tmp, intpr, obs_disp, &
-                   & disp, log_likelihood2)
+                   & disp, log_likelihood2, is_ok2)
            end if
            log_likelihood = &
                 log_likelihood + log_likelihood2
@@ -384,13 +384,15 @@ program main
            log_likelihood = minus_infty
         end if
         
+
         ! Judege
         call mc%judge_model(tm_tmp, hyp_disp_tmp, hyp_rf_tmp, is_ok, &
              & log_likelihood, log_prior_ratio, log_proposal_ratio)
         call pt%set_mc(j, mc)
 
+        
         ! One step summary
-        if (pt%get_rank() == 0) then
+        if (verb) then
            call mc%one_step_summary()
         end if
         
@@ -419,7 +421,7 @@ program main
            end do
            
            ! V model
-           vm = intpr%get_vmodel(mc%get_tm())
+           call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
            write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
            call vm%display(io_vmod_all)
            

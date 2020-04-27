@@ -21,7 +21,7 @@ contains
   !---------------------------------------------------------------------
   
   subroutine forward_recv_func(tm, hyp, intpr, obs, rf, cov, &
-       & log_likelihood)
+       & log_likelihood, is_ok)
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp
     type(interpreter), intent(inout) :: intpr
@@ -29,13 +29,20 @@ contains
     type(recv_func), intent(inout) :: rf(:)
     type(covariance), intent(in) :: cov(:)
     double precision, intent(out) :: log_likelihood
+    logical, intent(out) :: is_ok
     double precision, allocatable :: misfit(:), phi1(:)
     double precision :: phi, s, rms
     type(vmodel) :: vm
     integer :: i, j, n
 
+
     ! Forward computation
-    vm = intpr%get_vmodel(tm)
+    call intpr%construct_vmodel(tm, vm, is_ok)
+    if (.not. is_ok) then
+       log_likelihood = minus_infty
+       return
+    end if
+    
     do i = 1, obs%get_n_rf()
        call rf(i)%set_vmodel(vm)
        call rf(i)%compute()
@@ -67,7 +74,8 @@ contains
 
   !-----------------------------------------------------------------------
   
-  subroutine forward_disper(tm, hyp, intpr, obs, disp, log_likelihood)
+  subroutine forward_disper(tm, hyp, intpr, obs, disp, log_likelihood, &
+       & is_ok)
     implicit none 
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp
@@ -75,13 +83,19 @@ contains
     type(observation_disper), intent(in) :: obs
     type(disper), intent(inout) :: disp(:)
     double precision, intent(out) :: log_likelihood
+    logical, intent(out) :: is_ok
     double precision :: misfit_c, misfit_u
     type(vmodel) :: vm
     double precision :: sc, su
     integer :: i, j, nc, nu
     
     ! calculate synthetic dispersion curves
-    vm = intpr%get_vmodel(tm)
+    call intpr%construct_vmodel(tm, vm, is_ok)
+    if (.not. is_ok) then
+       log_likelihood = minus_infty
+       return
+    end if
+    
     do j = 1, obs%get_n_disp()
        call disp(j)%set_vmodel(vm)
        call disp(j)%dispersion()
@@ -101,6 +115,7 @@ contains
                & disp(j)%get_u(i) == 0.d0) then
              ! Failer in root search
              log_likelihood = minus_infty
+             is_ok = .false.
              return 
           end if
           if (obs%get_c_use(i,j)) then
