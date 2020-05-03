@@ -36,6 +36,7 @@ module cls_recv_func
   type recv_func
      private
      type(vmodel) :: vmodel
+     type(signal_process) :: sp
      
      integer :: n
      double precision :: delta
@@ -137,8 +138,6 @@ contains
        self%amp_max = amp_max
     end if
     
-    
-
     allocate(self%rf_data(self%n))
     allocate(self%f_data(self%n, 2))
     allocate(self%t_data(self%n, 2))
@@ -149,6 +148,9 @@ contains
     self%rf_data(1:self%n) = 0.d0
     self%n_syn_rf(:,:) = 0
 
+    self%sp = signal_process(n = self%n, dt = self%delta)
+    call self%sp%set_gaussian_filter(self%a_gauss)
+    
     return 
   end function init_recv_func
 
@@ -167,26 +169,24 @@ contains
   
   subroutine recv_func_compute(self)
     class(recv_func), intent(inout) :: self
-    type(signal_process) :: sp
     double precision :: t_arrival, fac
     integer :: i_src, i_target
     
-    sp = init_signal_process(self%n, self%delta)
 
     ! Calculate synthetic Green's function in the freq. domain
     call self%do_propagation()
     self%f_data(:, ir) = conjg(self%f_data(:, ir))
     self%f_data(:, iz) = -conjg(self%f_data(:, iz))
-    
 
+    
     ! Freq.-to-time conversion
-    call sp%set_gaussian_filter(self%a_gauss)
+
     if (self%deconv_flag) then
        ! W/ deconvolution
-       call sp%set_f_data(self%water_level_deconv()) ! deconv.
-       call sp%apply_filter()
-       call sp%inverse_fft()
-       self%rf_data(:) = sp%get_t_data()
+       call self%sp%set_f_data(self%water_level_deconv()) ! deconv.
+       call self%sp%apply_filter()
+       call self%sp%inverse_fft()
+       self%rf_data(:) = self%sp%get_t_data()
        call self%shift_rf_data(self%t_pre)
        if (self%correct_amp) then
           call self%normalization()
@@ -201,18 +201,18 @@ contains
           i_target = iz
        end if
 
-       call sp%set_f_data(self%f_data(:, i_src))
-       call sp%inverse_fft()
-       fac = maxval(sp%get_t_data())
+       call self%sp%set_f_data(self%f_data(:, i_src))
+       call self%sp%inverse_fft()
+       fac = maxval(self%sp%get_t_data())
        
        if (self%rf_phase == "P") then
-          call sp%set_f_data(self%f_data(:, i_target))
+          call self%sp%set_f_data(self%f_data(:, i_target))
        else
-          call sp%set_f_data(-conjg(self%f_data(:, i_target)))
+          call self%sp%set_f_data(-conjg(self%f_data(:, i_target)))
        end if
-       call sp%apply_filter()
-       call sp%inverse_fft()
-       self%rf_data(:) = sp%get_t_data() / fac
+       call self%sp%apply_filter()
+       call self%sp%inverse_fft()
+       self%rf_data(:) = self%sp%get_t_data() / fac
        t_arrival = self%first_arrival()
 
        if (self%rf_phase == "P") then

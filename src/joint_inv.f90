@@ -366,6 +366,14 @@ program main
              & is_ok, log_prior_ratio, &
              & log_proposal_ratio)
 
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !call intpr%construct_vmodel(tm_tmp, vm, is_ok2)
+        !write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
+        !call vm%display(io_vmod_all)
+        !call mpi_barrier(MPI_COMM_WORLD ,ierr)
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
         ! Forward computation
         if (is_ok) then
            log_likelihood = 0.d0
@@ -389,7 +397,6 @@ program main
         call mc%judge_model(tm_tmp, hyp_disp_tmp, hyp_rf_tmp, is_ok, &
              & log_likelihood, log_prior_ratio, log_proposal_ratio)
         call pt%set_mc(j, mc)
-
         
         ! One step summary
         if (verb) then
@@ -421,9 +428,9 @@ program main
            end do
            
            ! V model
-           call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
-           write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
-           call vm%display(io_vmod_all)
+           !call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
+           !write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
+           !call vm%display(io_vmod_all)
            
         end if
      end do

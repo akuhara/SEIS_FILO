@@ -242,6 +242,11 @@ contains
        ipack = self%select_pair()
     end if
     call mpi_bcast(ipack, 4, MPI_INTEGER4, 0, MPI_COMM_WORLD, ierr)
+    if (ierr /= MPI_SUCCESS) then
+       write(0,*)"ERROR: while MPI_BCAST"
+       call mpi_finalize(ierr)
+       stop
+    end if
     call unpack_pair_info(ipack=ipack, rank1=rank1, rank2=rank2, &
          & chain1=chain1, chain2=chain2)
     
@@ -280,6 +285,11 @@ contains
        l1    = mc1%get_log_likelihood()
        call mpi_recv(rpack, 2, MPI_DOUBLE_PRECISION, rank2, 1111, &
             & MPI_COMM_WORLD, status, ierr)
+       if (ierr /= MPI_SUCCESS) then
+          write(0,*)"ERROR: while MPI_RECV rpack 1"
+          call mpi_finalize(ierr)
+          stop
+       end if
        call unpack_mc_info(rpack, temp=temp2, likelihood=l2)
 
        call judge_swap(temp1, temp2, l1, l2, is_accepted)
@@ -293,6 +303,11 @@ contains
        end if
        call mpi_send(rpack, 2, MPI_DOUBLE_PRECISION, rank2, 2222, &
             & MPI_COMM_WORLD, status, ierr)
+       if (ierr /= MPI_SUCCESS) then
+          write(0,*)"ERROR: while MPI_SEND rpack 1"
+          call mpi_finalize(ierr)
+          stop
+       end if
        if (present(verb) .and. verb) then
           write(*,*)"----"
           write(*,*)"Rank1    :", rank1
@@ -312,8 +327,18 @@ contains
        rpack = pack_mc_info(temp=temp2, likelihood=l2)
        call mpi_send(rpack, 2, MPI_DOUBLE_PRECISION, rank1, 1111, &
             & MPI_COMM_WORLD, status, ierr)
+       if (ierr /= MPI_SUCCESS) then
+          write(0,*)"ERROR: while MPI_SEND rpack 2"
+          call mpi_finalize(ierr)
+          stop
+       end if
        call mpi_recv(rpack, 2, MPI_DOUBLE_PRECISION, rank1, 2222, &
             & MPI_COMM_WORLD, status, ierr)
+       if (ierr /= MPI_SUCCESS) then
+          write(0,*)"ERROR: while MPI_RECV rpack 2"
+          call mpi_finalize(ierr)
+          stop
+       end if
        call unpack_mc_info(rpack, temp=temp2, likelihood=l2)
        call mc2%set_temp(temp2)
        call self%set_mc(chain2, mc2)
@@ -329,7 +354,6 @@ contains
     integer :: ipack(4)
     integer :: rank1, rank2, chain1, chain2
     integer :: i1, i2
-    
     
     i1 = int(rand_u() * self%n_proc * self%n_chain)
     do 

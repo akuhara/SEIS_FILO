@@ -42,13 +42,16 @@ contains
        log_likelihood = minus_infty
        return
     end if
+    !log_likelihood = 0.d0  !!!!!!!!!!!!!!!!!!!!!!
+    !return !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     do i = 1, obs%get_n_rf()
        call rf(i)%set_vmodel(vm)
        call rf(i)%compute()
     end do
+    !log_likelihood = 0.d0 !!!!!!!!!!!!!!!!
+    !return !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
-
     ! calc misfit
     log_likelihood = 0.d0
     do i = 1, obs%get_n_rf()

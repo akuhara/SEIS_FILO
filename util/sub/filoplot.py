@@ -139,9 +139,9 @@ class InvResult:
         del_amp = (amp_max - amp_min) / n_bin_amp
         
         t_min = float(param["t_start"])
-        t_max = 2 * float(param["t_end"])
+
         del_t = float(param["delta"])
-        
+        t_max = 2 * float(param["t_end"]) - del_t        
         a, t = np.mgrid[slice(amp_min, \
                               amp_max + del_amp, \
                               del_amp), \
