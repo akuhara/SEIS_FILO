@@ -30,6 +30,7 @@ module cls_interpreter
   use cls_vmodel
   use mod_sort
   use mod_const
+  use cls_line_text, only: line_max
   implicit none 
   
   type interpreter
@@ -71,8 +72,13 @@ module cls_interpreter
      double precision :: vp_max
      double precision :: dvp
      
+     logical :: solve_anomaly = .false.
      logical :: solve_vp = .true.
      logical :: is_sphere = .false.
+
+     character(line_max) :: ref_vmod_in
+     double precision :: dvs_sig
+     double precision :: dvp_sig
 
      double precision, allocatable :: wrk_vp(:), wrk_vs(:), wrk_z(:) 
      
@@ -108,8 +114,8 @@ contains
        & n_bin_z, vs_min, vs_max, n_bin_vs, n_disp, n_rf, n_bin_sig, &
        & vp_min, vp_max, n_bin_vp, &
        & is_ocean, ocean_thick, vp_ocean, rho_ocean, solve_vp, &
-       & is_sphere, vp_bottom, vs_bottom, rho_bottom) &
-       & result(self)
+       & solve_anomaly, is_sphere, vp_bottom, vs_bottom, rho_bottom, &
+       & dvs_sig, dvp_sig) result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
     integer, intent(in), optional :: n_bin_vp
@@ -122,10 +128,13 @@ contains
          & vp_ocean, rho_ocean
     double precision, intent(in), optional :: vp_bottom, &
          & vs_bottom, rho_bottom
+    double precision, intent(in), optional :: dvs_sig, dvp_sig
     logical, intent(in), optional :: solve_vp
+    logical, intent(in), optional :: solve_anomaly
     logical, intent(in), optional :: is_sphere
 
-
+    integer :: ierr
+    
     self%nlay_max = nlay_max
     allocate(self%wrk_vp(nlay_max + 1))
     allocate(self%wrk_vs(nlay_max + 1))
@@ -191,14 +200,17 @@ contains
     if (present(solve_vp)) then
        if (.not. present(vp_min)) then
           write(0,*)"ERROR: vp_min is not given"
+          call mpi_finalize(ierr)
           stop
        end if
        if (.not. present(vp_max)) then
           write(0,*)"ERROR: vp_max is not given"
+          call mpi_finalize(ierr)
           stop
        end if
        if (.not. present(n_bin_vp)) then
           write(0,*)"ERROR: n_bin_vp is not given"
+          call mpi_finalize(ierr)
           stop
        end if
        self%solve_vp = solve_vp
@@ -213,8 +225,26 @@ contains
           self%vpz_mean = 0.d0
        end if
     end if
-
     
+    if (present(solve_anomaly)) then
+       if (.not. present(dvs_sig)) then
+          write(0,*)"ERROR: dvs_sig is not given"
+          call mpi_finalize(ierr)
+          stop
+       end if
+       if (self%solve_vp) then
+          if (.not. present(dvp_sig)) then
+             write(0,*)"ERROR: dvp_sig is not given"
+             call mpi_finalize(ierr)
+             stop
+          end if
+       end if
+       self%solve_anomaly = solve_anomaly
+       self%dvs_sig = dvs_sig
+       if (self%solve_vp) then
+          self%dvp_sig = dvp_sig
+       end if
+    end if
 
     return 
   end function init_interpreter
