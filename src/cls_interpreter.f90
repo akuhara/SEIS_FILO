@@ -79,6 +79,10 @@ module cls_interpreter
      character(line_max) :: ref_vmod_in
      double precision :: dvs_sig
      double precision :: dvp_sig
+     double precision :: dz_ref
+     double precision, allocatable :: vs_ref(:)
+     double precision, allocatable :: vp_ref(:)
+     
 
      double precision, allocatable :: wrk_vp(:), wrk_vs(:), wrk_z(:) 
      
@@ -101,6 +105,8 @@ module cls_interpreter
      procedure :: get_dvs => interpreter_get_dvs
      procedure :: get_dvp => interpreter_get_dvp
      procedure :: get_dz => interpreter_get_dz
+     
+     procedure :: read_ref_vmod_in => interpreter_read_ref_vmod_in
   end type interpreter
   
   interface interpreter
@@ -269,7 +275,7 @@ contains
     
     k = tm%get_k()
     vm = init_vmodel()
-
+    
     is_ok = .true.
     
     ! Set ocean layer
@@ -529,6 +535,56 @@ contains
   end subroutine interpreter_save_disp_sigma
 
   !---------------------------------------------------------------------
+  
+  subroutine interpreter_read_ref_vmod_in(self)
+    class(interpreter), intent(inout) :: self
+    integer :: io, ierr, nz, i
+    double precision :: z_old, z_tmp, dz
+    double precision, parameter :: eps = epsilon(1.d0)
+    
+    open(newunit = io, file = self%ref_vmod_in, status = "old", &
+         & iostat = ierr)
+    if (ierr /= 0) then
+       write(0,*)"ERROR: cannot open ", trim(self%ref_vmod_in)
+       call mpi_finalize(ierr)
+       stop
+    end if
+
+    ! get nz and dz
+    nz = 0
+    dz = -99.d0
+    z_old = -99.d0
+    do 
+       read(io, *, iostat= ierr) z_tmp
+       if (ierr /= 0) exit
+       nz = nz + 1
+       if (nz > 2 .and. abs(z_tmp - z_old - dz) > eps) then
+          write(0,*)"ERROR: while reading reference velocity file:", &
+               & trim(self%ref_vmod_in)
+          write(0,*)"       Depth increment must be constant"
+          call mpi_finalize(ierr)
+          stop
+       end if
+       dz = z_tmp - z_old
+       z_old = z_tmp
+    end do
+    self%dz_ref = dz
+
+    allocate(self%vs_ref(nz))
+    allocate(self%vp_ref(nz))
+    
+    rewind(io)
+    do i = 1, nz
+       read(io, *)z_tmp, self%vp_ref(i), self%vs_ref(i)
+    end do
+
+
+    close(io)
+    return 
+  end subroutine interpreter_read_ref_vmod_in
+
+  !---------------------------------------------------------------------
+  
   integer function interpreter_get_n_bin_z(self) result(n_bin_z)
     class(interpreter), intent(in) ::self
 
