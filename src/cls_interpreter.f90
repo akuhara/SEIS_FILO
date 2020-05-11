@@ -115,7 +115,7 @@ contains
        & vp_min, vp_max, n_bin_vp, &
        & is_ocean, ocean_thick, vp_ocean, rho_ocean, solve_vp, &
        & solve_anomaly, is_sphere, vp_bottom, vs_bottom, rho_bottom, &
-       & dvs_sig, dvp_sig) result(self)
+       & dvs_sig, dvp_sig, ref_vmod_in) result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
     integer, intent(in), optional :: n_bin_vp
@@ -133,6 +133,8 @@ contains
     logical, intent(in), optional :: solve_anomaly
     logical, intent(in), optional :: is_sphere
 
+    character(line_max), intent(in), optional :: ref_vmod_in
+    
     integer :: ierr
     
     self%nlay_max = nlay_max
@@ -232,6 +234,11 @@ contains
           call mpi_finalize(ierr)
           stop
        end if
+       if (.not. present(ref_vmod_in)) then
+          write(0,*)"ERROR: ref_vmod_in is not given"
+          call mpi_finalize(ierr)
+          stop
+       end if
        if (self%solve_vp) then
           if (.not. present(dvp_sig)) then
              write(0,*)"ERROR: dvp_sig is not given"
@@ -241,6 +248,7 @@ contains
        end if
        self%solve_anomaly = solve_anomaly
        self%dvs_sig = dvs_sig
+       self%ref_vmod_in = ref_vmod_in
        if (self%solve_vp) then
           self%dvp_sig = dvp_sig
        end if
