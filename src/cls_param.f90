@@ -417,6 +417,8 @@ contains
        read(val, *) self%vp_bottom
     else if (name == "rho_bottom") then
        read(val, *) self%rho_bottom
+    else if (name == "ref_vmod_in") then
+       self%ref_vmod_in = val
     else
        if (self%verb) then
           write(0,*)"ERROR: Invalid parameter name"

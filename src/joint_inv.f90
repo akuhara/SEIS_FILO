@@ -153,7 +153,6 @@ program main
 
 
   ! Set interpreter 
-  if (verb) write(*,*)"Setting interpreter"
   intpr = interpreter(&
        & nlay_max= para%get_k_max(),                             &
        & z_min = para%get_z_min(),                               &
@@ -177,7 +176,8 @@ program main
        & ref_vmod_in = para%get_ref_vmod_in(),                   &
        & vp_bottom = para%get_vp_bottom(),                       &
        & vs_bottom = para%get_vs_bottom(),                       &
-       & rho_bottom = para%get_rho_bottom()                      &
+       & rho_bottom = para%get_rho_bottom(),                     &
+       & verb = verb                                             &
        & )
 
   ! Set proposal

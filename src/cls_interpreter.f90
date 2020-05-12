@@ -76,6 +76,8 @@ module cls_interpreter
      logical :: solve_vp = .true.
      logical :: is_sphere = .false.
 
+     logical :: verb = .false.
+
      character(line_max) :: ref_vmod_in
      double precision :: dvs_sig
      double precision :: dvp_sig
@@ -121,7 +123,7 @@ contains
        & vp_min, vp_max, n_bin_vp, &
        & is_ocean, ocean_thick, vp_ocean, rho_ocean, solve_vp, &
        & solve_anomaly, is_sphere, vp_bottom, vs_bottom, rho_bottom, &
-       & dvs_sig, dvp_sig, ref_vmod_in) result(self)
+       & dvs_sig, dvp_sig, ref_vmod_in, verb) result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
     integer, intent(in), optional :: n_bin_vp
@@ -140,8 +142,16 @@ contains
     logical, intent(in), optional :: is_sphere
 
     character(line_max), intent(in), optional :: ref_vmod_in
-    
+    logical, intent(in), optional :: verb
     integer :: ierr
+
+    if (present(verb)) then
+       self%verb = verb
+    end if
+    
+    if (self%verb) then
+       write(*,'(a)')"<< Initialize model interpreter >>"
+    end if
     
     self%nlay_max = nlay_max
     allocate(self%wrk_vp(nlay_max + 1))
@@ -235,6 +245,10 @@ contains
     end if
     
     if (present(solve_anomaly)) then
+       self%solve_anomaly = solve_anomaly
+    end if
+
+    if (self%solve_anomaly) then
        if (.not. present(dvs_sig)) then
           write(0,*)"ERROR: dvs_sig is not given"
           call mpi_finalize(ierr)
@@ -258,7 +272,10 @@ contains
        if (self%solve_vp) then
           self%dvp_sig = dvp_sig
        end if
+
+       call self%read_ref_vmod_in()
     end if
+
 
     return 
   end function init_interpreter
@@ -540,12 +557,15 @@ contains
     class(interpreter), intent(inout) :: self
     integer :: io, ierr, nz, i
     double precision :: z_old, z_tmp, dz
-    double precision, parameter :: eps = epsilon(1.d0)
+    double precision, parameter :: eps = 1.0e-5
     
     open(newunit = io, file = self%ref_vmod_in, status = "old", &
          & iostat = ierr)
-    if (ierr /= 0) then
-       write(0,*)"ERROR: cannot open ", trim(self%ref_vmod_in)
+    if (ierr /= 0 .and. self%verb) then
+       write(0,*)"ERROR: cannot open reference velocity file:", &
+            & trim(self%ref_vmod_in)
+       write(0,*)"       Set 'ref_vmod_in = <Filename>' or " // &
+            & "'solve_anomaly = .false.' in the parameter file"
        call mpi_finalize(ierr)
        stop
     end if
@@ -558,10 +578,13 @@ contains
        read(io, *, iostat= ierr) z_tmp
        if (ierr /= 0) exit
        nz = nz + 1
-       if (nz > 2 .and. abs(z_tmp - z_old - dz) > eps) then
+       if (nz > 2 .and. abs(z_tmp - z_old - dz) > eps .and. &
+            & self%verb) then
           write(0,*)"ERROR: while reading reference velocity file:", &
                & trim(self%ref_vmod_in)
-          write(0,*)"       Depth increment must be constant"
+          write(0,*)"       Depth increment must be constant", &
+               & z_tmp - z_old, dz
+
           call mpi_finalize(ierr)
           stop
        end if
@@ -577,9 +600,18 @@ contains
     do i = 1, nz
        read(io, *)z_tmp, self%vp_ref(i), self%vs_ref(i)
     end do
-
-
     close(io)
+    
+    if (self%verb) then
+       write(*,*)"----- Reference velocity -----"
+       do i = 1, nz
+          write(*,'(3F9.3)')(i-1) * self%dz_ref, self%vp_ref(i), &
+               & self%vs_ref(i)
+       end do
+    end if
+       
+       
+    
     return 
   end subroutine interpreter_read_ref_vmod_in
 
