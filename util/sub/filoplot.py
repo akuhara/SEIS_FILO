@@ -56,10 +56,52 @@ class InvResult:
     def _plot_n_layers(self, fig, ax):
         file = "n_layers.ppd"
         xlabel = "# of layers"
-        ylabel = "Posterior probability"
+        ylabel = "Probability"
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          names=(xlabel, ylabel))
         df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
+        ax.set_ylabel(ylabel)
+
+    #---------------------------------------------------------------
+
+    def _plot_sigma(self, fig, ax, mode, trace_id):
+        param = self._param
+        clabel = "Phase vel. (km/s)"
+        c_used = "Phase velocity is used?"
+        ulabel = "Group vel. (km/s)"
+        u_used = "Group velocity is used?"
+
+        if mode == "group":
+            file = "group_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = u_used
+        elif mode == "phase":
+            file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = c_used
+        elif mode == "recv_func":
+            file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
+        
+        if mode == "group" or mode == "phase":
+            df = pd.read_csv(param["obs_disper_file"],\
+                             delim_whitespace=True, \
+                             header=None, \
+                             names=(clabel, c_used, ulabel, u_used), \
+                             comment='#')
+            df_obs = df[df[used_label] == "T"]
+        else:
+            df_obs = (999,)
+
+        xlabel = "Standard deviation of data noise"
+        ylabel = "Probability"
+        if len(df_obs) > 0:
+            df = pd.read_csv(file, delim_whitespace=True, header=None, \
+                             names=(xlabel, ylabel))
+            df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
+        else:
+            ax.text(0.5, 0.5, "N/A", size=40, \
+                    horizontalalignment="center", \
+                    verticalalignment="center")
+            ax.set_xlabel(xlabel)
+            
         ax.set_ylabel(ylabel)
 
     #---------------------------------------------------------------
@@ -85,7 +127,7 @@ class InvResult:
             nbin_v = int(param["n_bin_vp"])
             
         zlabel = "Depth (km)"
-        plabel = "Posterior probability"
+        plabel = "Probability"
         del_v = (v_max - v_min) / nbin_v
         z_min = 0.0
         z_max = float(param["z_max"])
@@ -128,7 +170,7 @@ class InvResult:
         
         tlabel = "Time (s)"
         alabel = "RF amp."
-        plabel = "Posterior probability"
+        plabel = "Probability"
         
         df = pd.read_csv(ppd_file, delim_whitespace=True, \
                          header=None, \
@@ -232,9 +274,9 @@ class InvResult:
         obs_file = param["disper_in"]
         self._read_dispersion_obs(obs_file, curve_id)
 
-        clabel = "Phase velocity (km/s)"
+        clabel = "Phase vel. (km/s)"
         c_used = "Phase velocity is used?"
-        ulabel = "Group velocity (km/s)"
+        ulabel = "Group vel. (km/s)"
         u_used = "Group velocity is used?"
         if mode == "c":
             ppd_file = "syn_phase" + str(curve_id).zfill(3) + ".ppd"
@@ -245,7 +287,7 @@ class InvResult:
             vlabel = ulabel
             used_label = u_used
         flabel = "Frequency (Hz)"
-        plabel = "Posterior probability"
+        plabel = "Probability"
         df = pd.read_csv(ppd_file, delim_whitespace=True, header=None, \
                          names=(flabel, vlabel, plabel))
         v_min = float(param["cmin"])
@@ -371,14 +413,14 @@ class InvResult:
 
     
     def draw_surface_wave_set(self, curve_id):
-        grid_geom = (4, 4)
-        fig_size = (22, 13)
+        grid_geom = (5, 4)
+        fig_size = (17, 10)
         param = self._param
         sns.set()
         sns.set_style('ticks')
         fig = plt.figure(figsize=fig_size)
         
-        fig.subplots_adjust(wspace=0.8, hspace=0.4)
+        fig.subplots_adjust(wspace=0.7, hspace=0.9)
         
         # Number of layers
         ax = plt.subplot2grid(grid_geom, (0, 0), colspan=2, fig=fig)
@@ -392,13 +434,21 @@ class InvResult:
         ax = plt.subplot2grid(grid_geom, (1, 1), fig=fig)
         self._plot_dispersion(fig, ax, "u", curve_id)
 
+        # Sigma phase velocity
+        ax = plt.subplot2grid(grid_geom, (2, 0), fig=fig)
+        self._plot_sigma(fig, ax, "phase", curve_id)
+
+        # Sigma group velocity
+        ax = plt.subplot2grid(grid_geom, (2, 1), fig=fig)
+        self._plot_sigma(fig, ax, "group", curve_id)
+
         # Vs-z
-        ax = plt.subplot2grid(grid_geom, (2, 0), rowspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
         self._plot_vz(fig, ax, "vs")
 
         # Vp-z
         if param["solve_vp"].lower() == ".true.":
-            ax = plt.subplot2grid(grid_geom, (2, 1), rowspan=2, fig=fig)
+            ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2, fig=fig)
             self._plot_vz(fig, ax, "vp")
             
         # Likelihood history
@@ -425,14 +475,14 @@ class InvResult:
         
     #---------------------------------------------------------------
     def draw_recv_func_set(self, trace_id):
-        grid_geom = (4, 4)
-        fig_size = (22, 13)
+        grid_geom = (5, 4)
+        fig_size = (17, 10)
         param = self._param
         sns.set()
         sns.set_style('ticks')
         fig = plt.figure(figsize=fig_size)
         
-        fig.subplots_adjust(wspace=0.8, hspace=0.4)
+        fig.subplots_adjust(wspace=0.7, hspace=0.9)
         
         # Number of layers
         ax = plt.subplot2grid(grid_geom, (0, 0), colspan=2, fig=fig)
@@ -442,13 +492,17 @@ class InvResult:
         ax = plt.subplot2grid(grid_geom, (1, 0), colspan=2, fig=fig)
         self._plot_recv_func(fig, ax, trace_id)
 
+        # Receiver function sigma
+        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=2, fig=fig)
+        self._plot_sigma(fig, ax, "recv_func", trace_id)
+
         # Vs-z
-        ax = plt.subplot2grid(grid_geom, (2, 0), rowspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
         self._plot_vz(fig, ax, "vs")
 
         # Vp-z
         if param["solve_vp"].lower() == ".true.":
-            ax = plt.subplot2grid(grid_geom, (2, 1), rowspan=2, fig=fig)
+            ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2, fig=fig)
             self._plot_vz(fig, ax, "vp")
             
         # Likelihood history
