@@ -1,10 +1,38 @@
+#-----------------------------------------------------------------------
+# Parameter file:
+# Sample input to disper_fwd of SEIS_FILO package
+# by Takeshi Akuhara
+#-----------------------------------------------------------------------
+
+# Output frequencies (Hz)
 fmin = 0.01
 fmax = 1.0
 df   = 0.002
+
+# Input velocity model
 vmod_in = vmod.in
+
+# Velocity range (km/s)
 cmin    = 1.5
 cmax    = 4.6
 dc      = 0.02
+
+# Phase (R: Rayleigh)
 disper_phase = R
-n_mode = 0       
+
+# Mode number (0: fundamental mode, 1: 1st overtone, 2: 2nd overtone, etc.)
+n_mode = 0
+
+# Additive noise (km/s)
+noise_added = 0.1
+
+# Random number seed
+i_seed1 = 1001
+i_seed2 = 22002
+i_seed3 = 333003
+i_seed4 = 4444004
+
+# Output filename
 disper_out = disper_test.out
+
+

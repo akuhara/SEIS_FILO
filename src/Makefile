@@ -38,7 +38,7 @@ LAPACK = -llapack -lblas
 BINDIR = ../bin
 DISP_FWD = $(BINDIR)/disper_fwd
 OBJS_DISP_FWD = disper_fwd.o cls_vmodel.o cls_disper.o cls_param.o \
-	       cls_line_text.o
+	       cls_line_text.o mod_random.o
 
 
 RF_FWD = $(BINDIR)/recv_func_fwd
@@ -62,7 +62,7 @@ all: $(TARGET)
 
 
 disper_fwd.o: cls_disper.mod cls_vmodel.mod cls_param.mod \
-	        cls_recv_func.mod
+	        cls_recv_func.mod mod_random.mod
 recv_func_fwd.o: cls_param.mod cls_vmodel.mod cls_signal_process.mod \
                  cls_recv_func.mod
 joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
@@ -73,7 +73,7 @@ joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
               cls_proposal.mod cls_hyper_model.mod 
 cls_hyper_model.o: mod_random.mod
 cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod
-cls_disper.o: cls_vmodel.mod
+cls_disper.o: cls_vmodel.mod mod_random.mod
 cls_trans_d_model.o: mod_random.mod
 cls_mcmc.o: mod_random.mod cls_trans_d_model.mod cls_hyper_model.mod \
             cls_proposal.mod

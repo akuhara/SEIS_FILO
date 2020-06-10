@@ -26,6 +26,7 @@
 !=======================================================================
 module cls_disper
   use cls_vmodel
+  use mod_random
   implicit none 
   
   double precision, private, parameter :: pi = acos(-1.d0)
@@ -65,6 +66,8 @@ module cls_disper
      character(len=200) :: disper_out = ""
      logical :: out_flag = .false.
 
+     double precision :: noise_added = 0.d0
+
    contains
      procedure :: dispersion => disper_dispersion
      procedure :: init_propagation => disper_init_propagation
@@ -96,10 +99,12 @@ contains
   !---------------------------------------------------------------------
   
   type(disper) function init_disper(vm, fmin, fmax, df, &
-       & cmin, cmax, dc, disper_phase, n_mode, disper_out) result(self)
+       & cmin, cmax, dc, disper_phase, n_mode, noise_added, &
+       & disper_out) result(self)
     type(vmodel), intent(in) :: vm
     double precision, intent(in) :: fmin, fmax, df
     double precision, intent(in) :: cmin, cmax, dc
+    double precision, intent(in), optional :: noise_added
     character(*), intent(in) :: disper_phase
     integer, intent(in) :: n_mode
     
@@ -153,6 +158,11 @@ contains
     if (self%disper_phase /= "L" .and. self%disper_phase /= "R") then
        write(0,*)"ERROR: disper_phase must be L or R"
        stop
+    end if
+
+    if (present(noise_added)) then
+       self%noise_added = noise_added
+       
     end if
 
     ! output file
@@ -218,7 +228,9 @@ contains
           self%u(i) = u
           if (self%out_flag) then
              write(self%io, '(3F10.4)') &
-                  & omega / (2.d0 * pi), self%c(i), self%u(i)
+                  & omega / (2.d0 * pi), &
+                  & self%c(i) + rand_g() * self%noise_added, &
+                  & self%u(i) + rand_g() * self%noise_added
           end if
        else
           ! full calculation

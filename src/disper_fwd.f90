@@ -28,6 +28,7 @@ program main
   use cls_param
   use cls_vmodel
   use cls_disper
+  use mod_random
   implicit none 
   integer :: n_arg
   character(len=200) :: param_file
@@ -50,6 +51,14 @@ program main
   vm = init_vmodel()
   call vm%read_file(para%get_vmod_in())
   
+  ! Init random generator
+  call init_random(para%get_i_seed1(), &
+       &           para%get_i_seed2(), &
+       &           para%get_i_seed3(), &
+       &           para%get_i_seed4())
+
+  
+  
   ! Calculate dispersion curve
   disp = disper(&
        & vm     = vm, &
@@ -61,7 +70,8 @@ program main
        & dc     = para%get_dc(), &
        & disper_phase = para%get_disper_phase(), &
        & n_mode = para%get_n_mode(), &
-       & disper_out = para%get_disper_out() &
+       & disper_out = para%get_disper_out(), &
+       & noise_added = para%get_noise_added() &
        & )
   
   call disp%dispersion()
