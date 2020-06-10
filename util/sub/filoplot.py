@@ -406,8 +406,9 @@ class InvResult:
         #    df.index = ['Birth', 'Death', 'Depth', 'Vs']
         
         df.columns = ['Proposed', 'Accepted']
+        df.index.name = 'Proposal type'
         df.plot(kind='bar', ax=ax)
-        
+
 
     #---------------------------------------------------------------
 

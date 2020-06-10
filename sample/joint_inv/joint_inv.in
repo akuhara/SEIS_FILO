@@ -13,8 +13,8 @@ temp_high = 30.0
 solve_vp    = .false.
 is_ocean    = .true.
 solve_rf_sig = .false.
-solve_disper_sig = .false.
-ocean_thick = 1.0
+solve_disper_sig = .true.
+ocean_thick = 2.0
 
 # MCMC prior
 k_min = 1
@@ -23,8 +23,8 @@ vs_min = 1.0
 vs_max = 5.0
 vp_min = 5.0
 vp_max = 8.5
-z_min  = 1.0
-z_max  = 10.0
+z_min  = 2.0
+z_max  = 30.0
 
 # MCMC proposal
 dev_vs = 0.03
@@ -32,7 +32,7 @@ dev_vp = 0.03
 dev_z  = 0.03
 
 # Observation file
-recv_func_in = recv_func.in
+recv_func_in = 
 disper_in    = disper.in
 
 # Output binning

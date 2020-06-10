@@ -7,7 +7,7 @@
 # Output frequencies (Hz)
 fmin = 0.01
 fmax = 1.0
-df   = 0.002
+df   = 0.05
 
 # Input velocity model
 vmod_in = vmod.in
@@ -24,7 +24,7 @@ disper_phase = R
 n_mode = 0
 
 # Additive noise (km/s)
-noise_added = 0.1
+noise_added = 0.03
 
 # Random number seed
 i_seed1 = 1001
