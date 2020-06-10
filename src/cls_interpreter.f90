@@ -287,8 +287,8 @@ contains
     type(trans_d_model), intent(in) :: tm
     type(vmodel), intent(out) :: vm
     logical, intent(out) :: is_ok
-    double precision :: thick
-    integer :: i, i1, k
+    double precision :: thick, vel
+    integer :: i, i1, k, iz, nlay
     
     k = tm%get_k()
     vm = init_vmodel()
@@ -318,14 +318,7 @@ contains
     call quick_sort(self%wrk_z, 1, k, self%wrk_vs, self%wrk_vp)
     ! Middle layers
     do i = 1, k
-       ! Vs
-       call vm%set_vs(i+i1, self%wrk_vs(i))
-       ! Vp
-       if (self%solve_vp) then
-          call vm%set_vp(i+i1, self%wrk_vp(i))
-       else
-          call vm%vs2vp_brocher(i+i1)
-       end if
+
        ! Thickness
        if (i == 1) then
           thick = self%wrk_z(i) - self%z_min
@@ -344,7 +337,47 @@ contains
           return
        end if
        call vm%set_h(i+i1, thick)
-
+       
+       ! Velocity
+       if (.not. self%solve_anomaly) then
+          ! Vs
+          call vm%set_vs(i+i1, self%wrk_vs(i))
+          ! Vp
+          if (self%solve_vp) then
+             call vm%set_vp(i+i1, self%wrk_vp(i))
+          else
+             call vm%vs2vp_brocher(i+i1)
+          end if
+       else
+          if (i == 1) then
+             iz = nint(0.5d0 * (self%wrk_z(i) + self%z_min) / &
+                  & self%dz_ref) + 1
+          else if (i == k) then
+             iz = nint(0.5d0 * (self%wrk_z(i-1) + self%z_max) / &
+                  & self%dz_ref) + 1
+          else
+             iz = nint(0.5d0 * (self%wrk_z(i-1) + self%wrk_z(i)) / &
+                  & self%dz_ref) + 1
+          end if
+          ! Vs
+          vel = self%vs_ref(iz) + self%wrk_vs(i)
+          if (vel < self%vs_min .or. vel > self%vs_max) then
+             is_ok = .false.
+             return
+          end if
+          call vm%set_vs(i+i1, vel)
+          ! Vp
+          if (self%solve_vp) then
+             vel = self%vp_ref(iz) + self%wrk_vp(i)
+             if (vel < self%vp_min .or. vel > self%vp_max) then
+                is_ok = .false.
+                return
+             end if
+             call vm%set_vp(i+i1, vel)
+          else
+             call vm%vs2vp_brocher(i+i1)
+          end if
+       end if
        ! Density
        call vm%vp2rho_brocher(i+i1)
     end do
@@ -353,14 +386,14 @@ contains
     if (self%vs_bottom > 0.d0) then
        call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
     else
-       call vm%set_vs(k+1+i1, self%wrk_vs(k))
+       call vm%set_vs(k+1+i1, vm%get_vs(k+i1)) ! <- Same as layer above
     end if
     ! Vp
     if (self%vp_bottom > 0.d0) then
        call vm%set_vp(k+1+i1, self%vp_bottom)
     else
        if (self%solve_vp) then
-          call vm%set_vp(k+1+i1, self%wrk_vp(k))
+          call vm%set_vp(k+1+i1, vm%get_vp(k+i1))
        else
           call vm%vs2vp_brocher(k+1+i1)
        end if

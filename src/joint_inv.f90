@@ -202,22 +202,38 @@ program main
        & nx    = n_td,               &
        & verb  = verb              &
        & )
-  call tm%set_prior(prop%get_i_vs(), id_uni, &
-       & para%get_vs_min(), para%get_vs_max())
+  if (.not. para%get_solve_anomaly()) then
+     call tm%set_prior(prop%get_i_vs(), id_uni, &
+          & para%get_vs_min(), para%get_vs_max())
+     call tm%set_birth(prop%get_i_vs(), id_uni, &
+          & para%get_vs_min(), para%get_vs_max())
+  else
+     call tm%set_prior(prop%get_i_vs(), id_gauss, &
+          & 0.d0, para%get_dvs_sig())
+     call tm%set_birth(prop%get_i_vs(), id_gauss, &
+          & 0.d0, para%get_dvs_sig())
+  end if
+  call tm%set_perturb(prop%get_i_vs(), para%get_dev_vs())
+  
   call tm%set_prior(prop%get_i_depth(),  id_uni, &
        & para%get_z_min(), para%get_z_max())
-  call tm%set_birth(id_vs, id_uni, &
-       & para%get_vs_min(), para%get_vs_max())
-  call tm%set_birth(id_z,  id_uni, &
+  call tm%set_birth(prop%get_i_depth(),  id_uni, &
        & para%get_z_min(), para%get_z_max())
-  call tm%set_perturb(id_vs, para%get_dev_vs())
-  call tm%set_perturb(id_z,  para%get_dev_z())
+  
+  call tm%set_perturb(prop%get_i_depth(),  para%get_dev_z())
   if (para%get_solve_vp()) then
-     call tm%set_prior(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max()) 
-     call tm%set_birth(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max())
-     call tm%set_perturb(id_vp, para%get_dev_vp())
+     if (.not. para%get_solve_anomaly()) then
+        call tm%set_prior(prop%get_i_vp(), id_uni, &
+             & para%get_vp_min(), para%get_vp_max()) 
+        call tm%set_birth(prop%get_i_vp(), id_uni, &
+             & para%get_vp_min(), para%get_vp_max())
+     else
+        call tm%set_prior(prop%get_i_vp(), id_gauss, &
+             & 0.d0, para%get_dvp_sig())
+        call tm%set_birth(prop%get_i_vp(), id_gauss, &
+             & 0.d0, para%get_dvp_sig())
+     end if
+     call tm%set_perturb(prop%get_i_vp(), para%get_dev_vp())
   end if
   
 
