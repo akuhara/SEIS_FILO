@@ -101,6 +101,8 @@ module cls_param
      integer :: n_mode = -999
      character(len=1) :: disper_phase
      
+     ! Noise level added to forward computation 
+     double precision :: noise_added = 0.d0
      
      character(len=line_max) :: vmod_in = ""
      character(len=line_max) :: disper_out = ""
@@ -187,6 +189,8 @@ module cls_param
      procedure :: get_vs_bottom => param_get_vs_bottom
      procedure :: get_rho_bottom => param_get_rho_bottom
      
+     procedure :: get_noise_added => param_get_noise_added
+
      procedure :: check_mcmc_params => param_check_mcmc_params
      procedure :: check_recv_func_fwd_params &
           & => param_check_recv_func_fwd_params
@@ -408,6 +412,8 @@ contains
        read(val, *) self%vp_bottom
     else if (name == "rho_bottom") then
        read(val, *) self%rho_bottom
+    else if (name == "noise_added") then
+       read(val, *) self%noise_added
     else
        if (self%verb) then
           write(0,*)"ERROR: Invalid parameter name"
@@ -1040,6 +1046,17 @@ contains
     
     return 
   end function param_get_rho_bottom
+
+  !---------------------------------------------------------------------
+  
+  double precision function param_get_noise_added(self) &
+       & result(noise_added)
+    class(param), intent(in) :: self
+
+    noise_added = self%noise_added
+    
+    return 
+  end function param_get_noise_added
   
   !---------------------------------------------------------------------
 
