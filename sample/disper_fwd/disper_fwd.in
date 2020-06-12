@@ -10,7 +10,7 @@ fmax = 1.0
 df   = 0.05
 
 # Input velocity model
-vmod_in = vmod.in
+vmod_in = ../vmod/vmod.in
 
 # Velocity range (km/s)
 cmin    = 1.5

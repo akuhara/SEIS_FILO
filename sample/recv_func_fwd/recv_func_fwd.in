@@ -1,14 +1,44 @@
-# Input parameter file for recv_func_fwd
+#-----------------------------------------------------------------------
+# Parameter file:
+# Sample input to recv_func_fwd of SEIS_FILO package
+# by Takeshi Akuhara
+#-----------------------------------------------------------------------
 
+# Ray parameter (s/km)
+rayp = 0.05
+
+# Gaussian parameter
+a_gauss = 8.0
+
+# Phase (P or S)
+rf_phase = P
+
+# Input velocity model
 vmod_in = ../vmod/vmod.in
 
-rayp = 0.05
-a_gauss = 8.0
-rf_phase = P
+# Time length prior to direct arrival
 t_pre = 3.0
+
+# Number of elements in time series
 n_smp = 2048
+
+# Time interval (s)
 delta = 0.05
-deconv_flag = .false.
+
+# Deconvolve by vertical component (T)  or not (F)
+deconv_flag = T
+
+# Correct for amplitude loss by filter (T) or not (F)
 correct_amp = .true.
+
+# Noise level
 noise_added = 0.03
+
+# Random number seed
+i_seed1 = 1001
+i_seed2 = 22002
+i_seed3 = 333003
+i_seed4 = 4444004
+
+# Output filename
 recv_func_out = recv_func.sac
