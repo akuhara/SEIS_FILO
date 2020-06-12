@@ -3,11 +3,12 @@
 vmod_in = vmod.in
 
 rayp = 0.05
-a_gauss = 2.0
+a_gauss = 8.0
 rf_phase = P
 t_pre = 3.0
-n_smp = 500
+n_smp = 2048
 delta = 0.05
-deconv_flag = .true.
+deconv_flag = .false.
 correct_amp = .true.
+noise_added = 0.03
 recv_func_out = recv_func.sac

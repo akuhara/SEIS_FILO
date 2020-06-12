@@ -27,6 +27,7 @@
 module cls_recv_func
   use cls_vmodel
   use cls_signal_process
+  use mod_random
   implicit none 
   
   complex(kind(0d0)), private, parameter :: ei = (0.d0, 1.d0)
@@ -61,6 +62,8 @@ module cls_recv_func
      double precision :: amp_min = -1.d0
      double precision :: amp_max = 1.d0
 
+     double precision :: noise_added = 0.d0
+
    contains
      procedure :: set_vmodel => recv_func_set_vmodel
      procedure :: compute => recv_func_compute
@@ -80,6 +83,7 @@ module cls_recv_func
      procedure :: get_amp_max => recv_func_get_amp_max
      procedure :: save_syn => recv_func_save_syn
      procedure :: get_n_syn_rf => recv_func_get_n_syn_rf
+     procedure :: add_noise => recv_func_add_noise
   end type recv_func
   
   interface recv_func
@@ -92,7 +96,7 @@ contains
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
        & rf_phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
-       & amp_min, amp_max) result(self)
+       & amp_min, amp_max, noise_added) result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
@@ -105,6 +109,7 @@ contains
     integer, intent(in), optional :: n_bin_amp
     double precision, intent(in), optional :: amp_min
     double precision, intent(in), optional :: amp_max
+    double precision, intent(in), optional :: noise_added
     
     
     self%vmodel = vm
@@ -136,6 +141,9 @@ contains
     end if
     if (present(amp_max)) then
        self%amp_max = amp_max
+    end if
+    if (present(noise_added)) then
+       self%noise_added = noise_added
     end if
     
     allocate(self%rf_data(self%n))
@@ -623,4 +631,43 @@ contains
   end function recv_func_get_n_syn_rf
 
   !---------------------------------------------------------------------
+
+  subroutine recv_func_add_noise(self)
+    class(recv_func), intent(inout) :: self
+    integer :: i
+    double precision, allocatable :: noise(:), flt(:)
+    complex(kind(0d0)), allocatable :: noise_c(:)
+    double precision :: fac
+    
+    allocate(noise(self%n))
+    allocate(flt(self%n))
+    allocate(noise_c(self%n))
+
+    ! Generate noise
+    if (self%a_gauss > 0.d0) then
+       fac = self%a_gauss * self%delta / sqrt(pi)
+    else
+       fac = 1.d0
+    end if
+    do i = 1, self%n
+       noise(i) = self%noise_added * rand_g() / fac
+    end do
+    call self%sp%set_t_data(noise)
+    
+    ! Apply filter
+    call self%sp%set_t_data(noise)
+    call self%sp%forward_fft()
+    call self%sp%apply_filter()
+    call self%sp%inverse_fft()
+    noise = self%sp%get_t_data()
+    
+    
+    ! Add noise
+    self%rf_data(1:self%n) = self%rf_data(1:self%n) + noise(1:self%n)
+
+    return 
+  end subroutine recv_func_add_noise
+  
+  !---------------------------------------------------------------------
+  
 end module cls_recv_func

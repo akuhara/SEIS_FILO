@@ -44,7 +44,7 @@ OBJS_DISP_FWD = disper_fwd.o cls_vmodel.o cls_disper.o cls_param.o \
 RF_FWD = $(BINDIR)/recv_func_fwd
 OBJS_RF_FWD = recv_func_fwd.o cls_vmodel.o cls_param.o \
 	 cls_line_text.o cls_signal_process.o \
-	 cls_recv_func.o
+	 cls_recv_func.o mod_random.o
 
 JOINT_INV = $(BINDIR)/joint_inv
 OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
@@ -64,7 +64,7 @@ all: $(TARGET)
 disper_fwd.o: cls_disper.mod cls_vmodel.mod cls_param.mod \
 	        cls_recv_func.mod mod_random.mod
 recv_func_fwd.o: cls_param.mod cls_vmodel.mod cls_signal_process.mod \
-                 cls_recv_func.mod
+                 cls_recv_func.mod mod_random.mod
 joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
               cls_mcmc.mod mod_const.mod cls_interpreter.mod \
               cls_param.mod cls_observation_recv_func.mod \
@@ -72,7 +72,7 @@ joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
               cls_observation_disper.mod mod_output.mod mod_forward.mod \
               cls_proposal.mod cls_hyper_model.mod 
 cls_hyper_model.o: mod_random.mod
-cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod
+cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod mod_random.mod
 cls_disper.o: cls_vmodel.mod mod_random.mod
 cls_trans_d_model.o: mod_random.mod
 cls_mcmc.o: mod_random.mod cls_trans_d_model.mod cls_hyper_model.mod \
