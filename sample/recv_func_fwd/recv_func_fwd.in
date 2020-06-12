@@ -26,13 +26,13 @@ n_smp = 2048
 delta = 0.05
 
 # Deconvolve by vertical component (T)  or not (F)
-deconv_flag = T
+deconv_flag = F
 
 # Correct for amplitude loss by filter (T) or not (F)
-correct_amp = .true.
+correct_amp = T
 
 # Noise level
-noise_added = 0.03
+noise_added = 0.01
 
 # Random number seed
 i_seed1 = 1001

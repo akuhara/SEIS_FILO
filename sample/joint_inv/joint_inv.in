@@ -1,7 +1,7 @@
 # MCMC iteration
-n_iter = 2000
+n_iter = 20000
 n_corr = 10	
-n_burn = 1000
+n_burn = 10000
 
 # Parallel temerping
 n_chain   = 5
@@ -12,7 +12,7 @@ temp_high = 30.0
 # Inversion setting
 solve_vp    = .false.
 is_ocean    = .true.
-solve_rf_sig = .false.
+solve_rf_sig = .true.
 solve_disper_sig = .true.
 ocean_thick = 2.0
 
@@ -29,10 +29,10 @@ z_max  = 30.0
 # MCMC proposal
 dev_vs = 0.03
 dev_vp = 0.03
-dev_z  = 0.03
+dev_z  = 0.05
 
 # Observation file
-recv_func_in = 
+recv_func_in = recv_func.in 
 disper_in    = disper.in
 
 # Output binning
