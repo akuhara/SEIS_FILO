@@ -1,6 +1,6 @@
 # Input parameter file for recv_func_fwd
 
-vmod_in = vmod.in
+vmod_in = ../vmod/vmod.in
 
 rayp = 0.05
 a_gauss = 8.0
