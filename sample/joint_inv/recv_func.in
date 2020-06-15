@@ -8,7 +8,7 @@
 # a_gauss, rayp, delta
 # phase
 # t_start, t_end
-# sigma_min, sigma_max, dev_sigma
+# sig_rf_min, sig_rf_max, dev_sig_rf
 # deconv_flag, correct_amp
 # -----------------------------
 recv_func.sac
