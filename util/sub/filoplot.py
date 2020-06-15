@@ -183,7 +183,9 @@ class InvResult:
         t_min = float(param["t_start"])
 
         del_t = float(param["delta"])
-        t_max = 2 * float(param["t_end"]) - del_t        
+        t_max = 2 * (float(param["t_end"]) - float(param["t_start"])) \
+                + float(param["t_start"]) - del_t    
+        print(t_min, t_max)
         a, t = np.mgrid[slice(amp_min, \
                               amp_max + del_amp, \
                               del_amp), \

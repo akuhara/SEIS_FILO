@@ -271,7 +271,7 @@ program main
      do i = 1, obs_rf%get_n_rf()
         rf(i) = recv_func( &
              & vm = vm, &
-             & n = obs_rf%get_n_smp(i) * 2, &
+             & n = 1024, &!obs_rf%get_n_smp(i) * 2, &
           & delta = obs_rf%get_delta(i), &
           & rayp = obs_rf%get_rayp(i), &
           & a_gauss = obs_rf%get_a_gauss(i), &

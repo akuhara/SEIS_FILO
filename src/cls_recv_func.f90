@@ -59,8 +59,8 @@ module cls_recv_func
      ! for MCMC
      integer, allocatable :: n_syn_rf(:, :)
      integer :: n_bin_amp = 100
-     double precision :: amp_min = -1.d0
-     double precision :: amp_max = 1.d0
+     double precision :: amp_min = -0.6d0
+     double precision :: amp_max = 0.6d0
 
      double precision :: noise_added = 0.d0
 
