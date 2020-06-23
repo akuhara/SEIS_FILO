@@ -494,7 +494,7 @@ program main
      del_amp = (rf(i)%get_amp_max() - rf(i)%get_amp_min()) / &
           & rf(i)%get_n_bin_amp()
      write(filename, '(A6,I3.3,A4)')"syn_rf", i, ".ppd"
-     call output_ppd_2d(filename, rank, obs_rf%get_n_smp(i) * 2, &
+     call output_ppd_2d(filename, rank, 1024, &
           & rf(i)%get_n_bin_amp(), rf(i)%get_n_syn_rf(), &
           & n_mod, obs_rf%get_t_start(i), obs_rf%get_delta(i), &
           & rf(i)%get_amp_min(), del_amp)

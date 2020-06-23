@@ -175,8 +175,8 @@ class InvResult:
         df = pd.read_csv(ppd_file, delim_whitespace=True, \
                          header=None, \
                          names=(alabel, tlabel, plabel))
-        amp_min = -1.0
-        amp_max = 1.0
+        amp_min = -0.6
+        amp_max = 0.6
         n_bin_amp = 100
         del_amp = (amp_max - amp_min) / n_bin_amp
         
@@ -185,8 +185,8 @@ class InvResult:
         del_t = float(param["delta"])
         #t_max = 2 * (float(param["t_end"]) - float(param["t_start"])) \
         #        + float(param["t_start"]) - del_t    
-        t_max = float(param["t_start"]) + 1024 * del_t
-        print(t_min, t_max)
+        t_max = t_min + 1024 * del_t
+    
         a, t = np.mgrid[slice(amp_min, \
                               amp_max + del_amp, \
                               del_amp), \
@@ -197,7 +197,7 @@ class InvResult:
         mappable = ax.pcolormesh(t, a, data, cmap='hot_r')
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel) 
-        ax.set_xlim([t_min, t_max / 2])
+        ax.set_xlim([float(param["t_start"]), float(param["t_end"])])
 
         # plot observation
         b, delta, t, data = self._read_sac(param["syn_rf_file"])
@@ -324,7 +324,7 @@ class InvResult:
             ax.set_ylabel(vlabel)
             cbar = fig.colorbar(mappable, ax=ax)
             cbar.ax.set_ylabel(plabel)
-            df_obs.plot.scatter(flabel, vlabel, ax=ax, s=40, \
+            df_obs.plot.scatter(flabel, vlabel, ax=ax, s=8, \
                                 marker=".", c="blue")
         else:
             ax.text(0.5, 0.5, "N/A", size=40, \
@@ -378,7 +378,7 @@ class InvResult:
         file = "likelihood.history"
         df = pd.read_csv(file, delim_whitespace=True, header=None)
         df.plot(ax=ax, legend=None, linewidth=0.6)
-        ax.set_ylim([-3000,200])
+        ax.set_ylim([-5000,1000])
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Log-likelihood")
         
@@ -493,11 +493,11 @@ class InvResult:
         self._plot_n_layers(fig, ax)
         
         # Receiver function
-        ax = plt.subplot2grid(grid_geom, (1, 0), colspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (1, 0), colspan=1, fig=fig)
         self._plot_recv_func(fig, ax, trace_id)
 
         # Receiver function sigma
-        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=1, fig=fig)
         self._plot_sigma(fig, ax, "recv_func", trace_id)
 
         # Vs-z

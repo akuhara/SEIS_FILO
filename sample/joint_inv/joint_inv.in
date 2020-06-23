@@ -1,13 +1,22 @@
+#-----------------------------------------------------------------------
+# Parameter file for inversion
+# Sample int to joint_inv of SEIS_FILO
+# by Takeshi Akuhara
+#-----------------------------------------------------------------------
+
 # MCMC iteration
-n_iter = 20000
+n_iter = 40000
 n_corr = 10	
-n_burn = 10000
+n_burn = 20000
+
+#-----------------------------------------------------------------------
 
 # Parallel temerping
 n_chain   = 5
 n_cool    = 1
 temp_high = 30.0
 
+#-----------------------------------------------------------------------
 
 # Inversion setting
 solve_vp    = .false.
@@ -16,7 +25,9 @@ solve_rf_sig = .true.
 solve_disper_sig = .true.
 ocean_thick = 2.0
 
-# MCMC prior
+#-----------------------------------------------------------------------
+
+# Prior probability 
 k_min = 1
 k_max = 21 
 vs_min = 1.0
@@ -26,19 +37,27 @@ vp_max = 8.5
 z_min  = 2.0
 z_max  = 30.0
 
+#-----------------------------------------------------------------------
+
 # MCMC proposal
 dev_vs = 0.03
 dev_vp = 0.03
 dev_z  = 0.05
 
-# Observation file
+#-----------------------------------------------------------------------
+
+# Observation summary file
 recv_func_in = recv_func.in 
 disper_in    = disper.in
 
-# Output binning
-n_bin_z  = 50
-n_bin_vp = 25 
-n_bin_vs = 25
+#-----------------------------------------------------------------------
+
+# Number of bins 
+n_bin_z  = 100
+n_bin_vp = 100 
+n_bin_vs = 100
+
+#-----------------------------------------------------------------------
 
 # Random number seeds
 i_seed1 = 11111111  
