@@ -84,6 +84,8 @@ module cls_param
      double precision :: a_gauss
      double precision :: delta
      double precision :: t_pre
+     double precision :: amp_min
+     double precision :: amp_max
      character(len=1) :: rf_phase
      logical :: deconv_flag
      logical :: correct_amp
@@ -181,6 +183,8 @@ module cls_param
      procedure :: get_t_pre => param_get_t_pre
      procedure :: get_rf_phase => param_get_rf_phase
      procedure :: get_delta => param_get_delta
+     procedure :: get_amp_min => param_get_amp_min
+     procedure :: get_amp_max => param_get_amp_max
      procedure :: get_deconv_flag => param_get_deconv_flag
      procedure :: get_correct_amp => param_get_correct_amp
      procedure :: get_recv_func_out => param_get_recv_func_out
@@ -390,6 +394,10 @@ contains
        read(val, *) self%n_smp
     else if (name == "delta") then
        read(val, *) self%delta
+    else if (name == "amp_min") then
+       read(val, *) self%amp_min
+    else if (name == "amp_max") then
+       read(val, *) self%amp_max
     else if (name == "rayp") then
        read(val, *) self%rayp
     else if (name == "a_gauss") then
@@ -965,6 +973,26 @@ contains
 
     return
   end function param_get_delta
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_amp_min(self) result(amp_min)
+    class(param), intent(in) :: self
+
+    amp_min = self%amp_min
+
+    return
+  end function param_get_amp_min
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_amp_max(self) result(amp_max)
+    class(param), intent(in) :: self
+
+    amp_max = self%amp_max
+    
+    return
+  end function param_get_amp_max
 
   !---------------------------------------------------------------------
 

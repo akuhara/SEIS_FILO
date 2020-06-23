@@ -278,7 +278,10 @@ program main
           & rf_phase = obs_rf%get_rf_phase(i), &
           & deconv_flag = obs_rf%get_deconv_flag(i), &
           & t_pre = -obs_rf%get_t_start(i), &
-          & correct_amp = obs_rf%get_correct_amp(i) &
+          & correct_amp = obs_rf%get_correct_amp(i), &
+          & amp_min = para%get_amp_min(), &
+          & amp_max = para%get_amp_max() &
+
           & )
         
      end do
