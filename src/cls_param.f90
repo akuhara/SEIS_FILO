@@ -1156,7 +1156,7 @@ contains
     if (trim(self%recv_func_in) == "" &
          & .and. trim(self%disper_in) == "") then
        if (self%verb) write(0,*)"ERROR: either recv_func_in or " // &
-            & "disper_in must be spcified"
+            & "disper_in must be specified"
        is_ok = .false.
     end if
 
