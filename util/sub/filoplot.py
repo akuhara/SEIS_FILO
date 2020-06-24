@@ -175,8 +175,17 @@ class InvResult:
         df = pd.read_csv(ppd_file, delim_whitespace=True, \
                          header=None, \
                          names=(alabel, tlabel, plabel))
-        amp_min = -0.6
-        amp_max = 0.6
+        if "amp_min" in param:
+            amp_min = float(param["amp_min"])
+        else:
+            amp_min = -0.6
+
+        if "amp_max" in param:
+            amp_max = float(param["amp_max"])
+        else:
+            amp_max = 0.6
+            
+        print(amp_min, amp_max, "AA")
         n_bin_amp = 100
         del_amp = (amp_max - amp_min) / n_bin_amp
         

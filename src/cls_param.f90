@@ -84,8 +84,8 @@ module cls_param
      double precision :: a_gauss
      double precision :: delta
      double precision :: t_pre
-     double precision :: amp_min
-     double precision :: amp_max
+     double precision :: amp_min = -0.6d0
+     double precision :: amp_max = 0.6d0
      character(len=1) :: rf_phase
      logical :: deconv_flag
      logical :: correct_amp
