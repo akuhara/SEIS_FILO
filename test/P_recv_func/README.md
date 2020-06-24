@@ -4,7 +4,7 @@
 ![Compalison](./rf_comp.png)
 
 * Red  : Radial receiver function by `recv_func_fwd`
-* Green: Radial receiver function by CPS
+* Black: Radial receiver function by CPS
 
 __NOTE__: Amplitudes are normalized by direct P arrival for comparison.
 
