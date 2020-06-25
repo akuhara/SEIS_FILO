@@ -6,5 +6,5 @@ delta    = 0.05
 t_pre    = 3.0
 deconv_flag = T
 correct_amp = T
-vmod_in = vmod.in
+vmod_in = ../vmod/vmod_land.in
 recv_func_out = recv_func.sac
