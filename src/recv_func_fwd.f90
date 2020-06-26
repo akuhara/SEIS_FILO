@@ -79,7 +79,11 @@ program main
   
   ! Main
   call rf%compute()
-  call rf%add_noise()
+  if (para%get_noise_added() > 0.d0) then
+     write(*,*)"Now makeing noise with temporal correlation"
+     write(*,*)"This takes a time..."
+     call rf%add_noise()
+  end if
 
   ! Output
   call rf%output_sac(para%get_recv_func_out())
