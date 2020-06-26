@@ -13,7 +13,7 @@ __NOTE__: Amplitudes are normalized by direct P arrival for comparison.
 |:---|:---|:---|:---|
 |5.0|3.0|2.5|5.0|
 |7.0|4.0|3.0|10.0|
-|8.0|4.6|3.3|-|
+|8.1|4.6|3.3|-|
 
 #### Reference:
 
