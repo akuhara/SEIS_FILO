@@ -80,8 +80,6 @@ program main
   ! Main
   call rf%compute()
   if (para%get_noise_added() > 0.d0) then
-     write(*,*)"Now makeing noise with temporal correlation"
-     write(*,*)"This takes a time..."
      call rf%add_noise()
   end if
 

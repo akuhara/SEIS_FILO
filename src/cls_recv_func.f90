@@ -636,40 +636,34 @@ contains
   subroutine recv_func_add_noise(self)
     class(recv_func), intent(inout) :: self
     type(covariance) :: cov
-    integer :: i
-    double precision, allocatable :: noise(:)!, flt(:)
-    !complex(kind(0d0)), allocatable :: noise_c(:)
-    !double precision :: fac
+    integer :: i, j, ierr
+    double precision, allocatable :: noise(:), l(:,:)
     
     allocate(noise(self%n))
-    !allocate(flt(self%n))
-    !allocate(noise_c(self%n))
+    allocate(l(self%n, self%n))
 
+    ! Get covariance matrix 
     cov = covariance(n=self%n, a_gauss=self%a_gauss, &
-         & delta=self%delta, verb=.false.)
-    
-    ! Generate noise
-    !if (self%a_gauss > 0.d0) then
-    !   fac = self%a_gauss * self%delta / sqrt(pi)
-    !else
-    !   fac = 1.d0
-    !end if
-    !do i = 1, self%n
-    !   noise(i) = self%noise_added * rand_g() / fac
-    !end do
-    !call self%sp%set_t_data(noise)
-    !
-    !! Apply filter
-    !call self%sp%set_t_data(noise)
-    !call self%sp%forward_fft()
-    !call self%sp%apply_filter()
-    !call self%sp%inverse_fft()
-    !noise = self%sp%get_t_data()
+         & delta=self%delta, verb=.false., no_inv = .true.)
+
+    ! Cholesky decomposition
+    l = cov%get_r_mat()
+    call dpotrf("U", self%n, l, self%n, ierr)
+    if (ierr /= 0) then
+       write(0,*)"ERROR: while Cholesky decomposotion"
+       stop
+    end if
+    do j = 1, self%n - 1
+       do i = j + 1, self%n
+          l(j, i) = 0.d0
+       end do
+    end do
 
     do i = 1, self%n
-       noise(i) = self%noise_added * rand_g() 
+       noise(i) = self%noise_added * rand_g()
     end do
-    noise = matmul(cov%get_r_mat(), noise)
+    noise = matmul(noise, l)
+
     
     ! Add noise
     self%rf_data(1:self%n) = self%rf_data(1:self%n) + noise(1:self%n)

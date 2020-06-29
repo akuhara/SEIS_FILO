@@ -55,7 +55,7 @@ OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
 	 cls_disper.o mod_output.o mod_forward.o cls_proposal.o \
 	 cls_hyper_model.o
 
-TARGET = $(DISP_FWD) $(RF_FWD) $(JOINT_INV)
+TARGET = $(DISP_FWD) $(RF_FWD) $(JOINT_INV) 
 
 .PHONY: all
 all: $(TARGET)
@@ -91,6 +91,7 @@ mod_forward.o: cls_trans_d_model.mod cls_interpreter.mod \
                cls_vmodel.mod mod_const.mod cls_covariance.mod \
 	       cls_hyper_model.mod
 mod_output.o: cls_parallel.mod 
+
 
 $(DISP_FWD): $(OBJS_DISP_FWD)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi

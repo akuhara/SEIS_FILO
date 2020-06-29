@@ -147,6 +147,7 @@ program main
           & n       = obs_rf%get_n_smp(i),   &
           & a_gauss = obs_rf%get_a_gauss(i), &
           & delta   = obs_rf%get_delta(i),   &
+          & no_inv = .false.,                &
           & verb  = verb                     &
           & )
   end do
