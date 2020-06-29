@@ -655,7 +655,7 @@ contains
     end if
     do j = 1, self%n - 1
        do i = j + 1, self%n
-          l(j, i) = 0.d0
+          l(i, j) = 0.d0
        end do
     end do
 
