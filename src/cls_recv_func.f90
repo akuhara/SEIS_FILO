@@ -662,7 +662,7 @@ contains
     do i = 1, self%n
        noise(i) = self%noise_added * rand_g()
     end do
-    noise = matmul(noise, l)
+    noise = matmul(l, noise)
 
     
     ! Add noise
