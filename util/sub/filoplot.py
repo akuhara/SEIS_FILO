@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import struct
+from matplotlib.ticker import MaxNLocator
 
 class InvResult:
     def __init__(self, param_file):
@@ -61,6 +62,7 @@ class InvResult:
                          names=(xlabel, ylabel))
         df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
         ax.set_ylabel(ylabel)
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     #---------------------------------------------------------------
 
@@ -207,6 +209,9 @@ class InvResult:
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel) 
         ax.set_xlim([float(param["t_start"]), float(param["t_end"])])
+
+        ax.set_xlabel(tlabel)
+        ax.set_ylabel(alabel)
 
         # plot observation
         b, delta, t, data = self._read_sac(param["syn_rf_file"])
