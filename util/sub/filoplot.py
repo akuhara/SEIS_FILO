@@ -391,7 +391,17 @@ class InvResult:
         param = self._param
         file = "likelihood.history"
         df = pd.read_csv(file, delim_whitespace=True, header=None)
-        df.plot(ax=ax, legend=None, linewidth=0.6)
+        n_all = len(df.columns)
+        if n_all > 5:
+            df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
+            n1 = 0
+            nn = n_all // 4
+            n2 = nn * 1
+            n3 = nn * 2
+            n4 = nn * 3
+            n5 = n_all - 1
+            df = df.iloc[:, [n1, n2, n3, n4, n5]]
+        df.plot(ax=ax, legend=None, linewidth=2.0)
         ax.set_ylim([-5000,1000])
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Log-likelihood")
@@ -402,7 +412,17 @@ class InvResult:
         param = self._param
         file = "temp.history"
         df = pd.read_csv(file, delim_whitespace=True, header=None)
-        df.plot(ax=ax, legend=None, linewidth=0.6)
+        n_all = len(df.columns)
+        if n_all > 5:
+            df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
+            n1 = 0
+            nn = n_all // 4
+            n2 = nn * 1
+            n3 = nn * 2
+            n4 = nn * 3
+            n5 = n_all - 1
+            df = df.iloc[:, [n1, n2, n3, n4, n5]]
+        df.plot(ax=ax, legend=None, linewidth=2.0)
     
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Temperature")
