@@ -5,7 +5,7 @@ Copyright (C) 2019-2020 Takeshi Akuhara
 
 __NOTE: Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. Anythings in codes and documents can change without notification.__
 
-![plot](./img/sample_output.png)
+![plot](./img/disper01.png)
 ---
 
 The SEIS_FILO program package aims to carry out transdimensional joint inversion of surface waves and receiver functions for ocean-bottom observatories. The main features are: 
