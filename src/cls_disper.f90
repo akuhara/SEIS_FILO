@@ -234,7 +234,7 @@ contains
           end if
        else
           ! full calculation
-          write(*,*)"FULL"
+          ! write(*,*)"FULL"
           call self%do_full_calculation(omega)
        end if
     end do
