@@ -33,6 +33,6 @@ i_seed3 = 333003
 i_seed4 = 4444004
 
 # Output filename
-disper_out = disper_test.out
+disper_out = disper.out
 
 
