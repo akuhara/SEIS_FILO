@@ -18,3 +18,6 @@ branches:
 script:
   - cd src && make FFTW="-I/usr/include -lfftw3" COV="-fprofile-arcs -ftest-coverage"
   - cd ../sample/recv_func_fwd && ../../bin/recv_func_fwd recv_func_fwd.in
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
