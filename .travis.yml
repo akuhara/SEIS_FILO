@@ -17,4 +17,4 @@ branches:
 
 script:
   - cd src && make FFTW="-I/usr/include -lfftw3" COV="-fprofile-arcs -ftest-coverage"
-  - cd ../sample/joint_inv && ../../bin/recv_func_fwd recv_func_fwd.in
+  - cd ../sample/recv_func_fwd && ../../bin/recv_func_fwd recv_func_fwd.in
