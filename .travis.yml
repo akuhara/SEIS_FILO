@@ -1,4 +1,4 @@
-addon:
+addons:
   apt:
     packages:
     - gfortran
