@@ -3,7 +3,8 @@ language: minimal
 addons:
   apt:
     packages:
-    - gfortran
+      ['gfortran','liblapack-dev','libopenmpi-dev']
+   
 git:
   depth: false
     
