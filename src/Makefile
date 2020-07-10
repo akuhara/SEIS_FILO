@@ -34,7 +34,7 @@ LAPACK = -llapack -lblas
 #-----------------------------------------------------------------------
 # DONOT CHANGE BELOW
 #-----------------------------------------------------------------------
-
+COV =
 BINDIR = ../bin
 DISP_FWD = $(BINDIR)/disper_fwd
 OBJS_DISP_FWD = disper_fwd.o cls_vmodel.o cls_disper.o cls_param.o \
@@ -95,20 +95,20 @@ mod_output.o: cls_parallel.mod
 
 $(DISP_FWD): $(OBJS_DISP_FWD)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(FC) $(FFLAGS) $^ -o $@
+	$(FC) $(FFLAGS) $(COV) $^ -o $@
 
 $(RF_FWD): $(OBJS_RF_FWD)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
+	$(FC) $(FFLAGS) $(COV) $^ -o $@ $(FFTW) $(LAPACK)
 
 $(JOINT_INV): $(OBJS_JOINT_INV)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
+	$(FC) $(FFLAGS) $(COV) $^ -o $@ $(FFTW) $(LAPACK)
 
 clean:
 	rm -f *.mod $(BINDIR)/* *.o
 
 %.o: %.f90
-	$(FC) $(FFLAGS) -c $< $(FFTW) $(LAPACK) -o $*.o 
+	$(FC) $(FFLAGS) $(COV) -c $< $(FFTW) $(LAPACK) -o $*.o 
 %.mod: %.f90 %.o
 	@:
