@@ -7,7 +7,7 @@ __SEISmological inversion tools for Flat and Isotropic Layered structures in the
 
 Copyright (C) 2019-2020 Takeshi Akuhara
 
-__NOTE: Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. Anythings in codes and documents can change without notification.__
+__NOTE: Currently, the software undergoes alpha testing: most functions work as intended but are not thoroughly tested yet. Anythings in codes and documents can change without notification.__
 
 ![plot](./img/disper01.png)
 ---
