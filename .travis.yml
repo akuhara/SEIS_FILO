@@ -10,3 +10,6 @@ git:
 branches:
   only: 
   - master
+
+script:
+  cd src && make
