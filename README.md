@@ -2,9 +2,9 @@
 
 __SEISmological inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
-Copyright (C) 2019-2020 Takeshi Akuhara
-
 [![Build Status](https://travis-ci.org/akuhara/SEIS_FILO.svg?branch=master)](https://travis-ci.org/akuhara/SEIS_FILO)
+
+Copyright (C) 2019-2020 Takeshi Akuhara
 
 __NOTE: Currently, the software undergoes alpha testing: part of functions seem to work but not thoroughly tested yet. Anythings in codes and documents can change without notification.__
 
