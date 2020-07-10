@@ -638,6 +638,7 @@ contains
     type(covariance) :: cov
     integer :: i, j, ierr
     double precision, allocatable :: noise(:), l(:,:)
+    double precision :: w
     
     allocate(noise(self%n))
     allocate(l(self%n, self%n))
@@ -648,6 +649,7 @@ contains
 
     ! Cholesky decomposition
     l = cov%get_r_mat()
+    l = l * self%noise_added ** 2
     call dpotrf("U", self%n, l, self%n, ierr)
     if (ierr /= 0) then
        write(0,*)"ERROR: while Cholesky decomposotion"
@@ -658,13 +660,19 @@ contains
           l(i, j) = 0.d0
        end do
     end do
+    
 
     do i = 1, self%n
-       noise(i) = self%noise_added * rand_g()
+       noise(i) = rand_g()
     end do
     noise = matmul(l, noise)
 
-    
+    w = -log(rand_u())
+    ! Make it Laplacian
+    do i = 1, self%n
+       noise(i) = noise(i) * sqrt(w)
+    end do
+
     ! Add noise
     self%rf_data(1:self%n) = self%rf_data(1:self%n) + noise(1:self%n)
 

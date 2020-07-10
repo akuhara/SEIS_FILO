@@ -15,6 +15,7 @@ module mod_forward
   
   double precision, parameter, private :: log_2pi_half &
        & = 0.5d0 * log(2.d0 * acos(-1.d0)) 
+  double precision, parameter :: pi = acos(-1.d0)
   
 contains
   
@@ -63,9 +64,11 @@ contains
        end do
        phi1 = matmul(misfit, cov(i)%get_inv())
        phi = dot_product(phi1, misfit)
-       log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
-            & - n * log_2pi_half - n * log(s) &
-            & - 0.5d0 * cov(i)%get_log_det_r()
+       !log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
+       !     & - n * log_2pi_half - n * log(s) &
+       !     & - 0.5d0 * cov(i)%get_log_det_r()
+       log_likelihood = log_likelihood - sqrt(2.0 * phi) &
+            & - 0.25d0 * (n - 1) * log(phi) - n * log(s)
        deallocate(misfit, phi1)
     end do
     
@@ -144,5 +147,4 @@ contains
   
   !---------------------------------------------------------------------
   
-
 end module mod_forward

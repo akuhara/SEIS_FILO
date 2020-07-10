@@ -3,14 +3,14 @@
 #-----------------------------------------------------------------------
 
 # Example 1. GNU fortran for debug
-#FC     = mpifort
-#FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized 
-#         -ffpe-trap=invalid,zero,overflow -fbacktrace 
+FC     = mpifort
+FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 \
+        -Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace 
 
 
 # Example 2. GNU fortran for fast computation
-FC     = mpifort
-FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+#FC     = mpifort
+#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 # Example 3. Intel compiler for debug
 #FC      = mpif90
@@ -55,10 +55,16 @@ OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
 	 cls_disper.o mod_output.o mod_forward.o cls_proposal.o \
 	 cls_hyper_model.o
 
+GEN_NOISE = $(BINDIR)/test_tool/gen_noise
+OBJS_GEN_NOISE = gen_noise.o cls_vmodel.o cls_param.o \
+	 cls_line_text.o cls_signal_process.o \
+	 cls_recv_func.o mod_random.o cls_covariance.o
+
 TARGET = $(DISP_FWD) $(RF_FWD) $(JOINT_INV) 
+TEST_TOOL = $(GEN_NOISE) 
 
 .PHONY: all
-all: $(TARGET)
+all: $(TARGET) $(TEST_TOOL)
 
 
 disper_fwd.o: cls_disper.mod cls_vmodel.mod cls_param.mod \
@@ -92,6 +98,9 @@ mod_forward.o: cls_trans_d_model.mod cls_interpreter.mod \
 	       cls_hyper_model.mod
 mod_output.o: cls_parallel.mod 
 
+gen_noise.o: cls_param.mod cls_vmodel.mod cls_signal_process.mod \
+                 cls_recv_func.mod mod_random.mod cls_covariance.mod
+
 
 $(DISP_FWD): $(OBJS_DISP_FWD)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
@@ -102,6 +111,10 @@ $(RF_FWD): $(OBJS_RF_FWD)
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
 
 $(JOINT_INV): $(OBJS_JOINT_INV)
+	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
+	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
+
+$(GEN_NOISE): $(OBJS_GEN_NOISE)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
 
