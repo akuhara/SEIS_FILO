@@ -4,8 +4,9 @@ addons:
   apt:
     packages:
     - gfortran
-
-
+git:
+  depth: false
+    
 branches:
   only: 
   - master
