@@ -1,0 +1,8 @@
+addon:
+  apt:
+    packages:
+    - gfortran
+
+branches:
+  only: 
+  - master
