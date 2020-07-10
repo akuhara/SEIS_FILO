@@ -16,4 +16,4 @@ branches:
   - master
 
 script:
-  cd src && make
+  cd src && make FFTW="-I/usr/local -lfftw3" 
