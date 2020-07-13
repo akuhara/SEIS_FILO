@@ -2,7 +2,7 @@
 fmin = 0.01
 fmax = 1.0
 df   = 0.002
-vmod_in = vmod.in
+vmod_in = ../vmod/vmod_ocean.in
 cmin    = 1.5
 cmax    = 4.6
 dc      = 0.02

@@ -1,15 +1,16 @@
-# Test for Rayleigh wave dispersion curves (ocean case)
+# Test for P receiver function
 #### Comparison to [Computer Programs in Seismology (CPS) by Harrmann](http://www.eas.slu.edu/eqc/eqccps.html)
 
-![Compalison](./rayleigh_test.png)
+![Compalison](./rf_comp.png)
 
-* Red and blue: Dispersion functions by `disper_fwd`
-* Green: Dispersion curves by CPS
+* Red  : Radial receiver function by `recv_func_fwd`
+* Black: Radial receiver function by CPS
+
+__NOTE__: Amplitudes are normalized by direct P arrival for comparison.
 
 #### Tested model
 |Vp (km/s)|Vs (km/s)|rho (g/cm^3)|Thickness (km)|
 |:---|:---|:---|:---|
-|1.5|-  |1.0|2.0|
 |5.0|3.0|2.5|5.0|
 |7.0|4.0|3.0|10.0|
 |8.1|4.6|3.3|-|

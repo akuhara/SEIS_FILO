@@ -28,6 +28,7 @@ program main
   use cls_param
   use cls_vmodel
   use cls_recv_func
+  use mod_random
   implicit none   
   integer :: n_arg
   character(len=200) :: param_file
@@ -54,6 +55,13 @@ program main
 
   ! Set velocity model
   call vm%read_file(para%get_vmod_in())
+
+  ! Init random generator
+  call init_random(para%get_i_seed1(), &
+       &           para%get_i_seed2(), &
+       &           para%get_i_seed3(), &
+       &           para%get_i_seed4())
+
   
   ! Init RF
   rf = recv_func(&
@@ -65,12 +73,16 @@ program main
        & rf_phase = para%get_rf_phase(), &
        & deconv_flag = para%get_deconv_flag(), &
        & t_pre = para%get_t_pre(), &
-       & correct_amp = para%get_correct_amp()&
+       & correct_amp = para%get_correct_amp(), &
+       & noise_added = para%get_noise_added() &
        & )
   
   ! Main
   call rf%compute()
-  
+  if (para%get_noise_added() > 0.d0) then
+     call rf%add_noise()
+  end if
+
   ! Output
   call rf%output_sac(para%get_recv_func_out())
 

@@ -87,6 +87,8 @@ module cls_param
      double precision :: a_gauss
      double precision :: delta
      double precision :: t_pre
+     double precision :: amp_min = -0.6d0
+     double precision :: amp_max = 0.6d0
      character(len=1) :: rf_phase
      logical :: deconv_flag
      logical :: correct_amp
@@ -104,8 +106,13 @@ module cls_param
      integer :: n_mode = -999
      character(len=1) :: disper_phase
      
-     character(len=line_max) :: ref_vmod_in = ""
+
+     ! Noise level added to forward computation 
+     double precision :: noise_added = 0.d0
+     
+     ! I/O file
      character(len=line_max) :: vmod_in = ""
+     character(len=line_max) :: ref_vmod_in = ""
      character(len=line_max) :: disper_out = ""
      character(len=line_max) :: disper_in = ""
      character(len=line_max) :: recv_func_in = ""
@@ -186,6 +193,8 @@ module cls_param
      procedure :: get_t_pre => param_get_t_pre
      procedure :: get_rf_phase => param_get_rf_phase
      procedure :: get_delta => param_get_delta
+     procedure :: get_amp_min => param_get_amp_min
+     procedure :: get_amp_max => param_get_amp_max
      procedure :: get_deconv_flag => param_get_deconv_flag
      procedure :: get_correct_amp => param_get_correct_amp
      procedure :: get_recv_func_out => param_get_recv_func_out
@@ -194,6 +203,8 @@ module cls_param
      procedure :: get_vs_bottom => param_get_vs_bottom
      procedure :: get_rho_bottom => param_get_rho_bottom
      
+     procedure :: get_noise_added => param_get_noise_added
+
      procedure :: check_mcmc_params => param_check_mcmc_params
      procedure :: check_recv_func_fwd_params &
           & => param_check_recv_func_fwd_params
@@ -395,6 +406,10 @@ contains
        read(val, *) self%n_smp
     else if (name == "delta") then
        read(val, *) self%delta
+    else if (name == "amp_min") then
+       read(val, *) self%amp_min
+    else if (name == "amp_max") then
+       read(val, *) self%amp_max
     else if (name == "rayp") then
        read(val, *) self%rayp
     else if (name == "a_gauss") then
@@ -419,6 +434,8 @@ contains
        read(val, *) self%rho_bottom
     else if (name == "ref_vmod_in") then
        self%ref_vmod_in = val
+    else if (name == "noise_added") then
+       read(val, *) self%noise_added
     else
        if (self%verb) then
           write(0,*)"ERROR: Invalid parameter name"
@@ -1014,6 +1031,26 @@ contains
 
   !---------------------------------------------------------------------
 
+  double precision function param_get_amp_min(self) result(amp_min)
+    class(param), intent(in) :: self
+
+    amp_min = self%amp_min
+
+    return
+  end function param_get_amp_min
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_amp_max(self) result(amp_max)
+    class(param), intent(in) :: self
+
+    amp_max = self%amp_max
+    
+    return
+  end function param_get_amp_max
+
+  !---------------------------------------------------------------------
+
   double precision function param_get_t_pre(self) result(t_pre)
     class(param), intent(in) :: self
 
@@ -1092,6 +1129,17 @@ contains
     
     return 
   end function param_get_rho_bottom
+
+  !---------------------------------------------------------------------
+  
+  double precision function param_get_noise_added(self) &
+       & result(noise_added)
+    class(param), intent(in) :: self
+
+    noise_added = self%noise_added
+    
+    return 
+  end function param_get_noise_added
   
   !---------------------------------------------------------------------
 
@@ -1187,6 +1235,15 @@ contains
             & "ocean_thick for ocean mode"
        is_ok = .false.
     end if
+
+    if (trim(self%recv_func_in) == "" &
+         & .and. trim(self%disper_in) == "") then
+       if (self%verb) write(0,*)"ERROR: either recv_func_in or " // &
+            & "disper_in must be specified"
+       is_ok = .false.
+    end if
+
+       
 
     return 
   end subroutine param_check_mcmc_params

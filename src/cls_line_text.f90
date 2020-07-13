@@ -133,7 +133,7 @@ contains
        is_ok = .false.
     else
        name = self%line(1:j-1)
-       val = self%line(j+1:self%nlen)
+       val = trim(adjustl(self%line(j+1:self%nlen)))
        is_ok = .true.
     end if
     

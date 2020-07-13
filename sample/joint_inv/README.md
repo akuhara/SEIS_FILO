@@ -7,11 +7,11 @@
 
 ## Input files
 
-* [joint_inv.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/joint_inv.in): the main parameter file
-* [disper.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/disper.in): observation summary file for dispersion curves
-* [rayleigh.0th](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/rayleigh.0th): observed data (phase & group velocities of the fundamental Rayleigh mode)
-* [recv_func.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/recv_func.in): observation summary file for receiver functions
-* [recv_func.sac](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/recv_func.sac): observed data (P receiver function)
+* [joint_inv.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/joint_inv.in): main parameter file
+* [disper.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/disper.in): data summary file for dispersion curves
+* [rayleigh.0th](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/rayleigh.0th): data file (phase & group velocities of the fundamental Rayleigh mode)
+* [recv_func.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/recv_func.in): data summary file for receiver functions
+* [recv_func.sac](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/recv_func.sac): data file (P receiver function)
 
 ## How to make plots
 

@@ -407,6 +407,11 @@ contains
        call vm%vp2rho_brocher(k+1+i1)
     end if
     
+    if (any(self%wrk_vs(i1+1:i1+k+1) > self%vs_max)) then
+       write(*,*)"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+       is_ok = .false.
+    end if
+
     !call vm%display()
     
     return 

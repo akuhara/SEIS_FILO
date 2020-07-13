@@ -27,6 +27,8 @@
 module cls_recv_func
   use cls_vmodel
   use cls_signal_process
+  use cls_covariance
+  use mod_random
   implicit none 
   
   complex(kind(0d0)), private, parameter :: ei = (0.d0, 1.d0)
@@ -58,8 +60,10 @@ module cls_recv_func
      ! for MCMC
      integer, allocatable :: n_syn_rf(:, :)
      integer :: n_bin_amp = 100
-     double precision :: amp_min = -1.d0
-     double precision :: amp_max = 1.d0
+     double precision :: amp_min = -0.6d0
+     double precision :: amp_max = 0.6d0
+
+     double precision :: noise_added = 0.d0
 
    contains
      procedure :: set_vmodel => recv_func_set_vmodel
@@ -80,6 +84,7 @@ module cls_recv_func
      procedure :: get_amp_max => recv_func_get_amp_max
      procedure :: save_syn => recv_func_save_syn
      procedure :: get_n_syn_rf => recv_func_get_n_syn_rf
+     procedure :: add_noise => recv_func_add_noise
   end type recv_func
   
   interface recv_func
@@ -92,7 +97,7 @@ contains
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
        & rf_phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
-       & amp_min, amp_max) result(self)
+       & amp_min, amp_max, noise_added) result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
@@ -105,6 +110,7 @@ contains
     integer, intent(in), optional :: n_bin_amp
     double precision, intent(in), optional :: amp_min
     double precision, intent(in), optional :: amp_max
+    double precision, intent(in), optional :: noise_added
     
     
     self%vmodel = vm
@@ -136,6 +142,9 @@ contains
     end if
     if (present(amp_max)) then
        self%amp_max = amp_max
+    end if
+    if (present(noise_added)) then
+       self%noise_added = noise_added
     end if
     
     allocate(self%rf_data(self%n))
@@ -623,4 +632,45 @@ contains
   end function recv_func_get_n_syn_rf
 
   !---------------------------------------------------------------------
+
+  subroutine recv_func_add_noise(self)
+    class(recv_func), intent(inout) :: self
+    type(covariance) :: cov
+    integer :: i, j, ierr
+    double precision, allocatable :: noise(:), l(:,:)
+    
+    allocate(noise(self%n))
+    allocate(l(self%n, self%n))
+
+    ! Get covariance matrix 
+    cov = covariance(n=self%n, a_gauss=self%a_gauss, &
+         & delta=self%delta, verb=.false., no_inv = .true.)
+
+    ! Cholesky decomposition
+    l = cov%get_r_mat()
+    call dpotrf("U", self%n, l, self%n, ierr)
+    if (ierr /= 0) then
+       write(0,*)"ERROR: while Cholesky decomposotion"
+       stop
+    end if
+    do j = 1, self%n - 1
+       do i = j + 1, self%n
+          l(i, j) = 0.d0
+       end do
+    end do
+
+    do i = 1, self%n
+       noise(i) = self%noise_added * rand_g()
+    end do
+    noise = matmul(l, noise)
+
+    
+    ! Add noise
+    self%rf_data(1:self%n) = self%rf_data(1:self%n) + noise(1:self%n)
+
+    return 
+  end subroutine recv_func_add_noise
+  
+  !---------------------------------------------------------------------
+  
 end module cls_recv_func

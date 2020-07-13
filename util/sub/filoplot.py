@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import struct
+from matplotlib.ticker import MaxNLocator
 
 class InvResult:
     def __init__(self, param_file):
@@ -60,6 +61,49 @@ class InvResult:
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          names=(xlabel, ylabel))
         df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
+        ax.set_ylabel(ylabel)
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    #---------------------------------------------------------------
+
+    def _plot_sigma(self, fig, ax, mode, trace_id):
+        param = self._param
+        clabel = "Phase vel. (km/s)"
+        c_used = "Phase velocity is used?"
+        ulabel = "Group vel. (km/s)"
+        u_used = "Group velocity is used?"
+
+        if mode == "group":
+            file = "group_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = u_used
+        elif mode == "phase":
+            file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = c_used
+        elif mode == "recv_func":
+            file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
+        
+        if mode == "group" or mode == "phase":
+            df = pd.read_csv(param["obs_disper_file"],\
+                             delim_whitespace=True, \
+                             header=None, \
+                             names=(clabel, c_used, ulabel, u_used), \
+                             comment='#')
+            df_obs = df[df[used_label] == "T"]
+        else:
+            df_obs = (999,)
+
+        xlabel = "Standard deviation of data noise"
+        ylabel = "Probability"
+        if len(df_obs) > 0:
+            df = pd.read_csv(file, delim_whitespace=True, header=None, \
+                             names=(xlabel, ylabel))
+            df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
+        else:
+            ax.text(0.5, 0.5, "N/A", size=40, \
+                    horizontalalignment="center", \
+                    verticalalignment="center")
+            ax.set_xlabel(xlabel)
+            
         ax.set_ylabel(ylabel)
 
     #---------------------------------------------------------------
@@ -175,15 +219,27 @@ class InvResult:
         df = pd.read_csv(ppd_file, delim_whitespace=True, \
                          header=None, \
                          names=(alabel, tlabel, plabel))
-        amp_min = -1.0
-        amp_max = 1.0
+        if "amp_min" in param:
+            amp_min = float(param["amp_min"])
+        else:
+            amp_min = -0.6
+
+        if "amp_max" in param:
+            amp_max = float(param["amp_max"])
+        else:
+            amp_max = 0.6
+            
+        print(amp_min, amp_max, "AA")
         n_bin_amp = 100
         del_amp = (amp_max - amp_min) / n_bin_amp
         
         t_min = float(param["t_start"])
 
         del_t = float(param["delta"])
-        t_max = 2 * float(param["t_end"]) - del_t        
+        #t_max = 2 * (float(param["t_end"]) - float(param["t_start"])) \
+        #        + float(param["t_start"]) - del_t    
+        t_max = t_min + 1024 * del_t
+    
         a, t = np.mgrid[slice(amp_min, \
                               amp_max + del_amp, \
                               del_amp), \
@@ -194,7 +250,10 @@ class InvResult:
         mappable = ax.pcolormesh(t, a, data, cmap='hot_r')
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel) 
-        ax.set_xlim([t_min, t_max / 2])
+        ax.set_xlim([float(param["t_start"]), float(param["t_end"])])
+
+        ax.set_xlabel(tlabel)
+        ax.set_ylabel(alabel)
 
         # plot observation
         b, delta, t, data = self._read_sac(param["syn_rf_file"])
@@ -321,7 +380,7 @@ class InvResult:
             ax.set_ylabel(vlabel)
             cbar = fig.colorbar(mappable, ax=ax)
             cbar.ax.set_ylabel(plabel)
-            df_obs.plot.scatter(flabel, vlabel, ax=ax, s=40, \
+            df_obs.plot.scatter(flabel, vlabel, ax=ax, s=8, \
                                 marker=".", c="blue")
         else:
             ax.text(0.5, 0.5, "N/A", size=40, \
@@ -374,8 +433,18 @@ class InvResult:
         param = self._param
         file = "likelihood.history"
         df = pd.read_csv(file, delim_whitespace=True, header=None)
-        df.plot(ax=ax, legend=None, linewidth=0.6)
-        ax.set_ylim([-3000,200])
+        n_all = len(df.columns)
+        if n_all > 5:
+            df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
+            n1 = 0
+            nn = n_all // 4
+            n2 = nn * 1
+            n3 = nn * 2
+            n4 = nn * 3
+            n5 = n_all - 1
+            df = df.iloc[:, [n1, n2, n3, n4, n5]]
+        df.plot(ax=ax, legend=None, linewidth=2.0)
+        ax.set_ylim([-5000,1000])
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Log-likelihood")
         
@@ -385,7 +454,17 @@ class InvResult:
         param = self._param
         file = "temp.history"
         df = pd.read_csv(file, delim_whitespace=True, header=None)
-        df.plot(ax=ax, legend=None, linewidth=0.6)
+        n_all = len(df.columns)
+        if n_all > 5:
+            df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
+            n1 = 0
+            nn = n_all // 4
+            n2 = nn * 1
+            n3 = nn * 2
+            n4 = nn * 3
+            n5 = n_all - 1
+            df = df.iloc[:, [n1, n2, n3, n4, n5]]
+        df.plot(ax=ax, legend=None, linewidth=2.0)
     
         ax.set_xlabel("Iteration #")
         ax.set_ylabel("Temperature")
@@ -406,8 +485,9 @@ class InvResult:
         #    df.index = ['Birth', 'Death', 'Depth', 'Vs']
         
         df.columns = ['Proposed', 'Accepted']
+        df.index.name = 'Proposal type'
         df.plot(kind='bar', ax=ax)
-        
+
 
     #---------------------------------------------------------------
 
@@ -489,11 +569,11 @@ class InvResult:
         self._plot_n_layers(fig, ax)
         
         # Receiver function
-        ax = plt.subplot2grid(grid_geom, (1, 0), colspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (1, 0), colspan=1, fig=fig)
         self._plot_recv_func(fig, ax, trace_id)
 
         # Receiver function sigma
-        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=1, fig=fig)
         self._plot_sigma(fig, ax, "recv_func", trace_id)
 
         # Vs-z

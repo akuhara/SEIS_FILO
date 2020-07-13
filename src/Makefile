@@ -4,9 +4,9 @@
 
 # Example 1. GNU fortran for debug
 FC     = mpifort
-FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 -Wuninitialized 
-         -ffpe-trap=invalid,zero,overflow -fbacktrace 
-
+FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 \
+         -Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace 
+ 
 
 # Example 2. GNU fortran for fast computation
 #FC     = mpifort
@@ -34,17 +34,17 @@ LAPACK = -llapack -lblas
 #-----------------------------------------------------------------------
 # DONOT CHANGE BELOW
 #-----------------------------------------------------------------------
-
+COV =
 BINDIR = ../bin
 DISP_FWD = $(BINDIR)/disper_fwd
 OBJS_DISP_FWD = disper_fwd.o cls_vmodel.o cls_disper.o cls_param.o \
-	       cls_line_text.o
+	       cls_line_text.o mod_random.o
 
 
 RF_FWD = $(BINDIR)/recv_func_fwd
 OBJS_RF_FWD = recv_func_fwd.o cls_vmodel.o cls_param.o \
 	 cls_line_text.o cls_signal_process.o \
-	 cls_recv_func.o
+	 cls_recv_func.o mod_random.o cls_covariance.o
 
 JOINT_INV = $(BINDIR)/joint_inv
 OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
@@ -55,16 +55,16 @@ OBJS_JOINT_INV = joint_inv.o cls_parallel.o mod_random.o \
 	 cls_disper.o mod_output.o mod_forward.o cls_proposal.o \
 	 cls_hyper_model.o
 
-TARGET = $(DISP_FWD) $(RF_FWD) $(JOINT_INV)
+TARGET = $(DISP_FWD) $(RF_FWD) $(JOINT_INV) 
 
 .PHONY: all
 all: $(TARGET)
 
 
 disper_fwd.o: cls_disper.mod cls_vmodel.mod cls_param.mod \
-	        cls_recv_func.mod
+	        cls_recv_func.mod mod_random.mod
 recv_func_fwd.o: cls_param.mod cls_vmodel.mod cls_signal_process.mod \
-                 cls_recv_func.mod
+                 cls_recv_func.mod mod_random.mod cls_covariance.mod
 joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
               cls_mcmc.mod mod_const.mod cls_interpreter.mod \
               cls_param.mod cls_observation_recv_func.mod \
@@ -72,8 +72,9 @@ joint_inv.o:  cls_parallel.mod mod_random.mod cls_trans_d_model.mod \
               cls_observation_disper.mod mod_output.mod mod_forward.mod \
               cls_proposal.mod cls_hyper_model.mod 
 cls_hyper_model.o: mod_random.mod
-cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod
-cls_disper.o: cls_vmodel.mod
+cls_recv_func.o: cls_vmodel.mod cls_signal_process.mod mod_random.mod \
+	         cls_covariance.mod
+cls_disper.o: cls_vmodel.mod mod_random.mod
 cls_trans_d_model.o: mod_random.mod
 cls_mcmc.o: mod_random.mod cls_trans_d_model.mod cls_hyper_model.mod \
             cls_proposal.mod
@@ -91,22 +92,23 @@ mod_forward.o: cls_trans_d_model.mod cls_interpreter.mod \
 	       cls_hyper_model.mod
 mod_output.o: cls_parallel.mod 
 
+
 $(DISP_FWD): $(OBJS_DISP_FWD)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(FC) $(FFLAGS) $^ -o $@
+	$(FC) $(FFLAGS) $(COV) $^ -o $@
 
 $(RF_FWD): $(OBJS_RF_FWD)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(FC) $(FFLAGS) $^ -o $@ $(FFTW)
+	$(FC) $(FFLAGS) $(COV) $^ -o $@ $(FFTW) $(LAPACK)
 
 $(JOINT_INV): $(OBJS_JOINT_INV)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(FC) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK)
+	$(FC) $(FFLAGS) $(COV) $^ -o $@ $(FFTW) $(LAPACK)
 
 clean:
 	rm -f *.mod $(BINDIR)/* *.o
 
 %.o: %.f90
-	$(FC) $(FFLAGS) -c $< $(FFTW) $(LAPACK) -o $*.o 
+	$(FC) $(FFLAGS) $(COV) -c $< $(FFTW) $(LAPACK) -o $*.o 
 %.mod: %.f90 %.o
 	@:

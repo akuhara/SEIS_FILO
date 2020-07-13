@@ -147,6 +147,7 @@ program main
           & n       = obs_rf%get_n_smp(i),   &
           & a_gauss = obs_rf%get_a_gauss(i), &
           & delta   = obs_rf%get_delta(i),   &
+          & no_inv = .false.,                &
           & verb  = verb                     &
           & )
   end do
@@ -291,14 +292,17 @@ program main
      do i = 1, obs_rf%get_n_rf()
         rf(i) = recv_func( &
              & vm = vm, &
-             & n = obs_rf%get_n_smp(i) * 2, &
+             & n = 1024, &!obs_rf%get_n_smp(i) * 2, &
           & delta = obs_rf%get_delta(i), &
           & rayp = obs_rf%get_rayp(i), &
           & a_gauss = obs_rf%get_a_gauss(i), &
           & rf_phase = obs_rf%get_rf_phase(i), &
           & deconv_flag = obs_rf%get_deconv_flag(i), &
           & t_pre = -obs_rf%get_t_start(i), &
-          & correct_amp = obs_rf%get_correct_amp(i) &
+          & correct_amp = obs_rf%get_correct_amp(i), &
+          & amp_min = para%get_amp_min(), &
+          & amp_max = para%get_amp_max() &
+
           & )
         
      end do
@@ -514,7 +518,7 @@ program main
      del_amp = (rf(i)%get_amp_max() - rf(i)%get_amp_min()) / &
           & rf(i)%get_n_bin_amp()
      write(filename, '(A6,I3.3,A4)')"syn_rf", i, ".ppd"
-     call output_ppd_2d(filename, rank, obs_rf%get_n_smp(i) * 2, &
+     call output_ppd_2d(filename, rank, 1024, &
           & rf(i)%get_n_bin_amp(), rf(i)%get_n_syn_rf(), &
           & n_mod, obs_rf%get_t_start(i), obs_rf%get_delta(i), &
           & rf(i)%get_amp_min(), del_amp)

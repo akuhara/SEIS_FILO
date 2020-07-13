@@ -31,7 +31,7 @@ contains
     double precision, intent(out) :: log_likelihood
     logical, intent(out) :: is_ok
     double precision, allocatable :: misfit(:), phi1(:)
-    double precision :: phi, s, rms
+    double precision :: phi, s
     type(vmodel) :: vm
     integer :: i, j, n
 
@@ -58,10 +58,8 @@ contains
        n = obs%get_n_smp(i)
        s = hyp%get_x(i)
        allocate(misfit(n), phi1(n))
-       rms = 0.d0
        do  j = 1, n
           misfit(j) = obs%get_rf_data(j, i) - rf(i)%get_rf_data(j)
-          rms = rms + misfit(j) ** 2
        end do
        phi1 = matmul(misfit, cov(i)%get_inv())
        phi = dot_product(phi1, misfit)
