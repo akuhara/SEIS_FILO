@@ -507,7 +507,6 @@ contains
     logical :: is_ok
     
     call self%construct_vmodel(tm, vm, is_ok)
-    call vm%display()
  
     nlay = vm%get_nlay()
     
