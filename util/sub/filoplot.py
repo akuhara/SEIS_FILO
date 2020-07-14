@@ -195,6 +195,33 @@ class InvResult:
         line, = ax.plot(df[vlabel], df[zlabel], color="blue")
         lines.append(line)
         labels.append("Mean model")
+
+
+        # Reference model (if applicable)
+        if "solve_anomaly" in param and \
+           (param["solve_anomaly"] == ".true." or \
+            param["solve_anomaly"] == "T"):
+            print("Anomaly mode")
+            
+            ref_file = param["ref_vmod_in"]
+            
+            xlabel2 = "Depth (km)"
+            ylabel2 = "P wave velocity (km/s)"
+            zlabel2 = "S wave velocity (km/s)"
+            df = pd.read_csv(ref_file, delim_whitespace=True, \
+                             header=None, \
+                             names=(xlabel2, ylabel2, zlabel2))
+            if (mode == "vs"):
+                ref_data = df[zlabel2]
+            elif (mode == "vp"):
+                ref_data = df[ylabel2]
+
+            line, = ax.plot(ref_data, df[xlabel2], color="black", \
+                            linestyle="dashed")
+            
+            lines.append(line)
+            labels.append("Reference model")
+
         ax.legend(lines, labels, loc="lower left")
         
         ax.set_xlabel(vlabel)
