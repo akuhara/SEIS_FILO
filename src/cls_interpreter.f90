@@ -360,6 +360,7 @@ contains
                   & self%dz_ref) + 1
           end if
           ! Vs
+          write(*,*)"iz=", iz, self%dz_ref
           vel = self%vs_ref(iz) + self%wrk_vs(i)
           if (vel < self%vs_min .or. vel > self%vs_max) then
              is_ok = .false.
@@ -599,11 +600,13 @@ contains
     
     open(newunit = io, file = self%ref_vmod_in, status = "old", &
          & iostat = ierr)
-    if (ierr /= 0 .and. self%verb) then
-       write(0,*)"ERROR: cannot open reference velocity file:", &
-            & trim(self%ref_vmod_in)
-       write(0,*)"       Set 'ref_vmod_in = <Filename>' or " // &
-            & "'solve_anomaly = .false.' in the parameter file"
+    if (ierr /= 0) then
+       if (self%verb) then
+          write(0,*)"ERROR: cannot open reference velocity file:", &
+               & trim(self%ref_vmod_in)
+          write(0,*)"       Set 'ref_vmod_in = <Filename>' or " // &
+               & "'solve_anomaly = .false.' in the parameter file"
+       end if
        call mpi_finalize(ierr)
        stop
     end if
