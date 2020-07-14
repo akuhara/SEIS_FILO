@@ -286,8 +286,12 @@ program main
   
   ! Set forward computation (recv_func)
   if (obs_rf%get_n_rf() > 0) then
-     call tm%generate_model()
-     call intpr%construct_vmodel(tm, vm, is_ok)
+     is_ok = .false.
+     do 
+        call tm%generate_model()
+        call intpr%construct_vmodel(tm, vm, is_ok)
+        if (is_ok) exit
+     end do
      allocate(rf(obs_rf%get_n_rf()), rf_tmp(obs_rf%get_n_rf()))
      do i = 1, obs_rf%get_n_rf()
         rf(i) = recv_func( &
@@ -310,8 +314,12 @@ program main
   
   ! Set forward computation (disper)
   if (obs_disp%get_n_disp() > 0) then
-     call tm%generate_model()
-     call intpr%construct_vmodel(tm, vm, is_ok)
+     is_ok = .false.
+     do 
+        call tm%generate_model()
+        call intpr%construct_vmodel(tm, vm, is_ok)
+        if (is_ok) exit
+     end do
      allocate(disp(obs_disp%get_n_disp()), &
           & disp_tmp(obs_disp%get_n_disp()))
      do i = 1, obs_disp%get_n_disp()
@@ -338,7 +346,12 @@ program main
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
      ! Generate random model
-     call tm%generate_model()
+     is_ok = .false.   
+     do 
+        call tm%generate_model()
+        call intpr%construct_vmodel(tm, vm, is_ok)
+        if (is_ok) exit
+     end do
      if (obs_rf%get_n_rf() > 0) then
         call hyp_rf%generate_model()
      end if

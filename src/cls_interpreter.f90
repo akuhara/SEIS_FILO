@@ -360,7 +360,6 @@ contains
                   & self%dz_ref) + 1
           end if
           ! Vs
-          write(*,*)"iz=", iz, self%dz_ref
           vel = self%vs_ref(iz) + self%wrk_vs(i)
           if (vel < self%vs_min .or. vel > self%vs_max) then
              is_ok = .false.
@@ -409,7 +408,6 @@ contains
     end if
     
     if (any(self%wrk_vs(i1+1:i1+k+1) > self%vs_max)) then
-       write(*,*)"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
        is_ok = .false.
     end if
 
@@ -509,6 +507,8 @@ contains
     logical :: is_ok
     
     call self%construct_vmodel(tm, vm, is_ok)
+    call vm%display()
+ 
     nlay = vm%get_nlay()
     
     self%n_layers(tm%get_k()) = self%n_layers(tm%get_k()) + 1
