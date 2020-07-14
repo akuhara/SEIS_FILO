@@ -292,7 +292,9 @@ contains
          & status = 'old')
     if (ierr /= 0) then
        write(0, *)"ERROR: cannot open ", trim(vmod_in)
-       call mpi_finalize(ierr)
+       !call mpi_finalize(ierr)
+       ! not necesarry call mpi_finalize here because this routine 
+       ! is only used for forward computation
        stop
     end if
     
