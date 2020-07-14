@@ -288,7 +288,7 @@ contains
     type(vmodel), intent(out) :: vm
     logical, intent(out) :: is_ok
     double precision :: thick, vel
-    integer :: i, i1, k, iz, nlay
+    integer :: i, i1, k, iz
     
     k = tm%get_k()
     vm = init_vmodel()
@@ -642,7 +642,21 @@ contains
        read(io, *)z_tmp, self%vp_ref(i), self%vs_ref(i)
     end do
     close(io)
-    
+
+    if (z_tmp <= self%z_max) then
+       if (self%verb) then
+          write(0,*)"ERROR: maximum depth in reference velocity " &
+               & // "model file must be deeper than z_max in " &
+               & // "main parameter file." 
+          write(0,*)"       Maximum depth in ", &
+               & trim(self%ref_vmod_in), &
+               & ": ", z_tmp 
+          write(0,*)"       z_max: ", self%z_max
+       end if
+       call mpi_finalize(ierr)
+       stop
+    end if
+
     if (self%verb) then
        write(*,*)"----- Reference velocity -----"
        do i = 1, nz
