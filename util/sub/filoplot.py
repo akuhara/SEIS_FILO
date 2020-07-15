@@ -8,19 +8,28 @@ import struct
 from matplotlib.ticker import MaxNLocator
 
 class InvResult:
-    def __init__(self, param_file):
+    def __init__(self, param_file, vs_true=None):
         
         # Check if file exists or not
         if os.path.exists(param_file) == False:
-            print("ERROR:" + param_file + "is not found", \
+            print("ERROR: " + param_file + " is not found", \
                   file=sys.stderr)
             sys.exit(1)
         self._param_file = param_file
-        
+
         # Get parameters
         self._param = {}
         self._read_param_file()
-        print(self._param)
+
+        if not vs_true is None:
+            if os.path.exists(vs_true) == False:
+                print("ERROR: " + vs_true + " is not found", \
+                      file=sys.stderr)
+                sys.exit(1)
+            else:
+                self._param["vs_true"] = vs_true
+        
+        return
 
     #-------------------------------------------------------------------
 
@@ -221,6 +230,13 @@ class InvResult:
             
             lines.append(line)
             labels.append("Reference model")
+            
+        # True model
+        if mode == "vs" and "vs_true" in param:
+            vp_true, vs_true, rho_true, z_true = self._read_vmod(param["vs_true"])
+            line, = ax.plot(vs_true, z_true, color="red")
+            lines.append(line)
+            labels.append("True model")
 
         ax.legend(lines, labels, loc="lower left")
         
@@ -229,6 +245,48 @@ class InvResult:
         ax.set_ylim([z_max, 0])
         ax.set_xlim([v_min, v_max])
         
+    #---------------------------------------------------------------
+
+    def _read_vmod(self, vmod_file):
+
+        vp = []
+        vs = []
+        rho = []
+        z = []
+        z_tmp = 0.0
+        count = 1
+        with open(vmod_file, 'r') as f:
+            for line in f:
+                tmp_line = line.rstrip()
+                # Dealing with comment out
+                i = tmp_line.find('#')
+                if i >= 0:
+                    tmp_line = line[0:i]
+                
+                # Skip if line is null
+                if len(tmp_line) == 0:
+                    continue
+                
+                item = tmp_line.split()
+                if count == 1:
+                    nlay = item[0]
+                else:
+                    print(item)
+                    print(item[1])
+                    vp.append(float(item[0]))
+                    vs.append(float(item[1]))
+                    rho.append(float(item[2]))
+                    z.append(z_tmp)
+                    vp.append(float(item[0]))
+                    vs.append(float(item[1]))
+                    rho.append(float(item[2]))
+                    z_tmp += float(item[3])
+                    z.append(z_tmp)
+                    
+                count += 1
+
+        return vp, vs, rho, z
+
     #---------------------------------------------------------------
     
     def _plot_recv_func(self, fig, ax, trace_id):
