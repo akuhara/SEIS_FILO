@@ -378,6 +378,10 @@ contains
        read(val, *) self%disper_sig_min
     else if (name == "disper_sig_max") then
        read(val, *) self%disper_sig_max
+    else if (name == "dvs_sig") then
+       read(val, *) self%dvs_sig
+    else if (name == "dvp_sig") then
+       read(val, *) self%dvp_sig
     else if (name == "ocean_thick") then
        read(val, *) self%ocean_thick 
     else if (name == "solve_vp") then
