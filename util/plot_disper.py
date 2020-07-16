@@ -17,7 +17,7 @@ if __name__ == "__main__":
                         help='ID of data file to be plotted')
     parser.add_argument('--vs_true',
                         default=None,
-                        help='True Vs model (for synthetic test)'
+                        help='true Vs model (for synthetic test)'
                         )
     args = parser.parse_args()
 
