@@ -30,6 +30,7 @@ module cls_interpreter
   use cls_vmodel
   use mod_sort
   use mod_const
+  use cls_line_text, only: line_max
   implicit none 
   
   type interpreter
@@ -71,8 +72,19 @@ module cls_interpreter
      double precision :: vp_max
      double precision :: dvp
      
+     logical :: solve_anomaly = .false.
      logical :: solve_vp = .true.
      logical :: is_sphere = .false.
+
+     logical :: verb = .false.
+
+     character(line_max) :: ref_vmod_in
+     double precision :: dvs_sig
+     double precision :: dvp_sig
+     double precision :: dz_ref
+     double precision, allocatable :: vs_ref(:)
+     double precision, allocatable :: vp_ref(:)
+     
 
      double precision, allocatable :: wrk_vp(:), wrk_vs(:), wrk_z(:) 
      
@@ -95,6 +107,8 @@ module cls_interpreter
      procedure :: get_dvs => interpreter_get_dvs
      procedure :: get_dvp => interpreter_get_dvp
      procedure :: get_dz => interpreter_get_dz
+     
+     procedure :: read_ref_vmod_in => interpreter_read_ref_vmod_in
   end type interpreter
   
   interface interpreter
@@ -108,8 +122,8 @@ contains
        & n_bin_z, vs_min, vs_max, n_bin_vs, n_disp, n_rf, n_bin_sig, &
        & vp_min, vp_max, n_bin_vp, &
        & is_ocean, ocean_thick, vp_ocean, rho_ocean, solve_vp, &
-       & is_sphere, vp_bottom, vs_bottom, rho_bottom) &
-       & result(self)
+       & solve_anomaly, is_sphere, vp_bottom, vs_bottom, rho_bottom, &
+       & dvs_sig, dvp_sig, ref_vmod_in, verb) result(self)
     integer, intent(in) :: nlay_max
     integer, intent(in) :: n_bin_z, n_bin_vs
     integer, intent(in), optional :: n_bin_vp
@@ -122,10 +136,23 @@ contains
          & vp_ocean, rho_ocean
     double precision, intent(in), optional :: vp_bottom, &
          & vs_bottom, rho_bottom
+    double precision, intent(in), optional :: dvs_sig, dvp_sig
     logical, intent(in), optional :: solve_vp
+    logical, intent(in), optional :: solve_anomaly
     logical, intent(in), optional :: is_sphere
 
+    character(line_max), intent(in), optional :: ref_vmod_in
+    logical, intent(in), optional :: verb
+    integer :: ierr
 
+    if (present(verb)) then
+       self%verb = verb
+    end if
+    
+    if (self%verb) then
+       write(*,'(a)')"<< Initialize model interpreter >>"
+    end if
+    
     self%nlay_max = nlay_max
     allocate(self%wrk_vp(nlay_max + 1))
     allocate(self%wrk_vs(nlay_max + 1))
@@ -191,14 +218,17 @@ contains
     if (present(solve_vp)) then
        if (.not. present(vp_min)) then
           write(0,*)"ERROR: vp_min is not given"
+          call mpi_finalize(ierr)
           stop
        end if
        if (.not. present(vp_max)) then
           write(0,*)"ERROR: vp_max is not given"
+          call mpi_finalize(ierr)
           stop
        end if
        if (.not. present(n_bin_vp)) then
           write(0,*)"ERROR: n_bin_vp is not given"
+          call mpi_finalize(ierr)
           stop
        end if
        self%solve_vp = solve_vp
@@ -213,8 +243,39 @@ contains
           self%vpz_mean = 0.d0
        end if
     end if
-
     
+    if (present(solve_anomaly)) then
+       self%solve_anomaly = solve_anomaly
+    end if
+
+    if (self%solve_anomaly) then
+       if (.not. present(dvs_sig)) then
+          write(0,*)"ERROR: dvs_sig is not given"
+          call mpi_finalize(ierr)
+          stop
+       end if
+       if (.not. present(ref_vmod_in)) then
+          write(0,*)"ERROR: ref_vmod_in is not given"
+          call mpi_finalize(ierr)
+          stop
+       end if
+       if (self%solve_vp) then
+          if (.not. present(dvp_sig)) then
+             write(0,*)"ERROR: dvp_sig is not given"
+             call mpi_finalize(ierr)
+             stop
+          end if
+       end if
+       self%solve_anomaly = solve_anomaly
+       self%dvs_sig = dvs_sig
+       self%ref_vmod_in = ref_vmod_in
+       if (self%solve_vp) then
+          self%dvp_sig = dvp_sig
+       end if
+
+       call self%read_ref_vmod_in()
+    end if
+
 
     return 
   end function init_interpreter
@@ -226,12 +287,12 @@ contains
     type(trans_d_model), intent(in) :: tm
     type(vmodel), intent(out) :: vm
     logical, intent(out) :: is_ok
-    double precision :: thick
-    integer :: i, i1, k
+    double precision :: thick, vel
+    integer :: i, i1, k, iz
     
     k = tm%get_k()
     vm = init_vmodel()
-
+    
     is_ok = .true.
     
     ! Set ocean layer
@@ -257,14 +318,7 @@ contains
     call quick_sort(self%wrk_z, 1, k, self%wrk_vs, self%wrk_vp)
     ! Middle layers
     do i = 1, k
-       ! Vs
-       call vm%set_vs(i+i1, self%wrk_vs(i))
-       ! Vp
-       if (self%solve_vp) then
-          call vm%set_vp(i+i1, self%wrk_vp(i))
-       else
-          call vm%vs2vp_brocher(i+i1)
-       end if
+
        ! Thickness
        if (i == 1) then
           thick = self%wrk_z(i) - self%z_min
@@ -283,7 +337,47 @@ contains
           return
        end if
        call vm%set_h(i+i1, thick)
-
+       
+       ! Velocity
+       if (.not. self%solve_anomaly) then
+          ! Vs
+          call vm%set_vs(i+i1, self%wrk_vs(i))
+          ! Vp
+          if (self%solve_vp) then
+             call vm%set_vp(i+i1, self%wrk_vp(i))
+          else
+             call vm%vs2vp_brocher(i+i1)
+          end if
+       else
+          if (i == 1) then
+             iz = nint(0.5d0 * (self%wrk_z(i) + self%z_min) / &
+                  & self%dz_ref) + 1
+          else if (i == k) then
+             iz = nint(0.5d0 * (self%wrk_z(i-1) + self%z_max) / &
+                  & self%dz_ref) + 1
+          else
+             iz = nint(0.5d0 * (self%wrk_z(i-1) + self%wrk_z(i)) / &
+                  & self%dz_ref) + 1
+          end if
+          ! Vs
+          vel = self%vs_ref(iz) + self%wrk_vs(i)
+          if (vel < self%vs_min .or. vel > self%vs_max) then
+             is_ok = .false.
+             return
+          end if
+          call vm%set_vs(i+i1, vel)
+          ! Vp
+          if (self%solve_vp) then
+             vel = self%vp_ref(iz) + self%wrk_vp(i)
+             if (vel < self%vp_min .or. vel > self%vp_max) then
+                is_ok = .false.
+                return
+             end if
+             call vm%set_vp(i+i1, vel)
+          else
+             call vm%vs2vp_brocher(i+i1)
+          end if
+       end if
        ! Density
        call vm%vp2rho_brocher(i+i1)
     end do
@@ -292,14 +386,14 @@ contains
     if (self%vs_bottom > 0.d0) then
        call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
     else
-       call vm%set_vs(k+1+i1, self%wrk_vs(k))
+       call vm%set_vs(k+1+i1, vm%get_vs(k+i1)) ! <- Same as layer above
     end if
     ! Vp
     if (self%vp_bottom > 0.d0) then
        call vm%set_vp(k+1+i1, self%vp_bottom)
     else
        if (self%solve_vp) then
-          call vm%set_vp(k+1+i1, self%wrk_vp(k))
+          call vm%set_vp(k+1+i1, vm%get_vp(k+i1))
        else
           call vm%vs2vp_brocher(k+1+i1)
        end if
@@ -314,7 +408,6 @@ contains
     end if
     
     if (any(self%wrk_vs(i1+1:i1+k+1) > self%vs_max)) then
-       write(*,*)"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
        is_ok = .false.
     end if
 
@@ -414,6 +507,7 @@ contains
     logical :: is_ok
     
     call self%construct_vmodel(tm, vm, is_ok)
+ 
     nlay = vm%get_nlay()
     
     self%n_layers(tm%get_k()) = self%n_layers(tm%get_k()) + 1
@@ -496,6 +590,87 @@ contains
   end subroutine interpreter_save_disp_sigma
 
   !---------------------------------------------------------------------
+  
+  subroutine interpreter_read_ref_vmod_in(self)
+    class(interpreter), intent(inout) :: self
+    integer :: io, ierr, nz, i
+    double precision :: z_old, z_tmp, dz
+    double precision, parameter :: eps = 1.0e-5
+    
+    open(newunit = io, file = self%ref_vmod_in, status = "old", &
+         & iostat = ierr)
+    if (ierr /= 0) then
+       if (self%verb) then
+          write(0,*)"ERROR: cannot open reference velocity file:", &
+               & trim(self%ref_vmod_in)
+          write(0,*)"       Set 'ref_vmod_in = <Filename>' or " // &
+               & "'solve_anomaly = .false.' in the parameter file"
+       end if
+       call mpi_finalize(ierr)
+       stop
+    end if
+
+    ! get nz and dz
+    nz = 0
+    dz = -99.d0
+    z_old = -99.d0
+    do 
+       read(io, *, iostat= ierr) z_tmp
+       if (ierr /= 0) exit
+       nz = nz + 1
+       if (nz > 2 .and. abs(z_tmp - z_old - dz) > eps .and. &
+            & self%verb) then
+          write(0,*)"ERROR: while reading reference velocity file:", &
+               & trim(self%ref_vmod_in)
+          write(0,*)"       Depth increment must be constant", &
+               & z_tmp - z_old, dz
+
+          call mpi_finalize(ierr)
+          stop
+       end if
+       dz = z_tmp - z_old
+       z_old = z_tmp
+    end do
+    self%dz_ref = dz
+
+    allocate(self%vs_ref(nz))
+    allocate(self%vp_ref(nz))
+    
+    rewind(io)
+    do i = 1, nz
+       read(io, *)z_tmp, self%vp_ref(i), self%vs_ref(i)
+    end do
+    close(io)
+
+    if (z_tmp <= self%z_max) then
+       if (self%verb) then
+          write(0,*)"ERROR: maximum depth in reference velocity " &
+               & // "model file must be deeper than z_max in " &
+               & // "main parameter file." 
+          write(0,*)"       Maximum depth in ", &
+               & trim(self%ref_vmod_in), &
+               & ": ", z_tmp 
+          write(0,*)"       z_max: ", self%z_max
+       end if
+       call mpi_finalize(ierr)
+       stop
+    end if
+
+    if (self%verb) then
+       write(*,*)"----- Reference velocity -----"
+       do i = 1, nz
+          write(*,'(3F9.3)')(i-1) * self%dz_ref, self%vp_ref(i), &
+               & self%vs_ref(i)
+       end do
+    end if
+       
+       
+    
+    return 
+  end subroutine interpreter_read_ref_vmod_in
+
+  !---------------------------------------------------------------------
+  
   integer function interpreter_get_n_bin_z(self) result(n_bin_z)
     class(interpreter), intent(in) ::self
 

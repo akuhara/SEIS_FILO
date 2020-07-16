@@ -57,6 +57,7 @@ module cls_trans_d_model
      procedure :: get_nx => trans_d_model_get_nx
      procedure :: get_x => trans_d_model_get_x
      procedure :: get_x_single => trans_d_model_get_x_single
+     procedure :: calc_log_prior => trans_d_model_calc_log_prior
      procedure :: generate_model => trans_d_model_generate_model
      procedure :: birth => trans_d_model_birth
      procedure :: death => trans_d_model_death
@@ -278,6 +279,31 @@ contains
 
     return 
   end function trans_d_model_get_x_single
+
+  !---------------------------------------------------------------------
+
+  double precision function trans_d_model_calc_log_prior(self, k, &
+       & iparam) result(p)
+    class(trans_d_model), intent(in) :: self
+    integer, intent(in) :: k, iparam
+    double precision :: x, sig2, mu
+    double precision, parameter :: pi2 = acos(-1.d0) * 2.d0
+    
+    x = self%x(k, iparam)
+    if (self%prior_type(iparam) == 1) then
+       p = -log(self%prior_param(iparam, 2) &
+            & - self%prior_param(iparam, 1))
+    else if (self%prior_type(iparam) == 2) then
+       mu = self%prior_param(iparam, 1)
+       sig2 = self%prior_param(iparam, 2) ** 2
+       p = -0.5d0 * log(pi2 * sig2) &
+            & - (x - mu) * (x - mu) / (2.d0 * sig2)
+    end if
+    
+    return 
+  end function trans_d_model_calc_log_prior
+    
+    
 
   !---------------------------------------------------------------------
 
