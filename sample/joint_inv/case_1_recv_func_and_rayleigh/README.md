@@ -7,7 +7,7 @@
 
 ## Input files
 
-* [joint_inv.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleighcase_1_recv_func_and_rayleigh/joint_inv.in): main parameter file
+* [joint_inv.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/joint_inv.in): main parameter file
 * [disper.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/disper.in): data summary file for dispersion curves
 * [rayleigh.0th](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/rayleigh.0th): data file (phase & group velocities of the fundamental Rayleigh mode)
 * [recv_func.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/recv_func.in): data summary file for receiver functions
