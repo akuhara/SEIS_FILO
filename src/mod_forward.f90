@@ -63,11 +63,11 @@ contains
        end do
        phi1 = matmul(misfit, cov(i)%get_inv())
        phi = dot_product(phi1, misfit)
-       !log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
-       !     & - n * log_2pi_half - n * log(s) &
-       !     & - 0.5d0 * cov(i)%get_log_det_r()
-       log_likelihood = log_likelihood - sqrt(2.d0 * phi) &
-            & - 0.25d0 * (n - 1) * log(phi) - n * log(s)
+       log_likelihood = log_likelihood - 0.5d0 * phi / (s * s) &
+            & - n * log_2pi_half - n * log(s) &
+            & - 0.5d0 * cov(i)%get_log_det_r()
+       !log_likelihood = log_likelihood - sqrt(2.d0 * phi) &
+       !     & - 0.25d0 * (n - 1) * log(phi) - n * log(s)
 
        deallocate(misfit, phi1)
     end do
