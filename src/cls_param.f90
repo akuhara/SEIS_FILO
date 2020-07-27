@@ -1209,6 +1209,14 @@ contains
        if (self%verb) write(0,*)"ERROR: vs_max must > vs_min"
        is_ok = .false.
     end if
+    if (self%vs_max <= self%vs_bottom) then
+       if (self%verb) write(0,*)"ERROR: vs_max must > vs_bottom"
+       is_ok = .false.
+    end if
+    if (self%vp_max <= self%vp_bottom) then
+       if (self%verb) write(0,*)"ERROR: vp_max must > vp_bottom"
+       is_ok = .false.
+    end if
     if (self%dev_z <= 0.d0) then
        if (self%verb) write(0,*)"ERROR: dev_z must > 0.0"
        is_ok = .false.
