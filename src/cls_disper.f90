@@ -53,6 +53,7 @@ module cls_disper
      integer :: io
      integer, allocatable :: n_fc(:,:)
      integer, allocatable :: n_fu(:,:)
+     integer, allocatable :: n_fa(:,:)
      character(1) :: disper_phase
      integer :: n_mode
 
@@ -60,6 +61,7 @@ module cls_disper
 
      double precision, allocatable :: c(:) ! phase velocity
      double precision, allocatable :: u(:) ! group velocity
+     double precision, allocatable :: a(:) ! Rayleigh admittance
      double precision :: y(5)
      logical :: is_ocean
      
@@ -84,9 +86,12 @@ module cls_disper
      procedure :: get_c_array => disper_get_c_array
      procedure :: get_u => disper_get_u
      procedure :: get_u_array => disper_get_u_array
+     procedure :: get_a => disper_get_a
+     procedure :: get_a_array => disper_get_a_array
      procedure :: save_syn => disper_save_syn
      procedure :: get_n_fc => disper_get_n_fc
      procedure :: get_n_fu => disper_get_n_fu
+     procedure :: get_n_fa => disper_get_n_fa
      
   end type disper
 
@@ -133,8 +138,9 @@ contains
        write(0,*)"ERROR: fmax must be .gt. fmin (self)"
        stop
     end if
-    allocate(self%c(self%nf), &
-         &   self%u(self%nf))
+    allocate(self%c(self%nf))
+    allocate(self%u(self%nf))
+    allocate(self%a(self%nf))
     
     self%cmin = cmin
     self%cmax = cmax
@@ -155,11 +161,12 @@ contains
        write(0,*)"ERROR: Love wave it not supported yet"
        stop
     end if
-    if (self%disper_phase /= "L" .and. self%disper_phase /= "R") then
-       write(0,*)"ERROR: disper_phase must be L or R"
+    if (self%disper_phase /= "L" .and. self%disper_phase /= "R" &
+         & .and. self%disper_phase /= "A") then
+       write(0,*)"ERROR: disper_phase must be L, R or A"
        stop
     end if
-
+    
     if (present(noise_added)) then
        self%noise_added = noise_added
        
@@ -180,9 +187,11 @@ contains
     
     ! for MCMC
     allocate(self%n_fc(self%nf, self%nc), self%n_fu(self%nf, self%nc))
+    allocate(self%n_fa(self%nf, self%nc))
     self%n_fc(:,:) = 0
     self%n_fu(:,:) = 0
-   
+    self%n_fa(:,:) = 0
+    
     return 
   end function init_disper
     
@@ -191,7 +200,7 @@ contains
   subroutine disper_dispersion(self)
     class(disper), intent(inout) :: self
     double precision :: omega, c_start, prev_rslt, grad
-    double precision :: c, u
+    double precision :: c, u, a
     logical :: first_flag
     integer :: i
     
@@ -217,20 +226,23 @@ contains
           else
              c_start = self%cmin
           end if
-          call self%find_root(omega, c_start, c, u, first_flag)
+          call self%find_root(omega, c_start, c, u, a, first_flag)
           if (c == 0.d0) then
              self%c(:) = 0.d0
              self%u(:) = 0.d0
+             self%a(:) = 0.d0
              write(*,*)"END dispersion calculation"
              return
           end if
           self%c(i) = c
           self%u(i) = u
+          self%a(i) = a * 1.d-6
           if (self%out_flag) then
-             write(self%io, '(3F10.4)') &
+             write(self%io, '(3F10.4,E14.4)') &
                   & omega / (2.d0 * pi), &
                   & self%c(i) + rand_g() * self%noise_added, &
-                  & self%u(i) + rand_g() * self%noise_added
+                  & self%u(i) + rand_g() * self%noise_added, &
+                  & self%a(i) + rand_g() * self%noise_added
           end if
        else
           ! full calculation
@@ -249,11 +261,11 @@ contains
     class(disper), intent(inout) :: self
     double precision, intent(in) :: omega
     integer :: i
-    double precision :: c_tmp, rslt
+    double precision :: c_tmp, rslt, a
 
     do i = 1, self%nc
        c_tmp = self%cmin + (i - 1) * self%dc 
-       call self%do_propagation(omega, c_tmp, rslt)
+       call self%do_propagation(omega, c_tmp, rslt, a)
        write(self%io, *) omega / (2.d0 * pi), c_tmp, rslt
     end do
     
@@ -262,13 +274,13 @@ contains
 
   !---------------------------------------------------------------------
   
-  subroutine disper_find_root(self, omega, c_start, c, u, first_flag)
+  subroutine disper_find_root(self, omega, c_start, c, u, a, first_flag)
     class(disper), intent(inout) :: self
     double precision, intent(in) :: omega, c_start
-    double precision, intent(out) :: c, u
+    double precision, intent(out) :: c, u, a
     logical, intent(in) :: first_flag
     integer :: i, count
-    double precision :: c_tmp, rslt, prev_rslt, cmin2, cmax2
+    double precision :: c_tmp, rslt, prev_rslt, cmin2, cmax2, a_tmp
     double precision :: c1, c2, rslt1_c, rslt2_c, del_c
     double precision :: rslt_min, rslt_max
     double precision :: omega1, omega2, del_omega, rslt1_omg, rslt2_omg
@@ -284,7 +296,7 @@ contains
        !write(*,*)"C_tmp=", c_tmp
        if (c_tmp > self%cmax) exit
        !write(*,*)"First"
-       call self%do_propagation(omega, c_tmp, rslt)
+       call self%do_propagation(omega, c_tmp, rslt, a_tmp)
        if (prev_rslt * rslt < 0) then
           count = count + 1
           if (.not. first_flag .or. self%n_mode == count) then
@@ -317,7 +329,7 @@ contains
     do i = 1, self%niter
        c_tmp = 0.5d0 * (cmin2 + cmax2)
        !write(*,*)"Second"             
-       call self%do_propagation(omega, c_tmp, rslt)
+       call self%do_propagation(omega, c_tmp, rslt, a_tmp)
        if (prev_rslt * rslt > 0.d0) then
           cmax2 = c_tmp
           rslt_max = rslt
@@ -325,30 +337,23 @@ contains
           cmin2 = c_tmp
           rslt_min = rslt
        end if
-       !if (rslt / prev_rslt < abs(del_c * eps)) then
-       !   write(*,*)"iter: ", i
-       !   exit
-       !end if
     end do
     
     c = c_tmp
-    ! Third step 
-    !c = (rslt_min * cmax2 + rslt_max * cmin2) / (rslt_min + rslt_max)
-    !write(*,*)"Thrid", rslt_min, rslt_max, c, cmin2, cmax2
-    !call self%do_propagation(omega, c, rslt)
+    a = a_tmp
     
     ! Group velocity
     ! derivative by c
     c1 = c - 0.001d0 * self%dc 
-    call self%do_propagation(omega, c1, rslt1_c)
+    call self%do_propagation(omega, c1, rslt1_c, a_tmp)
     c2 = c + 0.001d0 * self%dc 
-    call self%do_propagation(omega, c2, rslt2_c)
+    call self%do_propagation(omega, c2, rslt2_c, a_tmp)
     del_c = (rslt2_c - rslt1_c) / (c2 - c1)
     ! derivative by omega
     omega1 = omega - 0.001d0 * self%df * 2.d0 * pi 
-    call self%do_propagation(omega1, c, rslt1_omg)
+    call self%do_propagation(omega1, c, rslt1_omg, a_tmp)
     omega2 = omega + 0.001d0 * self%df * 2.d0 * pi 
-    call self%do_propagation(omega2, c, rslt2_omg)
+    call self%do_propagation(omega2, c, rslt2_omg, a_tmp)
     del_omega = (rslt2_omg - rslt1_omg) / (omega2 - omega1)
     ! group velocity from the two derivatives
     u = c / (1.d0 + omega * del_omega / (c * del_c))
@@ -357,10 +362,11 @@ contains
   end subroutine disper_find_root
   !---------------------------------------------------------------------
 
-  subroutine disper_do_propagation(self, omega, c, rslt)
+  subroutine disper_do_propagation(self, omega, c, rslt, admittance)
     class(disper), intent(inout) :: self
     double precision, intent(in) :: omega, c
     double precision, intent(out) :: rslt
+    double precision, intent(out) :: admittance
     logical :: is_ok
     integer :: i, nlay, i0
     
@@ -378,12 +384,14 @@ contains
     end do
 
     if (self%is_ocean) then
-       self%y(1) = self%y(3)
-       self%y(2) = self%y(5)
+       self%y(1) = self%y(3) ! Displacement
+       self%y(2) = self%y(5) ! Stress / (omega * c)
+       admittance = self%y(1) / (self%y(2) * omega * c)
        self%y(1:2) = matmul(self%liquid_propagator(omega, c), self%y(1:2))
        rslt = self%y(2)
     else
        rslt = self%y(i24)
+       admittance = 0.d0
     end if
     
     return 
@@ -655,6 +663,28 @@ contains
   end function disper_get_u_array
 
   !---------------------------------------------------------------------
+
+  double precision function disper_get_a(self, i) result(a)
+    class(disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    a = self%a(i)
+
+    return 
+  end function disper_get_a
+
+  !---------------------------------------------------------------------
+
+  function disper_get_a_array(self) result(a)
+    class(disper), intent(in) :: self
+    double precision :: a(self%nf)
+  
+    a(:) = self%a(:)
+
+    return 
+  end function disper_get_a_array
+
+  !---------------------------------------------------------------------
   
   subroutine disper_save_syn(self)
     class(disper), intent(inout) :: self
@@ -697,4 +727,15 @@ contains
   
   !---------------------------------------------------------------------
 
+  function disper_get_n_fa(self) result(n_fa)
+    class(disper), intent(in) :: self
+    integer :: n_fa(self%nf, self%nc)
+    
+    n_fa(:,:) = self%n_fa(:,:)
+    
+    return 
+  end function disper_get_n_fa
+  
+  !---------------------------------------------------------------------
+  
 end module cls_disper
