@@ -207,9 +207,15 @@ contains
              if (self%u(i-1) /= 0.d0) then
                 grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
                      & self%c(i-1) / (omega - 2.d0 * pi * self%df)
-                c_start = self%c(i-1) + &
-                     & 3.5d0 * grad * 2.d0 * pi * self%df
-                !c_start = self%cmin
+                
+                if (grad < 0.d0) then
+                   c_start = self%c(i-1) + &
+                        & 3.5d0 * grad * 2.d0 * pi * self%df ! 3.5
+                else 
+                   c_start = self%cmin
+                   first_flag = .true.
+                end if
+
                 if (c_start <= self%cmin) then
                    c_start = self%cmin
                 end if
