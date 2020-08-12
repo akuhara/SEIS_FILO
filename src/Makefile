@@ -79,7 +79,7 @@ cls_trans_d_model.o: mod_random.mod
 cls_mcmc.o: mod_random.mod cls_trans_d_model.mod cls_hyper_model.mod \
             cls_proposal.mod
 cls_interpreter.o: cls_trans_d_model.mod cls_vmodel.mod mod_sort.mod \
-                   mod_const.mod cls_hyper_model.mod
+                   mod_const.mod cls_hyper_model.mod cls_line_text.mod
 cls_parallel.o: cls_mcmc.mod 
 cls_param.o: cls_line_text.mod
 cls_observation_recv_func.o: cls_line_text.mod

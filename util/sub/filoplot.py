@@ -8,19 +8,28 @@ import struct
 from matplotlib.ticker import MaxNLocator
 
 class InvResult:
-    def __init__(self, param_file):
+    def __init__(self, param_file, vs_true=None):
         
         # Check if file exists or not
         if os.path.exists(param_file) == False:
-            print("ERROR:" + param_file + "is not found", \
+            print("ERROR: " + param_file + " is not found", \
                   file=sys.stderr)
             sys.exit(1)
         self._param_file = param_file
-        
+
         # Get parameters
         self._param = {}
         self._read_param_file()
-        print(self._param)
+
+        if not vs_true is None:
+            if os.path.exists(vs_true) == False:
+                print("ERROR: " + vs_true + " is not found", \
+                      file=sys.stderr)
+                sys.exit(1)
+            else:
+                self._param["vs_true"] = vs_true
+        
+        return
 
     #-------------------------------------------------------------------
 
@@ -63,6 +72,48 @@ class InvResult:
         df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
         ax.set_ylabel(ylabel)
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    #---------------------------------------------------------------
+
+    def _plot_sigma(self, fig, ax, mode, trace_id):
+        param = self._param
+        clabel = "Phase vel. (km/s)"
+        c_used = "Phase velocity is used?"
+        ulabel = "Group vel. (km/s)"
+        u_used = "Group velocity is used?"
+
+        if mode == "group":
+            file = "group_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = u_used
+        elif mode == "phase":
+            file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = c_used
+        elif mode == "recv_func":
+            file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
+        
+        if mode == "group" or mode == "phase":
+            df = pd.read_csv(param["obs_disper_file"],\
+                             delim_whitespace=True, \
+                             header=None, \
+                             names=(clabel, c_used, ulabel, u_used), \
+                             comment='#')
+            df_obs = df[df[used_label] == "T"]
+        else:
+            df_obs = (999,)
+
+        xlabel = "Standard deviation of data noise"
+        ylabel = "Probability"
+        if len(df_obs) > 0:
+            df = pd.read_csv(file, delim_whitespace=True, header=None, \
+                             names=(xlabel, ylabel))
+            df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
+        else:
+            ax.text(0.5, 0.5, "N/A", size=40, \
+                    horizontalalignment="center", \
+                    verticalalignment="center")
+            ax.set_xlabel(xlabel)
+            
+        ax.set_ylabel(ylabel)
 
     #---------------------------------------------------------------
 
@@ -153,6 +204,40 @@ class InvResult:
         line, = ax.plot(df[vlabel], df[zlabel], color="blue")
         lines.append(line)
         labels.append("Mean model")
+
+
+        # Reference model (if applicable)
+        if "solve_anomaly" in param and \
+           (param["solve_anomaly"] == ".true." or \
+            param["solve_anomaly"] == "T"):
+            print("Anomaly mode")
+            
+            ref_file = param["ref_vmod_in"]
+            
+            xlabel2 = "Depth (km)"
+            ylabel2 = "P wave velocity (km/s)"
+            zlabel2 = "S wave velocity (km/s)"
+            df = pd.read_csv(ref_file, delim_whitespace=True, \
+                             header=None, \
+                             names=(xlabel2, ylabel2, zlabel2))
+            if (mode == "vs"):
+                ref_data = df[zlabel2]
+            elif (mode == "vp"):
+                ref_data = df[ylabel2]
+
+            line, = ax.plot(ref_data, df[xlabel2], color="black", \
+                            linestyle="dashed")
+            
+            lines.append(line)
+            labels.append("Reference model")
+            
+        # True model
+        if mode == "vs" and "vs_true" in param:
+            vp_true, vs_true, rho_true, z_true = self._read_vmod(param["vs_true"])
+            line, = ax.plot(vs_true, z_true, color="red")
+            lines.append(line)
+            labels.append("True model")
+
         ax.legend(lines, labels, loc="lower left")
         
         ax.set_xlabel(vlabel)
@@ -160,6 +245,48 @@ class InvResult:
         ax.set_ylim([z_max, 0])
         ax.set_xlim([v_min, v_max])
         
+    #---------------------------------------------------------------
+
+    def _read_vmod(self, vmod_file):
+
+        vp = []
+        vs = []
+        rho = []
+        z = []
+        z_tmp = 0.0
+        count = 1
+        with open(vmod_file, 'r') as f:
+            for line in f:
+                tmp_line = line.rstrip()
+                # Dealing with comment out
+                i = tmp_line.find('#')
+                if i >= 0:
+                    tmp_line = line[0:i]
+                
+                # Skip if line is null
+                if len(tmp_line) == 0:
+                    continue
+                
+                item = tmp_line.split()
+                if count == 1:
+                    nlay = item[0]
+                else:
+                    print(item)
+                    print(item[1])
+                    vp.append(float(item[0]))
+                    vs.append(float(item[1]))
+                    rho.append(float(item[2]))
+                    z.append(z_tmp)
+                    vp.append(float(item[0]))
+                    vs.append(float(item[1]))
+                    rho.append(float(item[2]))
+                    z_tmp += float(item[3])
+                    z.append(z_tmp)
+                    
+                count += 1
+
+        return vp, vs, rho, z
+
     #---------------------------------------------------------------
     
     def _plot_recv_func(self, fig, ax, trace_id):

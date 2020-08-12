@@ -154,7 +154,6 @@ program main
 
 
   ! Set interpreter 
-  if (verb) write(*,*)"Setting interpreter"
   intpr = interpreter(&
        & nlay_max= para%get_k_max(),                             &
        & z_min = para%get_z_min(),                               &
@@ -172,9 +171,14 @@ program main
        & is_ocean = para%get_is_ocean(),                         &
        & ocean_thick = para%get_ocean_thick(),                   &
        & solve_vp = para%get_solve_vp(),                         &
+       & solve_anomaly = para%get_solve_anomaly(),               &
+       & dvs_sig = para%get_dvs_sig(),                           &
+       & dvp_sig = para%get_dvp_sig(),                           &
+       & ref_vmod_in = para%get_ref_vmod_in(),                   &
        & vp_bottom = para%get_vp_bottom(),                       &
        & vs_bottom = para%get_vs_bottom(),                       &
-       & rho_bottom = para%get_rho_bottom()                      &
+       & rho_bottom = para%get_rho_bottom(),                     &
+       & verb = verb                                             &
        & )
 
   ! Set proposal
@@ -199,22 +203,38 @@ program main
        & nx    = n_td,               &
        & verb  = verb              &
        & )
-  call tm%set_prior(prop%get_i_vs(), id_uni, &
-       & para%get_vs_min(), para%get_vs_max())
+  if (.not. para%get_solve_anomaly()) then
+     call tm%set_prior(prop%get_i_vs(), id_uni, &
+          & para%get_vs_min(), para%get_vs_max())
+     call tm%set_birth(prop%get_i_vs(), id_uni, &
+          & para%get_vs_min(), para%get_vs_max())
+  else
+     call tm%set_prior(prop%get_i_vs(), id_gauss, &
+          & 0.d0, para%get_dvs_sig())
+     call tm%set_birth(prop%get_i_vs(), id_gauss, &
+          & 0.d0, para%get_dvs_sig())
+  end if
+  call tm%set_perturb(prop%get_i_vs(), para%get_dev_vs())
+  
   call tm%set_prior(prop%get_i_depth(),  id_uni, &
        & para%get_z_min(), para%get_z_max())
-  call tm%set_birth(id_vs, id_uni, &
-       & para%get_vs_min(), para%get_vs_max())
-  call tm%set_birth(id_z,  id_uni, &
+  call tm%set_birth(prop%get_i_depth(),  id_uni, &
        & para%get_z_min(), para%get_z_max())
-  call tm%set_perturb(id_vs, para%get_dev_vs())
-  call tm%set_perturb(id_z,  para%get_dev_z())
+  
+  call tm%set_perturb(prop%get_i_depth(),  para%get_dev_z())
   if (para%get_solve_vp()) then
-     call tm%set_prior(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max()) 
-     call tm%set_birth(id_vp, id_uni, &
-          & para%get_vp_min(), para%get_vp_max())
-     call tm%set_perturb(id_vp, para%get_dev_vp())
+     if (.not. para%get_solve_anomaly()) then
+        call tm%set_prior(prop%get_i_vp(), id_uni, &
+             & para%get_vp_min(), para%get_vp_max()) 
+        call tm%set_birth(prop%get_i_vp(), id_uni, &
+             & para%get_vp_min(), para%get_vp_max())
+     else
+        call tm%set_prior(prop%get_i_vp(), id_gauss, &
+             & 0.d0, para%get_dvp_sig())
+        call tm%set_birth(prop%get_i_vp(), id_gauss, &
+             & 0.d0, para%get_dvp_sig())
+     end if
+     call tm%set_perturb(prop%get_i_vp(), para%get_dev_vp())
   end if
   
 
@@ -266,8 +286,12 @@ program main
   
   ! Set forward computation (recv_func)
   if (obs_rf%get_n_rf() > 0) then
-     call tm%generate_model()
-     call intpr%construct_vmodel(tm, vm, is_ok)
+     is_ok = .false.
+     do 
+        call tm%generate_model()
+        call intpr%construct_vmodel(tm, vm, is_ok)
+        if (is_ok) exit
+     end do
      allocate(rf(obs_rf%get_n_rf()), rf_tmp(obs_rf%get_n_rf()))
      do i = 1, obs_rf%get_n_rf()
         rf(i) = recv_func( &
@@ -290,8 +314,12 @@ program main
   
   ! Set forward computation (disper)
   if (obs_disp%get_n_disp() > 0) then
-     call tm%generate_model()
-     call intpr%construct_vmodel(tm, vm, is_ok)
+     is_ok = .false.
+     do 
+        call tm%generate_model()
+        call intpr%construct_vmodel(tm, vm, is_ok)
+        if (is_ok) exit
+     end do
      allocate(disp(obs_disp%get_n_disp()), &
           & disp_tmp(obs_disp%get_n_disp()))
      do i = 1, obs_disp%get_n_disp()
@@ -318,7 +346,12 @@ program main
   ! Set MCMC chain
   do i = 1, para%get_n_chain()
      ! Generate random model
-     call tm%generate_model()
+     is_ok = .false.   
+     do 
+        call tm%generate_model()
+        call intpr%construct_vmodel(tm, vm, is_ok)
+        if (is_ok) exit
+     end do
      if (obs_rf%get_n_rf() > 0) then
         call hyp_rf%generate_model()
      end if

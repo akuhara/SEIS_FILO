@@ -50,6 +50,7 @@ module cls_param
      double precision :: z_min = 0.d0
      double precision :: z_max = 70.d0
      logical :: solve_vp = .false.
+     logical :: solve_anomaly = .false.
      logical :: solve_rf_sig = .true.
      logical :: solve_disper_sig = .true.
      logical :: is_sphere = .false.
@@ -57,6 +58,8 @@ module cls_param
      double precision :: vp_max = 9.0d0
      double precision :: vs_min = 2.5d0
      double precision :: vs_max = 5.0d0
+     double precision :: dvp_sig = 0.1d0
+     double precision :: dvs_sig = 0.1d0
      double precision :: rf_sig_min = 0.005d0
      double precision :: rf_sig_max = 0.1d0
      double precision :: disper_sig_min = 0.01d0
@@ -103,10 +106,13 @@ module cls_param
      integer :: n_mode = -999
      character(len=1) :: disper_phase
      
+
      ! Noise level added to forward computation 
      double precision :: noise_added = 0.d0
      
+     ! I/O file
      character(len=line_max) :: vmod_in = ""
+     character(len=line_max) :: ref_vmod_in = ""
      character(len=line_max) :: disper_out = ""
      character(len=line_max) :: disper_in = ""
      character(len=line_max) :: recv_func_in = ""
@@ -158,6 +164,8 @@ module cls_param
      procedure :: get_vs_max => param_get_vs_max
      procedure :: get_vp_min => param_get_vp_min
      procedure :: get_vp_max => param_get_vp_max
+     procedure :: get_dvs_sig => param_get_dvs_sig
+     procedure :: get_dvp_sig => param_get_dvp_sig
      procedure :: get_z_min => param_get_z_min
      procedure :: get_z_max => param_get_z_max
      procedure :: get_rf_sig_min => param_get_rf_sig_min
@@ -168,10 +176,12 @@ module cls_param
      procedure :: get_ocean_thick => param_get_ocean_thick
 
      procedure :: get_solve_vp => param_get_solve_vp
+     procedure :: get_solve_anomaly => param_get_solve_anomaly
      procedure :: get_solve_rf_sig => param_get_solve_rf_sig
      procedure :: get_solve_disper_sig => param_get_solve_disper_sig
      procedure :: get_is_ocean => param_get_is_ocean
      
+     procedure :: get_ref_vmod_in => param_get_ref_vmod_in
      procedure :: get_vmod_in => param_get_vmod_in
      procedure :: get_disper_out => param_get_disper_out
      procedure :: get_disper_in  => param_get_disper_in
@@ -368,10 +378,16 @@ contains
        read(val, *) self%disper_sig_min
     else if (name == "disper_sig_max") then
        read(val, *) self%disper_sig_max
+    else if (name == "dvs_sig") then
+       read(val, *) self%dvs_sig
+    else if (name == "dvp_sig") then
+       read(val, *) self%dvp_sig
     else if (name == "ocean_thick") then
        read(val, *) self%ocean_thick 
     else if (name == "solve_vp") then
        read(val, *) self%solve_vp
+    else if (name == "solve_anomaly") then
+       read(val, *) self%solve_anomaly
     else if (name == "solve_rf_sig") then
        read(val, *)self%solve_rf_sig
     else if (name == "solve_disper_sig") then
@@ -420,6 +436,8 @@ contains
        read(val, *) self%vp_bottom
     else if (name == "rho_bottom") then
        read(val, *) self%rho_bottom
+    else if (name == "ref_vmod_in") then
+       self%ref_vmod_in = val
     else if (name == "noise_added") then
        read(val, *) self%noise_added
     else
@@ -778,6 +796,26 @@ contains
   end function param_get_vp_max
 
   !---------------------------------------------------------------------
+
+  double precision function param_get_dvs_sig(self) result(dvs_sig)
+    class(param), intent(in) :: self
+
+    dvs_sig = self%dvs_sig
+
+    return
+  end function param_get_dvs_sig
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_dvp_sig(self) result(dvp_sig)
+    class(param), intent(in) :: self
+
+    dvp_sig = self%dvp_sig
+
+    return
+  end function param_get_dvp_sig
+
+  !---------------------------------------------------------------------
   
   double precision function param_get_z_min(self) result(z_min)
     class(param), intent(in) :: self
@@ -851,6 +889,16 @@ contains
   end function param_get_ocean_thick
 
   !---------------------------------------------------------------------
+  
+  logical function param_get_solve_anomaly(self) result(solve_anomaly)
+    class(param), intent(in) :: self
+
+    solve_anomaly = self%solve_anomaly
+    
+    return 
+  end function param_get_solve_anomaly
+
+  !---------------------------------------------------------------------
 
   logical function param_get_solve_vp(self) result(solve_vp)
     class(param), intent(in) :: self
@@ -889,6 +937,17 @@ contains
     
     return 
   end function param_get_is_ocean
+
+  !---------------------------------------------------------------------
+  
+  character(len=line_max) function param_get_ref_vmod_in(self) &
+       & result(ref_vmod_in)
+    class(param), intent(in) :: self
+    
+    ref_vmod_in = self%ref_vmod_in
+    
+    return
+  end function param_get_ref_vmod_in
   
   !---------------------------------------------------------------------
   
@@ -1148,6 +1207,14 @@ contains
     end if
     if (self%vs_max <= self%vs_min) then
        if (self%verb) write(0,*)"ERROR: vs_max must > vs_min"
+       is_ok = .false.
+    end if
+    if (self%vs_max <= self%vs_bottom) then
+       if (self%verb) write(0,*)"ERROR: vs_max must > vs_bottom"
+       is_ok = .false.
+    end if
+    if (self%vp_max <= self%vp_bottom) then
+       if (self%verb) write(0,*)"ERROR: vp_max must > vp_bottom"
        is_ok = .false.
     end if
     if (self%dev_z <= 0.d0) then

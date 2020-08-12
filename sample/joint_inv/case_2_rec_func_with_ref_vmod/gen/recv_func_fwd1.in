@@ -1,0 +1,16 @@
+rayp     = 0.05
+a_gauss  = 8.0
+rf_phase = P
+n_smp    = 1024
+delta    = 0.05
+t_pre    = 3.0
+deconv_flag = F
+correct_amp = T
+vmod_in = vmod.true 
+recv_func_out = recv_func1.sac
+
+noise_added = 0.00
+i_seed1 = 33333
+i_seed2  = 222
+i_seed3 = 99823
+i_seed4 = 33341
