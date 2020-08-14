@@ -54,6 +54,7 @@ module cls_param
      logical :: solve_rf_sig = .true.
      logical :: solve_disper_sig = .true.
      logical :: is_sphere = .false.
+     double precision :: r_earth = 6371.d0
      double precision :: vp_min = 4.5d0
      double precision :: vp_max = 9.0d0
      double precision :: vs_min = 2.5d0
@@ -204,6 +205,9 @@ module cls_param
      procedure :: get_rho_bottom => param_get_rho_bottom
      
      procedure :: get_noise_added => param_get_noise_added
+
+     procedure :: get_is_sphere => param_get_is_sphere
+     procedure :: get_r_earth => param_get_r_earth
 
      procedure :: check_mcmc_params => param_check_mcmc_params
      procedure :: check_recv_func_fwd_params &
@@ -394,6 +398,8 @@ contains
        read(val, *)self%solve_disper_sig
     else if (name == "is_sphere") then
        read(val, *) self%is_sphere
+    else if (name == "r_earth") then
+       read(val, *) self%r_earth
     else if (name == "is_ocean") then
        read(val, *) self%is_ocean 
     else if (name == "n_bin_z") then
@@ -1144,6 +1150,26 @@ contains
     
     return 
   end function param_get_noise_added
+  
+  !---------------------------------------------------------------------
+
+  logical function param_get_is_sphere(self) result(is_sphere)
+    class(param), intent(in) :: self
+    
+    is_sphere = self%is_sphere
+  
+    return 
+  end function param_get_is_sphere
+  
+  !---------------------------------------------------------------------
+
+  double precision function param_get_r_earth(self) result(r_earth)
+    class(param), intent(in) :: self
+    
+    r_earth = self%r_earth
+    
+    return 
+  end function param_get_r_earth
   
   !---------------------------------------------------------------------
 

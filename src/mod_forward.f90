@@ -21,32 +21,45 @@ contains
   !---------------------------------------------------------------------
   
   subroutine forward_recv_func(tm, hyp, intpr, obs, rf, cov, &
-       & log_likelihood, is_ok)
+       & is_sphere, r_earth, log_likelihood, is_ok)
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp
     type(interpreter), intent(inout) :: intpr
     type(observation_recv_func), intent(in) :: obs
     type(recv_func), intent(inout) :: rf(:)
     type(covariance), intent(in) :: cov(:)
+    logical, intent(in) :: is_sphere
+    double precision, intent(in) :: r_earth
     double precision, intent(out) :: log_likelihood
     logical, intent(out) :: is_ok
     double precision, allocatable :: misfit(:), phi1(:)
     double precision :: phi, s
-    type(vmodel) :: vm
+    type(vmodel) :: vm, vm_flattened
     integer :: i, j, n
 
 
-    ! Forward computation
     call intpr%construct_vmodel(tm, vm, is_ok)
+    !call vm%display()
+    
+    ! Earth flattening
+    if (is_sphere) then
+       call vm%sphere2flat(r_earth, vm_flattened)
+    end if
+
     if (.not. is_ok) then
        log_likelihood = minus_infty
        return
     end if
+
     !log_likelihood = 0.d0  !!!!!!!!!!!!!!!!!!!!!!
     !return !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     do i = 1, obs%get_n_rf()
-       call rf(i)%set_vmodel(vm)
+       if (is_sphere) then
+          call rf(i)%set_vmodel(vm_flattened)
+       else
+          call rf(i)%set_vmodel(vm)
+       end if
        call rf(i)%compute()
     end do
     !log_likelihood = 0.d0 !!!!!!!!!!!!!!!!
@@ -78,30 +91,41 @@ contains
 
   !-----------------------------------------------------------------------
   
-  subroutine forward_disper(tm, hyp, intpr, obs, disp, log_likelihood, &
-       & is_ok)
+  subroutine forward_disper(tm, hyp, intpr, obs, disp, &
+       & is_sphere, r_earth, log_likelihood, is_ok)
     implicit none 
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp
     type(interpreter), intent(inout) :: intpr
     type(observation_disper), intent(in) :: obs
     type(disper), intent(inout) :: disp(:)
+    logical, intent(in) :: is_sphere
+    double precision, intent(in) ::r_earth
     double precision, intent(out) :: log_likelihood
     logical, intent(out) :: is_ok
     double precision :: misfit_c, misfit_u
-    type(vmodel) :: vm
+    type(vmodel) :: vm, vm_flattened
     double precision :: sc, su
     integer :: i, j, nc, nu
     
-    ! calculate synthetic dispersion curves
     call intpr%construct_vmodel(tm, vm, is_ok)
+    
+    ! Earth flattening
+    if (is_sphere) then
+       call vm%sphere2flat(r_earth, vm_flattened)
+    end if
+    
     if (.not. is_ok) then
        log_likelihood = minus_infty
        return
     end if
     
     do j = 1, obs%get_n_disp()
-       call disp(j)%set_vmodel(vm)
+       if (is_sphere) then
+          call disp(j)%set_vmodel(vm_flattened)
+       else
+          call disp(j)%set_vmodel(vm)
+       end if
        call disp(j)%dispersion()
     end do
     
