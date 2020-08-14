@@ -29,7 +29,7 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 * __Flexible inversion setting__
     * Vp solved or fixed
     * Ocean exists or not
-    * Flat or spherical model (planned)
+    * Flat or spherical Earth model
     * Solve for noise standard deviation
     * Prior constraint applied or not
 * __Easy to visualize__
