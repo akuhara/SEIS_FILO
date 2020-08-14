@@ -55,7 +55,7 @@ module cls_vmodel
      procedure :: vp2rho_brocher => vmodel_vp2rho_brocher
      procedure :: vp2vs_brocher => vmodel_vp2vs_brocher
      procedure :: vs2vp_brocher => vmodel_vs2vp_brocher
-
+     procedure :: sphere2flat => vmodel_sphere2flat
   end type vmodel
   
   interface vmodel
@@ -463,6 +463,31 @@ contains
     return 
   end subroutine vmodel_vs2vp_brocher
     
+  !---------------------------------------------------------------------
+  
+  subroutine vmodel_sphere2flat(self, r_earth, vm_out)
+    class(vmodel), intent(in) :: self
+    class(vmodel), intent(out) :: vm_out
+    double precision, intent(in) :: r_earth
+    double precision :: r, ztop, zbot
+    integer :: i
+
+    call vm_out%set_nlay(self%nlay)
+    r = r_earth
+    do i= 1, self%nlay
+       ztop = r_earth * log(r_earth / r)
+       r = r - 0.5d0 * self%h(i) ! Get radius at layer center
+       vm_out%vp(i) = self%vp(i) * r_earth / r
+       vm_out%vs(i) = self%vs(i) * r_earth / r
+       vm_out%rho(i) = self%rho(i) * r / r_earth
+       r = r - 0.5d0 * self%h(i)
+       zbot = r_earth * log(r_earth / r)
+       vm_out%h(i) = zbot - ztop
+    end do
+    return 
+  end subroutine vmodel_sphere2flat
+    
+
   !---------------------------------------------------------------------
 
 end module cls_vmodel
