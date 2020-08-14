@@ -189,13 +189,14 @@ class InvResult:
         
         df = pd.read_csv(file, delim_whitespace=True, header=None, \
                          names=(vlabel, zlabel, plabel))
-        z, v = np.mgrid[slice(z_min, z_max + eps, del_z), \
-                        slice(v_min, v_max + eps, del_v)]
+        v_tmp = df[df[vlabel].duplicated()==False][vlabel]
+        z_tmp = df[df[zlabel].duplicated()==False][zlabel]
         df_below_sea = df[df[zlabel] > float(param["z_min"])]
         p_max = df_below_sea[plabel].max()
-        #print(p_max)
         data = df.pivot(zlabel, vlabel, plabel)
-        mappable = ax.pcolormesh(v, z, data, cmap='hot_r', vmax=p_max)
+        mappable = ax.pcolormesh(v_tmp, z_tmp, \
+                                 data, shading='nearest', \
+                                 cmap='hot_r', vmax=p_max)
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel)
         
@@ -314,25 +315,11 @@ class InvResult:
         else:
             amp_max = 0.6
             
-        print(amp_min, amp_max, "AA")
-        n_bin_amp = 100
-        del_amp = (amp_max - amp_min) / n_bin_amp
-        
-        t_min = float(param["t_start"])
-
-        del_t = float(param["delta"])
-        #t_max = 2 * (float(param["t_end"]) - float(param["t_start"])) \
-        #        + float(param["t_start"]) - del_t    
-        t_max = t_min + 1024 * del_t
-    
-        a, t = np.mgrid[slice(amp_min, \
-                              amp_max + del_amp, \
-                              del_amp), \
-                        slice(t_min - 0.5 * del_t, \
-                              t_max + 0.5 * del_t, \
-                              del_t)]
+        t_tmp = df[df[tlabel].duplicated()==False][tlabel]
+        a_tmp = df[df[alabel].duplicated()==False][alabel]
         data = df.pivot(tlabel, alabel, plabel)
-        mappable = ax.pcolormesh(t, a, data, cmap='hot_r')
+        mappable = ax.pcolormesh(a_tmp, t_tmp, data, cmap='hot_r', \
+                                 shading='nearest')
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel) 
         ax.set_xlim([float(param["t_start"]), float(param["t_end"])])
@@ -434,19 +421,13 @@ class InvResult:
         plabel = "Probability"
         df = pd.read_csv(ppd_file, delim_whitespace=True, header=None, \
                          names=(flabel, vlabel, plabel))
-        v_min = float(param["cmin"])
-        v_max = float(param["cmax"])
-        del_v = float(param["dc"])
+        
         f_min = float(param["fmin"])
         del_f = float(param["df"])
         nf    = int(param["nf"])
         f_max = f_min + (nf -1) * del_f
-        v, f = np.mgrid[slice(v_min - 0.5 * del_v, \
-                              v_max + del_v, \
-                              del_v), \
-                        slice(f_min - 0.5 * del_f, \
-                              f_max + del_f, \
-                              del_f)]
+        v_tmp = df[df[vlabel].duplicated()==False][vlabel]
+        f_tmp = df[df[flabel].duplicated()==False][flabel]
         data = df.pivot(vlabel, flabel, plabel)
 
         # Observation
@@ -460,7 +441,8 @@ class InvResult:
         
         # Draw
         if len(df_obs) > 0:
-            mappable = ax.pcolor(f, v, data, cmap='hot_r')
+            mappable = ax.pcolormesh(f_tmp, v_tmp, data, cmap='hot_r', \
+                                     shading='nearest')
             ax.set_xlabel(flabel)
             ax.set_ylabel(vlabel)
             cbar = fig.colorbar(mappable, ax=ax)
