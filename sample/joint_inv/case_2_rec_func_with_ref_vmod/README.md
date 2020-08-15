@@ -7,9 +7,9 @@
 
 ## Input files
 
-* [joint_inv.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_recv_func_with_ref_vmod/joint_inv.in): main parameter file
-* [recv_func.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_recv_func_with_ref_vmod/recv_func.in): data summary file for receiver functions
-* [recv_func.sac](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_recv_func_with_ref_vmod/recv_func.sac): data file (P receiver function)
+* [joint_inv.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_rec_func_with_ref_vmod/joint_inv.in): main parameter file
+* [recv_func.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_rec_func_with_ref_vmod/recv_func.in): data summary file for receiver functions
+* [recv_func.sac](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_rec_func_with_ref_vmod/recv_func.sac): data file (P receiver function)
 
 ## How to make plots
 
