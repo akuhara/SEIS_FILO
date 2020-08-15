@@ -11,6 +11,7 @@
 * [recv_func.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_rec_func_with_ref_vmod/recv_func.in): data summary file for receiver functions
 * [recv_func1.sac](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_rec_func_with_ref_vmod/recv_func1.sac): data file #1 (P receiver function with a ray parameter of 0.05 s/km)
 * [recv_func2.sac](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_2_rec_func_with_ref_vmod/recv_func2.sac): data file #2 (P receiver function with a ray parameter of 0.09 s/km)
+* [ref_vmod.in](https://github.com/akuhara/SEIS_FILO/edit/master/sample/joint_inv/case_2_rec_func_with_ref_vmod/ref_vmod.in): reference velocity model, working as a prior constraint 
 
 ## How to make plots
 
