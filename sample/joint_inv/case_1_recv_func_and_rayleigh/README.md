@@ -15,6 +15,6 @@
 
 ## How to make plots
 
-1. `python ../../../util/plot_recv_func.py joint_inv.in 1`, which produces `disper01.png`.
+1. `python ../../../util/plot_disper.py joint_inv.in 1`, which produces `disper01.png`.
 
-2. `python ../../../util/plot_disper.py joint_inv.in 1`, which produces `recv_func01.png`.
+2. `python ../../../util/plot_recv_func.py joint_inv.in 1`, which produces `recv_func01.png`.
