@@ -1,4 +1,4 @@
-# Dispsesion curve forward computation
+# Dispersion curve forward computation
 
 
 ## How to run
