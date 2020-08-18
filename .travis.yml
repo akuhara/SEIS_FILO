@@ -23,6 +23,7 @@ script:
   - cd ../disper_fwd && ../../bin/disper_fwd disper_fwd.in
   - cd ../joint_inv/case_1_recv_func_and_rayleigh && mpirun -np 2 ../../../bin/joint_inv joint_inv_minimal.in
   - cd ../case_2_rec_func_with_ref_vmod && mpirun -np 2 ../../../bin/joint_inv joint_inv_minimal.in 
+  
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
