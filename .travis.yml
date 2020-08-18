@@ -22,11 +22,11 @@ script:
   - cd ../sample/recv_func_fwd && ../../bin/recv_func_fwd recv_func_fwd.in
   - cd ../disper_fwd && ../../bin/disper_fwd disper_fwd.in
   - cd ../joint_inv/case_1_recv_func_and_rayleigh && mpirun -np 2 ../../../bin/joint_inv joint_inv_minimal.in
-  - python ../../../util/plot_disper.py joint_inv_mimimal.in 1
-  - python ../../../util/plot_recv_funv.py joint_inv_minimal.in 1
+  - python ../../../util/plot_disper.py joint_inv_minimal.in 1
+  - python ../../../util/plot_recv_func.py joint_inv_minimal.in 1
   - cd ../case_2_rec_func_with_ref_vmod && mpirun -np 2 ../../../bin/joint_inv joint_inv_minimal.in 
-  - python ../../../util/plot_recv_funv.py joint_inv_minimal.in 1
-  - python ../../../util/plot_recv_funv.py joint_inv_minimal.in 2
+  - python ../../../util/plot_recv_func.py joint_inv_minimal.in 1
+  - python ../../../util/plot_recv_func.py joint_inv_minimal.in 2
   
 
 after_success:
