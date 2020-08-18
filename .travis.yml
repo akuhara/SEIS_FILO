@@ -1,4 +1,4 @@
-language: minimal 
+language: python
 
 addons:
   apt:
