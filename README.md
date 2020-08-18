@@ -44,7 +44,7 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 * [FFTW library](http://fftw.org/)
 * [LAPACK library](http://www.netlib.org/lapack/)
 * [Open MPI](https://www.open-mpi.org/)
-* Some Python modules listed in [requirements.txt](https://github.com/akuhara/SEIS_FILO/tree/requirements.txt)
+* Some Python modules listed in [requirements.txt](https://github.com/akuhara/SEIS_FILO/blob/master/requirements.txt)
 
   
 ## Install
