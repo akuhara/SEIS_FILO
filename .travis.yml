@@ -24,10 +24,10 @@ script:
   - cd ../joint_inv/case_1_recv_func_and_rayleigh && mpirun -np 2 ../../../bin/joint_inv joint_inv_minimal.in
   - pip install coverage
   - coverage run ../../../util/plot_disper.py joint_inv_minimal.in 1
-  - coverage run ../../../util/plot_recv_func.py joint_inv_minimal.in 1
+  - coverage run --append  ../../../util/plot_recv_func.py joint_inv_minimal.in 1
   - cd ../case_2_rec_func_with_ref_vmod && mpirun -np 2 ../../../bin/joint_inv joint_inv_minimal.in 
-  - coverage run ../../../util/plot_recv_func.py joint_inv_minimal.in 1
-  - coverage run ../../../util/plot_recv_func.py joint_inv_minimal.in 2
+  - coverage run --append ../../../util/plot_recv_func.py joint_inv_minimal.in 1
+  - coverage run --append ../../../util/plot_recv_func.py joint_inv_minimal.in 2
   
 
 after_success:
