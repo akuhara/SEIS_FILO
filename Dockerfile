@@ -4,7 +4,8 @@ RUN apt-get update && apt-get install -y \
   liblapack-dev \
   libopenmpi-dev \
   libfftw3-dev \
-  openmpi-bin
+  openmpi-bin \
+  python3-pip
 COPY requirements.txt /tmp/
 RUN pip install --requirement /tmp/requirements.txt
 COPY src/ /
