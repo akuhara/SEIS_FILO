@@ -5,4 +5,8 @@ RUN apt-get update && apt-get install -y \
   libopenmpi-dev \
   libfftw3-dev \
   openmpi-bin
+COPY requirements.txt /tmp/
+RUN pip install --requirement /tmp/requirements.txt
+COPY src/ /
+CMD ["/bin/bash"] 
   
