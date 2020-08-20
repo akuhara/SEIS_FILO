@@ -17,7 +17,9 @@ RUN useradd -m ${USER}
 USER ${USER}
 WORKDIR /home/${USER}
 ENV PATH $PATH:/usr/local/SEIS_FILO/bin
-RUN cp -r /usr/local/SEIS_FILO/sample . && cp -r /usr/local/SEIS_FILO/util .
+RUN cp -r /usr/local/SEIS_FILO/sample . \
+  && cp -r /usr/local/SEIS_FILO/util . \
+  && mkdir /home/${USER}/data
 
 CMD ["/bin/bash"] 
 
