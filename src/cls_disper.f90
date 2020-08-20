@@ -547,11 +547,6 @@ contains
        else
           fac = 0.d0
        end if
-       !else
-       !   ch = 1.d0
-       !   sh = 0.d0
-       !   fac = 1.d0
-       !end if
     else if (v < c) then
        ! Use cos and sin instead of cosh and sinh 
        !   to avoid complex values

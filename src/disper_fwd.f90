@@ -30,11 +30,18 @@ program main
   use cls_disper
   use mod_random
   implicit none 
-  integer :: n_arg
+  integer :: n_arg, ierr
   character(len=200) :: param_file
   type(param) :: para
   type(vmodel) :: vm
   type(disper) :: disp
+  logical :: verb
+
+  verb = .true.
+  
+  ! MPI init
+  !  just in case of erroneous exit, where mpi_finalize is called.
+  call mpi_init(ierr) 
   
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
@@ -45,7 +52,7 @@ program main
   call get_command_argument(1, param_file)
 
   ! Read parameter file
-  para = init_param(param_file)
+  para = init_param(param_file, verb=verb)
   
   ! Set velocity model
   vm = init_vmodel()
