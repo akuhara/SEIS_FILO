@@ -1,4 +1,5 @@
 From ubuntu:18.04
+ARG USER=seismologist
 RUN apt-get update && apt-get install -y \
   gfortran \
   liblapack-dev \
@@ -9,6 +10,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt /tmp/
 RUN pip3 install --upgrade pip && pip3 install --requirement /tmp/requirements.txt
 COPY . /SEIS_FILO/
-RUN cd /SEIS_FILO/src && make FFTW="-I/usr/include -lfftw3"
+WORKDIR /SEIS_FILO/src
+RUN make FFTW="-I/usr/include -lfftw3"
+RUN useradd -m ${USER}
+USER ${USER}
+
 CMD ["/bin/bash"] 
-  
+
