@@ -4,6 +4,8 @@ __SEISmological inversion tools for Flat and Isotropic Layered structures in the
 
 [![Build Status](https://travis-ci.org/akuhara/SEIS_FILO.svg?branch=master)](https://travis-ci.org/akuhara/SEIS_FILO)
 [![codecov](https://codecov.io/gh/akuhara/SEIS_FILO/branch/master/graph/badge.svg)](https://codecov.io/gh/akuhara/SEIS_FILO)
+![GitHub](https://img.shields.io/github/license/akuhara/SEIS_FILO)
+
 
 Copyright (C) 2019-2020 Takeshi Akuhara
 
