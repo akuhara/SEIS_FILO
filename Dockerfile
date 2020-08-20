@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
   libopenmpi-dev \
   libfftw3-dev \
   openmpi-bin \
-  python3-pip
+  python3-pip \
+  ssh
 COPY requirements.txt /tmp/
 RUN pip3 install --upgrade pip && pip3 install --requirement /tmp/requirements.txt
 COPY . /SEIS_FILO/
