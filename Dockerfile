@@ -16,7 +16,7 @@ RUN make FFTW="-I/usr/include -lfftw3"
 RUN useradd -m ${USER}
 USER ${USER}
 WORKDIR /home/${USER}
-ENV PATH $PATH:usr/local/SEIS_FILO/bin
+ENV PATH $PATH:/usr/local/SEIS_FILO/bin
 
 CMD ["/bin/bash"] 
 
