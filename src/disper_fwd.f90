@@ -30,6 +30,8 @@ program main
   use cls_disper
   use mod_random
   implicit none 
+  include 'mpif.h'
+
   integer :: n_arg, ierr
   character(len=200) :: param_file
   type(param) :: para
