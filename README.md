@@ -4,6 +4,9 @@ __SEISmological inversion tools for Flat and Isotropic Layered structures in the
 
 [![Build Status](https://travis-ci.org/akuhara/SEIS_FILO.svg?branch=master)](https://travis-ci.org/akuhara/SEIS_FILO)
 [![codecov](https://codecov.io/gh/akuhara/SEIS_FILO/branch/master/graph/badge.svg)](https://codecov.io/gh/akuhara/SEIS_FILO)
+![GitHub](https://img.shields.io/github/license/akuhara/SEIS_FILO)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/akuhara/seis-filo)
+
 
 Copyright (C) 2019-2020 Takeshi Akuhara
 
@@ -34,9 +37,6 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
     * Prior constraint applied or not
 * __Easy to visualize__
     * Plot utilities also available
-    
-
-
 
 ---
 
@@ -50,6 +50,7 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 ## Install
 Type `make` in the `src` directory. Please edit the [Makefile](https://github.com/akuhara/SEIS_FILO/tree/master/src/Makefile) in accordance with your environment (i.e., compiler type and libarary paths). 
 
+Alternatively, you can choose to use [docker container](https://hub.docker.com/r/akuhara/seis-filo) in which ready-to-use executable files are stored. 
 
 ## Quick Start with Sample
 * [__disper_fwd__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/disper_fwd): Surface wave forward computation (phase & group velocities)

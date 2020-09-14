@@ -30,11 +30,20 @@ program main
   use cls_disper
   use mod_random
   implicit none 
-  integer :: n_arg
+  include 'mpif.h'
+
+  integer :: n_arg, ierr
   character(len=200) :: param_file
   type(param) :: para
-  type(vmodel) :: vm
+  type(vmodel) :: vm, vm2
   type(disper) :: disp
+  logical :: verb
+
+  verb = .true.
+  
+  ! MPI init
+  !  just in case of erroneous exit, where mpi_finalize is called.
+  call mpi_init(ierr) 
   
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
@@ -45,11 +54,16 @@ program main
   call get_command_argument(1, param_file)
 
   ! Read parameter file
-  para = init_param(param_file)
+  para = init_param(param_file, verb=verb)
   
   ! Set velocity model
   vm = init_vmodel()
   call vm%read_file(para%get_vmod_in())
+  if (para%get_is_sphere()) then
+     call vm%sphere2flat(para%get_r_earth(), vm2)
+  else 
+     vm2 = vm
+  end if     
   
   ! Init random generator
   call init_random(para%get_i_seed1(), &
@@ -57,11 +71,9 @@ program main
        &           para%get_i_seed3(), &
        &           para%get_i_seed4())
 
-  
-  
-  ! Calculate dispersion curve
+    ! Calculate dispersion curve
   disp = disper(&
-       & vm     = vm, &
+       & vm     = vm2, &
        & fmin   = para%get_fmin(), &
        & fmax   = para%get_fmax(), &
        & df     = para%get_df(), &
