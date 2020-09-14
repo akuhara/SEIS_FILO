@@ -35,7 +35,7 @@ program main
   integer :: n_arg, ierr
   character(len=200) :: param_file
   type(param) :: para
-  type(vmodel) :: vm
+  type(vmodel) :: vm, vm2
   type(recv_func) :: rf
   logical :: is_ok, verb
 
@@ -64,6 +64,12 @@ program main
 
   ! Set velocity model
   call vm%read_file(para%get_vmod_in())
+  if (para%get_is_sphere()) then
+     call vm%sphere2flat(para%get_r_earth(), vm2)
+  else 
+     vm2 = vm
+  end if
+
 
   ! Init random generator
   call init_random(para%get_i_seed1(), &
@@ -74,7 +80,7 @@ program main
   
   ! Init RF
   rf = recv_func(&
-       & vm    = vm, &
+       & vm    = vm2, &
        & n     = para%get_n_smp(), &
        & delta = para%get_delta(), &
        & rayp  = para%get_rayp(), &

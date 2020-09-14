@@ -33,7 +33,7 @@ program main
   integer :: n_arg, ierr
   character(len=200) :: param_file
   type(param) :: para
-  type(vmodel) :: vm
+  type(vmodel) :: vm, vm2
   type(disper) :: disp
   logical :: verb
 
@@ -57,6 +57,11 @@ program main
   ! Set velocity model
   vm = init_vmodel()
   call vm%read_file(para%get_vmod_in())
+  if (para%get_is_sphere()) then
+     call vm%sphere2flat(para%get_r_earth(), vm2)
+  else 
+     vm2 = vm
+  end if     
   
   ! Init random generator
   call init_random(para%get_i_seed1(), &
@@ -64,11 +69,9 @@ program main
        &           para%get_i_seed3(), &
        &           para%get_i_seed4())
 
-  
-  
-  ! Calculate dispersion curve
+    ! Calculate dispersion curve
   disp = disper(&
-       & vm     = vm, &
+       & vm     = vm2, &
        & fmin   = para%get_fmin(), &
        & fmax   = para%get_fmax(), &
        & df     = para%get_df(), &
