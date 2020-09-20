@@ -520,7 +520,8 @@ class InvResult:
     def _plot_temp_history(self, fig, ax):
         param = self._param
         file = "temp.history"
-        df = pd.read_csv(file, delim_whitespace=True, header=None)
+        df = pd.read_csv(file, delim_whitespace=True, header=None
+                         dtype=np.float64)
         n_all = len(df.columns)
         if n_all > 5:
             df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
