@@ -483,7 +483,8 @@ class InvResult:
                 if (count - 2) // 6 + 1 == curve_id:
                     iloc = (count - 2) % 6
                     if iloc == 0:
-                        self._param["obs_disper_file"] = tmp_line
+                        self._param["obs_disper_file"] = tmp_line.replace('\'','')
+                        self._param["obs_disper_file"] = self._param["obs_disper_file"].replace('\"','')
                     elif iloc == 2:
                         item = tmp_line.split(" ")
                         self._param["nf"]   = item[0]
