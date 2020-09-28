@@ -417,7 +417,7 @@ contains
           stop
        end if
        do i = 1, n_iter
-          write(fmt, '("(",I0,"E15.3)")')n_all
+          write(fmt, '("(",I0,"E16.4)")')n_all
           write(io, trim(fmt))hist_all2(i, 1:n_all)
        end do
        close(io)
