@@ -1,5 +1,6 @@
 import os 
 import sys
+import re
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -358,7 +359,8 @@ class InvResult:
                 if (count - 2) // 6 + 1 == trace_id:
                     iloc = (count - 2) % 6
                     if iloc == 0:
-                        self._param["syn_rf_file"] = tmp_line
+                        self._param["syn_rf_file"] = tmp_line.replace('\'','')
+                        self._param["syn_rf_file"] = self._param["syn_rf_file"].replace('\"','')
                     elif iloc == 1:
                         item = tmp_line.split(" ")
                         self._param["delta"] = item[2]
