@@ -188,6 +188,8 @@ program main
        & solve_disper_sig = para%get_solve_disper_sig(), &
        & n_rf             = obs_rf%get_n_rf(),           &
        & n_disp           = obs_disp%get_n_disp(),       &
+       & k_min            = para%get_k_min(),            &
+       & k_max            = para%get_k_max(),            &
        & verb             = verb                         &
        &) 
 
