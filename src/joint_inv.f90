@@ -490,10 +490,9 @@ program main
 
   ! K
   filename = "n_layers.ppd"
-  n_k = para%get_k_max() - para%get_k_min()
-  call output_ppd_1d(filename, rank, n_k, &
+  call output_ppd_1d(filename, rank, para%get_k_max(), &
        & intpr%get_n_layers(), n_mod, &
-       & dble(para%get_k_min()), 1.d0)
+       & 1.d0 , 1.d0)
   
   ! marginal posterior of Vs 
   filename = "vs_z.ppd"
