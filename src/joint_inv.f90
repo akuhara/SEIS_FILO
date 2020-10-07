@@ -45,7 +45,7 @@ program main
   integer :: n_td, io_vmod_all
   logical :: verb
   integer :: i, j, k, ierr, n_proc, rank, n_arg
-  integer :: n_mod, n_k
+  integer :: n_mod
   double precision :: log_likelihood, temp, log_likelihood2
   double precision :: log_prior_ratio, log_proposal_ratio
   double precision :: del_amp
