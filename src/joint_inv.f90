@@ -45,7 +45,7 @@ program main
   integer :: n_td, io_vmod_all
   logical :: verb
   integer :: i, j, k, ierr, n_proc, rank, n_arg
-  integer :: n_mod
+  integer :: n_mod, n_k
   double precision :: log_likelihood, temp, log_likelihood2
   double precision :: log_prior_ratio, log_proposal_ratio
   double precision :: del_amp
@@ -467,9 +467,9 @@ program main
            end do
            
            ! V model
-           !call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
-           !write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
-           !call vm%display(io_vmod_all)
+           call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
+           write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
+           call vm%display(io_vmod_all)
            
         end if
      end do
@@ -490,7 +490,8 @@ program main
 
   ! K
   filename = "n_layers.ppd"
-  call output_ppd_1d(filename, rank, para%get_k_max(), &
+  n_k = para%get_k_max() - para%get_k_min()
+  call output_ppd_1d(filename, rank, n_k, &
        & intpr%get_n_layers(), n_mod, &
        & dble(para%get_k_min()), 1.d0)
   
