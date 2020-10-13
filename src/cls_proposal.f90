@@ -70,10 +70,10 @@ contains
   !---------------------------------------------------------------------
   
   type(proposal) function init_proposal(solve_vp, solve_rf_sig, &
-       & solve_disper_sig, n_rf, n_disp, verb) & 
+       & solve_disper_sig, n_rf, n_disp, k_min, k_max, verb) & 
        & result(self)
     logical, intent(in) :: solve_vp, solve_rf_sig, solve_disper_sig
-    integer, intent(in) :: n_rf, n_disp
+    integer, intent(in) :: n_rf, n_disp, k_min, k_max
     logical, intent(in), optional :: verb
     integer :: i
 
@@ -83,7 +83,8 @@ contains
     if (self%verb) then
        write(*,'(a)')"<< Initialize proposals >>"
     end if
-
+    
+    
     self%n_proposal = 1 ! Birth, Death, Depth, & Vs
     self%i_depth = self%n_proposal
     self%n_proposal = self%n_proposal + 1
@@ -95,12 +96,14 @@ contains
        self%i_vp = self%n_proposal
     end if
     
-    self%n_proposal = self%n_proposal + 1
-    self%i_birth = self%n_proposal
+    if (k_max - k_min > 1) then
+       self%n_proposal = self%n_proposal + 1
+       self%i_birth = self%n_proposal
+       self%n_proposal = self%n_proposal + 1
+       self%i_death = self%n_proposal
+    end if
 
-    self%n_proposal = self%n_proposal + 1
-    self%i_death = self%n_proposal
-
+    
     self%solve_rf_sig = solve_rf_sig
     self%n_rf = n_rf
     if (self%solve_rf_sig .and. self%n_rf > 0) then

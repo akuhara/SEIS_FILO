@@ -188,6 +188,8 @@ program main
        & solve_disper_sig = para%get_solve_disper_sig(), &
        & n_rf             = obs_rf%get_n_rf(),           &
        & n_disp           = obs_disp%get_n_disp(),       &
+       & k_min            = para%get_k_min(),            &
+       & k_max            = para%get_k_max(),            &
        & verb             = verb                         &
        &) 
 
@@ -467,9 +469,9 @@ program main
            end do
            
            ! V model
-           !call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
-           !write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
-           !call vm%display(io_vmod_all)
+           call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
+           write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
+           call vm%display(io_vmod_all)
            
         end if
      end do
@@ -492,7 +494,7 @@ program main
   filename = "n_layers.ppd"
   call output_ppd_1d(filename, rank, para%get_k_max(), &
        & intpr%get_n_layers(), n_mod, &
-       & dble(para%get_k_min()), 1.d0)
+       & 1.d0 , 1.d0)
   
   ! marginal posterior of Vs 
   filename = "vs_z.ppd"
