@@ -1,1 +1,7 @@
-site_name: My Docs
+site_name: SEIS_FILO
+
+nav: 
+     - Home: index.md
+     - Overview: overview.md
+
+theme: readthedocs

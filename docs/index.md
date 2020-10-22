@@ -1,17 +1,14 @@
-# Welcome to MkDocs
+# SEIS_FILO 
+SEISmological transdimensional inversion tools for Flat and Isotropic Layered medium in the Ocean
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+## Package contents
 
-## Commands
+* __recv_func_fwd:__ Synthetic calculation of receiver functions
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+* __disper_fwd:__ Synthetic calculation of surface wave dispersion curves
 
-## Project layout
+* __joint_inv:__ Transdimensional joint inversion of receiver functions and surface wave dispersion curves
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Before Use
+
+* [Overview](overview)
