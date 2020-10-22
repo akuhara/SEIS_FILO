@@ -358,7 +358,8 @@ class InvResult:
                 if (count - 2) // 6 + 1 == trace_id:
                     iloc = (count - 2) % 6
                     if iloc == 0:
-                        self._param["syn_rf_file"] = tmp_line
+                        self._param["syn_rf_file"] = tmp_line.replace('\'','')
+                        self._param["syn_rf_file"] = self._param["syn_rf_file"].replace('\"','')
                     elif iloc == 1:
                         item = tmp_line.split(" ")
                         self._param["delta"] = item[2]
@@ -481,7 +482,8 @@ class InvResult:
                 if (count - 2) // 6 + 1 == curve_id:
                     iloc = (count - 2) % 6
                     if iloc == 0:
-                        self._param["obs_disper_file"] = tmp_line
+                        self._param["obs_disper_file"] = tmp_line.replace('\'','')
+                        self._param["obs_disper_file"] = self._param["obs_disper_file"].replace('\"','')
                     elif iloc == 2:
                         item = tmp_line.split(" ")
                         self._param["nf"]   = item[0]
@@ -520,7 +522,8 @@ class InvResult:
     def _plot_temp_history(self, fig, ax):
         param = self._param
         file = "temp.history"
-        df = pd.read_csv(file, delim_whitespace=True, header=None)
+        df = pd.read_csv(file, delim_whitespace=True, header=None,
+                         dtype=np.float64)
         n_all = len(df.columns)
         if n_all > 5:
             df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
