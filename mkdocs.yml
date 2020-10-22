@@ -2,6 +2,25 @@ site_name: SEIS_FILO
 
 nav: 
      - Home: index.md
-     - Overview: overview.md
-
+     - Before use:
+       - Overview: overview.md
+       - Requirements: requirements.md
+       - Install: install.md
+       - Terms of use: terms_of_use.md
+     - How to use:
+       - Input files:
+         - Overview of input files: overview_of_input_files.md
+         - Main parameter file: main_parameter_file.md
+         - Data summary file: data_summary_file.md
+         - Data file: data_file.md
+         - Reference velocity file: reference_velocity_file.md
+         - Velocity model file: velocity_model_file.md
+         - Parameter list: parameter_list.md
+       - Output files:
+         - Number of layers: number_of_layers.md
+         - Velocity profile: velocity_profile.md
+         - Dispersion curve ensemble: dispersion_curve_ensemble.md
+         - Receiver function ensemble: receiver_function_ensemble.md
+         - Standard deviation of noise: standard_deviation_of_noise.md
+       - Plot utilities: plot_utilities.md
 theme: readthedocs
