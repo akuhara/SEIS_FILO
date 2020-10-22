@@ -43,3 +43,14 @@ SEISmological transdimensional inversion tools for Flat and Isotropic Layered me
 * Forward calculation
     * [Dispersion curve](dispersion_curve.md)
     * [Receiver function](receiver_function.md)
+
+* Inversion analysis
+    * [Model parameters](model_parameters.md)
+    * [Prior probability](prior_probability.md)
+    * [MCMC step](mcmc_step.md)
+    * [Parallel tempering](parallel_tempering.md)
+
+* Miscellaneous
+    * [Receiver function amplitude](receiver_function_amplitude.md)
+    * [Verification](verification.md)
+    * [Spherical Earth mode](spherical_earth_mode.md)
