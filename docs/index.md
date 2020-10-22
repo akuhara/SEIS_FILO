@@ -37,4 +37,9 @@ SEISmological transdimensional inversion tools for Flat and Isotropic Layered me
     * [Dispersion curve ensemble](dispersion_curve_ensemble.md)
     * [Receiver function ensemble](receiver_function_ensemble.md)
     * [Standard deviation of noise](standard_deviation_of_noise.md)
+
 * [Plot utilities](plot_utilities.md)
+
+* Forward calculation
+    * [Dispersion curve](dispersion_curve.md)
+    * [Receiver function](receiver_function.md)
