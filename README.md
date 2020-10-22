@@ -6,7 +6,7 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 [![codecov](https://codecov.io/gh/akuhara/SEIS_FILO/branch/master/graph/badge.svg)](https://codecov.io/gh/akuhara/SEIS_FILO)
 ![GitHub](https://img.shields.io/github/license/akuhara/SEIS_FILO)
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/akuhara/seis-filo)
-
+[![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 
 Copyright (C) 2019-2020 Takeshi Akuhara
 
@@ -60,6 +60,7 @@ Alternatively, you can choose to use [docker container](https://hub.docker.com/r
 ---
 
 ## For More Details
-See [Wiki](https://github.com/akuhara/SEIS_FILO/wiki).
+See (online documentation)[https://seis-filo.readthedocs.io].
+
 
 
