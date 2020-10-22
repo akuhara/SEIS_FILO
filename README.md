@@ -1,4 +1,4 @@
-# SEIS_FILO (Alpha version)
+# SEIS_FILO (Beta version)
 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
@@ -9,8 +9,6 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 
 Copyright (C) 2019-2020 Takeshi Akuhara
-
-__NOTE: Currently, the software undergoes alpha testing: most functions work as intended but are not thoroughly tested yet. Anythings in codes and documents can change without notification.__
 
 ![plot](./img/disper01.png)
 ---
@@ -60,7 +58,7 @@ Alternatively, you can choose to use [docker container](https://hub.docker.com/r
 ---
 
 ## For More Details
-See (online documentation)[https://seis-filo.readthedocs.io].
+See [online documentation](https://seis-filo.readthedocs.io).
 
 
 
