@@ -1,7 +1,7 @@
 # .readthedocs.yml
 # Read the Dcos configuration file
 
-version: 1
+version: 2
 
 python:
   version: 3.7
