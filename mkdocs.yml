@@ -43,6 +43,7 @@ theme: readthedocs
 #  - admonition
 
 markdown_extensions:
+  - mdx_math
   - admonition
     
 #extra_javascript:
