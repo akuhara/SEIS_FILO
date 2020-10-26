@@ -38,9 +38,14 @@ nav:
 
 theme: readthedocs
 
-markdown_extensions: 
-  - mdx_math
+#markdown_extensions: 
+#  - mdx_math
+#  - admonition
+
+markdown_extensions:
   - admonition
     
+#extra_javascript:
+#  - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML 
 extra_javascript:
-  - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML 
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML
