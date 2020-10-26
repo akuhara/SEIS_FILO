@@ -2,11 +2,12 @@
 
 The joint inversion program, `joint_inv`,  samples the posterior probability distributions of model parameters regarding 1-D velocity structure. The model parameters are:
  
-* Number of layers: \\(k\\)
+* Number of layers: \\\(k\\\)
 * Depth of each layer bottom: \\(z_i (i=1,\cdots,k)\\)
 * S-wave velocity of each layer: \\(\beta_i (i=1,\cdots,k)\\)
 * P-wave velocity of each layer (optional): \\(\alpha_i (i=1,\cdots,k)\\)
 * Standard deviation of data noise (optional): \\(\sigma_i (i=1,\cdots,N_{data})\\)
+
 
 Alternatively, one can solve for velocity anomalies centered on the given reference velocity, as is done by [Akuhara et al. (2020)](https://doi.org/10.1029/2020GL088280). This mode is activated by setting [solve_anomaly](parameter_list.md#solve_anomaly) to be 'T' in [the main parameter file](main_parameter_file.md). 
 
