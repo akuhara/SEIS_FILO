@@ -7,7 +7,8 @@ SEISmological transdimensional inversion tools for Flat and Isotropic Layered me
 
 * __disper_fwd:__ Synthetic calculation of surface wave dispersion curves
 
-* __joint_inv:__ Transdimensional joint inversion of receiver functions and surface wave dispersion curves
+* __joint_inv:__ Transdimensional joint inversion of receiver functions and surf
+ace wave dispersion curves
 
 ## Before use
 

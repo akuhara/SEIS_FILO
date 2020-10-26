@@ -2,6 +2,19 @@
 
 The spherical Earth mode can be invoked by setting [is_sphere](parameter_list.md#is_sphere) = T. This mode assumes that input/output velocities and depths are defined with the spherical coordinate. Before forward computations, velocities, depths, and densities are adjusted for the cartesian coordinate via the Earth-flattening approximation as follows:
 
-<a href="https://www.codecogs.com/eqnedit.php?latex=z_{cart}&space;=&space;R_{E}\ln\left(\frac{R_{E}}{r}&space;\right&space;),&space;\\&space;\alpha_{cart}&space;=&space;\alpha_{sphe}\left(\frac{r}{R_{E}}&space;\right&space;),&space;\\&space;\beta_{cart}&space;=&space;\beta_{sphe}\left(\frac{r}{R_{E}}&space;\right&space;),&space;\\&space;\text{and}&space;\\&space;\rho_{cart}&space;=&space;\rho_{sphe}\left(\frac{r}{R_{E}}&space;\right&space;)." target="_blank"><img src="https://latex.codecogs.com/gif.latex?z_{cart}&space;=&space;R_{E}\ln\left(\frac{R_{E}}{r}&space;\right&space;),&space;\\&space;\alpha_{cart}&space;=&space;\alpha_{sphe}\left(\frac{r}{R_{E}}&space;\right&space;),&space;\\&space;\beta_{cart}&space;=&space;\beta_{sphe}\left(\frac{r}{R_{E}}&space;\right&space;),&space;\\&space;\text{and}&space;\\&space;\rho_{cart}&space;=&space;\rho_{sphe}\left(\frac{r}{R_{E}}&space;\right&space;)," title="z_{cart} = R_{E}\ln\left(\frac{R_{E}}{r} \right ), \\ \alpha_{cart} = \alpha_{sphe}\left(\frac{r}{R_{E}} \right ), \\ \beta_{cart} = \beta_{sphe}\left(\frac{r}{R_{E}} \right ), \\ \text{and} \\ \rho_{cart} = \rho_{sphe}\left(\frac{r}{R_{E}} \right )," /></a> 
+$$
+z_{cart} = R_E\ln\left(\frac{R_E}{r}\right) ,
+$$
+$$
+\alpha_{cart} = \alpha_{sphe} \left(\frac{r}{R_E}\right),
+$$
+$$
+\beta_{cart} = \beta_{sphe} \left(\frac{r}{R_E}\right),
+$$
+and 
+$$
+\rho_{cart} = \rho_{sphe} \left(\frac{r}{R_E}\right), 
+$$
 
-where z, alpha, beta, and rho represent depth, P-wave velocity, S-wave velocity, and density, respectively. R_E is the Earth's radius and r is a distance to the origin.    
+where \\(z\\), \\(\alpha\\), \\(\beta\\), and \\(\rho\\) represent depth, P-wave velocity, S-wave velocity, and density, respectively. \\(R_E\\) is the Earth's radius and \\(r\\) is a distance to the origin.
+

@@ -7,9 +7,10 @@ Parallel tempering is a technique offering more efficient MCMC sampling. Multipl
 The performance of the parallel tempering depends on the number of MCMC chains and temperatures given to the chains. SEIS_FILO offers four adjustable parameters for this purpose: [n_proc](parameter_list.md#n_proc), [n_chain](parameter_list.md#n_chain), [n_cool](parameter_list.md#n_cool), and 
 [temp_high](parameter_list.md#temp_high). 
 
-* The number of chains is set to n_proc × n_chains, where n_proc is the number of processes for parallel computing and n_chains is the number of MCMC chains per process.
-* Out of n_proc × n_chains chains, n_proc × n_cool chains are given unit temperature (i.e., non-tempered). 
-* Temperatures of the other chains are randomly distributed in logarithmic scale between 1 and temp_high, while the temperature of one chain is fixed at temp_high. 
+!!! Note
+    * The number of chains is set to n_proc × n_chains, where n_proc is the number of processes for parallel computing and n_chains is the number of MCMC chains per process.
+    * Out of n_proc × n_chains chains, n_proc × n_cool chains are given unit temperature (i.e., non-tempered). 
+    * Temperatures of the other chains are randomly distributed in logarithmic scale between 1 and temp_high, while the temperature of one chain is fixed at temp_high. 
 
  
 
