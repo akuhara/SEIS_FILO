@@ -1,6 +1,7 @@
 # MCMC step
 
 At each iteration, a trial model is proposed by perturbing the current model. One of the following 6 proposals is randomly selected. 
+
 * Brith proposal: add a layer
 * Death proposal: delete a layer
 * Depth proposal: perturb a layer bottom depth
