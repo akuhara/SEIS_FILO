@@ -240,6 +240,15 @@ contains
                   & // "(dev_sig_c) = ", &
                   & self%dev_sig_c(i)
           end if
+          
+          ! ERROR 
+          if (self%sig_c_min(i) + self%dev_sig_c(i) > self%sig_c_max(i)) then
+             write(0,*)"ERROR: following relation must be satisfied"
+             write(0,*)"       sig_c_min + dev_sig_c <= sig_c_max"
+             call mpi_abort(ierr)
+          end if
+
+
           exit
        end do
 
@@ -262,6 +271,14 @@ contains
                   & // "(dev_sig_u) = ", &
                   & self%dev_sig_u(i)
           end if
+          
+          ! ERROR 
+          if (self%sig_u_min(i) + self%dev_sig_u(i) > self%sig_u_max(i)) then
+             write(0,*)"ERROR: following relation must be satisfied"
+             write(0,*)"       sig_u_min + dev_sig_u <= sig_u_max"
+             call mpi_abort(ierr)
+          end if
+          
           exit
        end do
 

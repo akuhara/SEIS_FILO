@@ -201,6 +201,11 @@ contains
                 write(*,'(A,F12.5)') &
                      & "End time (t_end) = ", self%t_end(i)
              end if
+             ! ERROR
+             if (self%t_start(i) >= self%t_end(i)) then
+                write(0,*)"ERROR: t_max must be larger than t_min"
+                call mpi_abort(ierr)
+             end if
              exit
           end if
        end do
@@ -219,6 +224,13 @@ contains
                   & "Max. sigma (sigma_max) = ", self%sigma_max(i)
              write(*,'(A,F12.5)') &
                   & "Stdv. sigma (dev_sigma) = ", self%dev_sigma(i)
+          end if
+
+          ! ERROR
+          if (self%sigma_min(i) + self%dev_sigma(i) > self%sigma_max(i)) then
+             write(0,*)"ERROR: following relation must be satisfied"
+             write(0,*)"       sig_rf_min + dev_sig_rf <= sig_rf_max"
+             call mpi_abort(ierr)
           end if
           exit
        end do

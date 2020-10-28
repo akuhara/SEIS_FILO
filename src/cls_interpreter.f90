@@ -375,7 +375,9 @@ contains
              end if
              call vm%set_vp(i+i1, vel)
           else
-             call vm%vs2vp_brocher(i+i1)
+             !call vm%vs2vp_brocher(i+i1)
+             vel = self%vp_ref(iz)
+             call vm%set_vp(i+i1, vel)
           end if
        end if
        ! Density
