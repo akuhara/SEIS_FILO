@@ -31,7 +31,7 @@ FFLAGS = -assume byterecl -lmpi -xAVX -O3
 #FFTW   = -I/usr/local/include -lfftw3
 #LAPACK = -llapack -lblas
 
-FFTW = -mkl=parallel
+FFTW = -I/opt/intel/mkl/include/fftw -mkl=parallel
 LAPACK =
 
 # Example B. EIC
