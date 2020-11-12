@@ -8,16 +8,15 @@
          -Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace \
 	 -pg
 
- 
-
 # Example 2. GNU fortran for fast computation
 #FC     = mpifort
 #FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
+# Example 3. Intel compmiler for fast computation
 FC = mpiifort
 FFLAGS = -assume byterecl -lmpi -xAVX -O3
 
-# Example 3. Intel compiler for debug
+# Example 4. EIC
 #FC      = mpif90
 #FFLAGS  = -assume byterecl -traceback -g -check bounds -fpe0 -lmpi 
 #MKLROOT = /home/app/intel/compilers_and_libraries_2019.5.281/linux/mkl
@@ -27,14 +26,15 @@ FFLAGS = -assume byterecl -lmpi -xAVX -O3
 # Libararies
 #-----------------------------------------------------------------------
 
-# Example A. General case
+# Example 1-2. Free library
 #FFTW   = -I/usr/local/include -lfftw3
 #LAPACK = -llapack -lblas
 
+# Example 3. Intel library
 FFTW = -I/opt/intel/mkl/include/fftw -mkl=parallel
 LAPACK =
 
-# Example B. EIC
+# Example 4. EIC
 #FFTW    = -I$(MKLROOT)/include/fftw -mkl=parallel
 #LAPACK  =  # leave this empty
 
