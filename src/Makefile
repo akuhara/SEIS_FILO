@@ -11,8 +11,11 @@
  
 
 # Example 2. GNU fortran for fast computation
-FC     = mpifort
-FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+#FC     = mpifort
+#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+
+FC = mpiifort
+FFLAGS = -assume byterecl -lmpi -xAVX -O3
 
 # Example 3. Intel compiler for debug
 #FC      = mpif90
@@ -25,8 +28,11 @@ FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 #-----------------------------------------------------------------------
 
 # Example A. General case
-FFTW   = -I/usr/local/include -lfftw3
-LAPACK = -llapack -lblas
+#FFTW   = -I/usr/local/include -lfftw3
+#LAPACK = -llapack -lblas
+
+FFTW = -mkl=parallel
+LAPACK =
 
 # Example B. EIC
 #FFTW    = -I$(MKLROOT)/include/fftw -mkl=parallel
