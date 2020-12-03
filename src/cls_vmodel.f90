@@ -33,6 +33,7 @@ module cls_vmodel
      private
      integer :: nlay
      double precision, allocatable :: vp(:), vs(:), rho(:), h(:)
+     double precision, allocatable :: qp(:), qs(:)
    
    contains
      ! setter
@@ -41,12 +42,16 @@ module cls_vmodel
      procedure :: set_vs => vmodel_set_vs
      procedure :: set_rho => vmodel_set_rho
      procedure :: set_h => vmodel_set_h
+     procedure :: set_qp => vmodel_set_qp
+     procedure :: set_qs => vmodel_set_qs
      ! getter
      procedure :: get_nlay => vmodel_get_nlay
      procedure :: get_vp => vmodel_get_vp
      procedure :: get_vs => vmodel_get_vs
      procedure :: get_rho => vmodel_get_rho
      procedure :: get_h => vmodel_get_h
+     procedure :: get_qp => vmodel_get_qp
+     procedure :: get_qs => vmodel_get_qs
      ! utilities
      procedure :: read_file => vmodel_read_file
      procedure :: set_example_ocean => vmodel_set_example_ocean
@@ -86,11 +91,17 @@ contains
     
     self%nlay = nlay
     allocate(self%vp(nlay), self%vs(nlay), self%rho(nlay), self%h(nlay))
+    allocate(self%qp(nlay))
+    allocate(self%qs(nlay))
+    
     self%vp(1:nlay) = -999.d0
     self%vs(1:nlay) = -999.d0
     self%rho(1:nlay) = -999.d0
     self%h(1:nlay) = -999.d0
-    
+    self%qp(1:nlay) = 1.0d20
+    self%qs(1:nlay) = 1.0d20
+
+
     return 
   end subroutine vmodel_set_nlay
 
@@ -184,6 +195,31 @@ contains
   end subroutine vmodel_set_h
 
   !---------------------------------------------------------------------
+
+  subroutine vmodel_set_qp(self, i, qp)
+    class(vmodel), intent(inout) :: self
+    integer, intent(in) :: i
+    double precision, intent(in) :: qp
+    
+    self%qp(i) = qp
+
+    return 
+  end subroutine vmodel_set_qp
+  
+  !---------------------------------------------------------------------
+
+  subroutine vmodel_set_qs(self, i, qs)
+    class(vmodel), intent(inout) :: self
+    integer, intent(in) :: i
+    double precision, intent(in) :: qs
+    
+    self%qs(i) = qs
+
+    return 
+  end subroutine vmodel_set_qs
+  
+  !---------------------------------------------------------------------
+
   
   integer function vmodel_get_nlay(self) result(nlay)
     class(vmodel), intent(inout) :: self
@@ -259,6 +295,28 @@ contains
   
   !---------------------------------------------------------------------
 
+  double precision function vmodel_get_qp(self, i) result(qp)
+    class(vmodel), intent(inout) :: self
+    integer, intent(in) :: i
+    
+    qp = self%qp(i)
+    
+    return 
+  end function vmodel_get_qp
+  
+  !---------------------------------------------------------------------
+
+  double precision function vmodel_get_qs(self, i) result(qs)
+    class(vmodel), intent(inout) :: self
+    integer, intent(in) :: i
+    
+    qs = self%qs(i)
+    
+    return 
+  end function vmodel_get_qs
+  
+  !---------------------------------------------------------------------
+
   subroutine vmodel_display(self, io)
     class(vmodel), intent(inout) :: self
     integer, intent(in), optional :: io
@@ -279,12 +337,14 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine vmodel_read_file(self, vmod_in)
+  subroutine vmodel_read_file(self, vmod_in, is_attenuative)
     class(vmodel), intent(inout) :: self
     character(*), intent(in) :: vmod_in
+    logical, intent(in), optional :: is_attenuative
     integer :: ierr, io, i, nlay
     type(line_text) :: lt
     character(line_max) :: line
+    
     
     write(*,*)"Reading velocity model from ", trim(vmod_in)
     
@@ -308,21 +368,29 @@ contains
        read(line, *)nlay
        exit
     end do
-    call self%set_nlay(nlay) ! <= allocate Vp, Vs, Rho, H
+    call self%set_nlay(nlay) ! <= allocate Vp, Vs, Rho, H, qp, qs
     
-    do i = 1, self%nlay
-       do 
-          read(io, '(a)')line
-          lt = line_text(line, ignore_space = .false.)
-          line = lt%get_line()
-          if (len_trim(line) == 0) cycle
-          read(line, *) &
-               & self%vp(i), self%vs(i), self%rho(i), self%h(i)
-          exit
-       end do
-    end do
-    close(io)
-    
+    block
+      logical :: flag
+      if (present(is_attenuative)) then
+         flag = is_attenuatvie
+      else 
+         flag = .false.
+      end if
+      
+      do i = 1, self%nlay
+         do 
+            read(io, '(a)')line
+            lt = line_text(line, ignore_space = .false.)
+            line = lt%get_line()
+            if (len_trim(line) == 0) cycle
+            read(line, *) &
+                 & self%vp(i), self%vs(i), self%rho(i), self%h(i)
+            exit
+         end do
+      end do
+      close(io)
+    end block
     call self%display()
     
     write(*,*)

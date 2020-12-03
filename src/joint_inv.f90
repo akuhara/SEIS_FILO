@@ -364,11 +364,12 @@ program main
 
      ! Set transdimensional model
      mc = mcmc( &
-          & tm       = tm,     &
-          & hyp_disp = hyp_disp,         &
-          & hyp_rf   = hyp_rf,           &
-          & prop     = prop,             &
-          & n_iter   = para%get_n_iter() &
+          & tm       = tm,                               &
+          & hyp_disp = hyp_disp,                         &
+          & hyp_rf   = hyp_rf,                           &
+          & prop     = prop,                             &
+          & n_iter   = para%get_n_iter(),                &
+          & diagnostic_mode = para%get_diagnostic_mode() &
           & )
      ! Set temperatures
      if (i <= para%get_n_cool()) then
@@ -407,10 +408,12 @@ program main
 
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !call intpr%construct_vmodel(tm_tmp, vm, is_ok2)
-        !write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
-        !call vm%display(io_vmod_all)
-        !call mpi_barrier(MPI_COMM_WORLD ,ierr)
+        !if (para%get_diagnostic_mode()) then
+           call intpr%construct_vmodel(tm_tmp, vm, is_ok2)
+           write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
+           call vm%display(io_vmod_all)
+           flush(io_vmod_all)
+        !end if
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
         ! Forward computation
@@ -441,7 +444,11 @@ program main
         
         ! One step summary
         if (verb) then
-           call mc%one_step_summary()
+           if (para%get_diagnostic_mode()) then
+              call mc%one_step_summary()
+           else if (j==1) then
+              write(*,*) i, "/", para%get_n_iter()
+           end if
         end if
         
         ! Recording
@@ -583,10 +590,12 @@ program main
   end do
   
   ! Likelihood history
-  filename = "likelihood.history"
-  call pt%output_history(filename, 'l')
-  filename = "temp.history"
-  call pt%output_history(filename, 't')
+  if (para%get_diagnostic_mode()) then
+     filename = "likelihood.history"
+     call pt%output_history(filename, 'l')
+     filename = "temp.history"
+     call pt%output_history(filename, 't')
+  end if
   
   ! Proposal count
   filename = "proposal.count"

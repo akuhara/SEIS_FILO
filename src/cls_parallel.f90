@@ -267,17 +267,17 @@ contains
           call self%set_mc(chain2, mc2)
        end if
        
-       if (present(verb) .and. verb) then
-          write(*,*)"----"
-          write(*,*)"Rank1    :", rank1
-          write(*,*)"Chain1   :", chain1
-          write(*,*)"Temp1    : ", temp1
-          write(*,*)"Rank2    :", rank2 
-          write(*,*)"Chain2   :", chain2
-          write(*,*)"Temp2    : ", temp2
-          write(*,*)"Accepted :", is_accepted
-          write(*,*)"----"
-       end if
+       !if (present(verb) .and. verb) then
+       !   write(*,*)"----"
+       !   write(*,*)"Rank1    :", rank1
+       !   write(*,*)"Chain1   :", chain1
+       !   write(*,*)"Temp1    : ", temp1
+       !   write(*,*)"Rank2    :", rank2 
+       !   write(*,*)"Chain2   :", chain2
+       !   write(*,*)"Temp2    : ", temp2
+       !   write(*,*)"Accepted :", is_accepted
+       !   write(*,*)"----"
+       !end if
        
     else if (self%rank == rank1) then
        mc1   = self%get_mc(chain1)
@@ -308,17 +308,17 @@ contains
           call mpi_finalize(ierr)
           stop
        end if
-       if (present(verb) .and. verb) then
-          write(*,*)"----"
-          write(*,*)"Rank1    :", rank1
-          write(*,*)"Chain1   :", chain1
-          write(*,*)"Temp1    : ", temp1
-          write(*,*)"Rank2    :", rank2 
-          write(*,*)"Chain2   :", chain2
-          write(*,*)"Temp2    : ", temp2
-          write(*,*)"Accepted :", is_accepted
-          write(*,*)"----"
-       end if
+       !if (present(verb) .and. verb) then
+       !   write(*,*)"----"
+       !   write(*,*)"Rank1    :", rank1
+       !   write(*,*)"Chain1   :", chain1
+       !   write(*,*)"Temp1    : ", temp1
+       !   write(*,*)"Rank2    :", rank2 
+       !   write(*,*)"Chain2   :", chain2
+       !   write(*,*)"Temp2    : ", temp2
+       !   write(*,*)"Accepted :", is_accepted
+       !   write(*,*)"----"
+       !end if
     else if (self%rank == rank2) then
        ! Sender
        mc2   = self%get_mc(chain2)
@@ -382,7 +382,7 @@ contains
     integer :: icol, n_all, n_iter
     double precision, allocatable :: hist_all(:,:), hist_all2(:,:)
     character(50) :: fmt
-    
+    write(*,*)self%n_chain,  self%n_proc
     n_all = self%n_chain * self%n_proc
     mc = self%mc(1)
     n_iter = mc%get_n_iter()

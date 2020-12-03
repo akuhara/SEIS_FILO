@@ -81,6 +81,9 @@ module cls_param
      logical :: is_ocean = .false.
      double precision :: ocean_thick = 0.d0
      
+     ! Attenuation
+     logical :: is_attenuative = .false.
+
      ! Parameters for receiver functions
      ! only used by recv_func_fwd
      integer :: n_smp 
@@ -123,7 +126,8 @@ module cls_param
      double precision :: vs_bottom = 4.6d0
      double precision :: vp_bottom = 8.1d0
      double precision :: rho_bottom = 3.3d0
-
+     
+     logical :: diagnostic_mode = .true.
      logical :: verb = .false.
 
 
@@ -181,6 +185,8 @@ module cls_param
      procedure :: get_solve_rf_sig => param_get_solve_rf_sig
      procedure :: get_solve_disper_sig => param_get_solve_disper_sig
      procedure :: get_is_ocean => param_get_is_ocean
+
+     procedure :: get_is_attenuative => param_get_is_attenuative
      
      procedure :: get_ref_vmod_in => param_get_ref_vmod_in
      procedure :: get_vmod_in => param_get_vmod_in
@@ -208,20 +214,18 @@ module cls_param
 
      procedure :: get_is_sphere => param_get_is_sphere
      procedure :: get_r_earth => param_get_r_earth
+     
+     procedure :: get_diagnostic_mode => param_get_diagnostic_mode
 
      procedure :: check_mcmc_params => param_check_mcmc_params
      procedure :: check_recv_func_fwd_params &
           & => param_check_recv_func_fwd_params
      
-     
-
   end type param
   
   interface param
      module procedure init_param
   end interface param
-
-
 
 contains
   
@@ -402,6 +406,8 @@ contains
        read(val, *) self%r_earth
     else if (name == "is_ocean") then
        read(val, *) self%is_ocean 
+    else if (name == "is_attenuative") then
+       read(val, *) self%is_attenuative
     else if (name == "n_bin_z") then
        read(val, *) self%n_bin_z 
     else if (name == "n_bin_vs") then
@@ -446,6 +452,8 @@ contains
        self%ref_vmod_in = val
     else if (name == "noise_added") then
        read(val, *) self%noise_added
+    else if (name == "diagnostic_mode") then
+       read(val, *) self%diagnostic_mode
     else
        if (self%verb) then
           write(0,*)"ERROR: Invalid parameter name"
@@ -945,6 +953,16 @@ contains
   end function param_get_is_ocean
 
   !---------------------------------------------------------------------
+
+  logical function param_get_is_attenuative(self) result(is_attenuative)
+    class(param), intent(in) :: self
+
+    is_attenuative = self%is_attenuative
+    
+    return 
+  end function param_get_is_attenuative
+
+  !---------------------------------------------------------------------
   
   character(len=line_max) function param_get_ref_vmod_in(self) &
        & result(ref_vmod_in)
@@ -1170,7 +1188,17 @@ contains
     
     return 
   end function param_get_r_earth
-  
+
+  !---------------------------------------------------------------------
+
+  logical function param_get_diagnostic_mode(self) result(diagnostic_mode)
+    class(param), intent(in) :: self
+    
+    diagnostic_mode = self%diagnostic_mode
+    
+    return 
+  end function param_get_diagnostic_mode
+
   !---------------------------------------------------------------------
 
   subroutine param_check_mcmc_params(self, is_ok)

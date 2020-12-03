@@ -52,6 +52,7 @@ module cls_mcmc
      double precision, allocatable :: temp_saved(:)
      double precision :: temp = 1.d0
      logical :: is_accepted
+     logical :: diagnostic_mode
    contains
      procedure :: propose_model => mcmc_propose_model
      procedure :: judge_model   => mcmc_judge_model
@@ -81,12 +82,12 @@ contains
   !---------------------------------------------------------------------
   
   type(mcmc) function init_mcmc(tm, hyp_disp, hyp_rf, &
-       & prop, n_iter) result(self)
+       & prop, n_iter, diagnostic_mode) result(self)
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp_rf, hyp_disp
     type(proposal), intent(in) :: prop
     integer, intent(in) :: n_iter
-    
+    logical, intent(in) :: diagnostic_mode
     
     self%tm = tm
     self%hyp_disp = hyp_disp
@@ -97,9 +98,12 @@ contains
     self%i_mod = 0
     self%log_likelihood = -1.0d300
     self%n_proposal_type = self%prop%get_n_proposal()
-    allocate(self%likelihood_saved(n_iter))
-    allocate(self%temp_saved(n_iter))
-    allocate(self%k_saved(n_iter))
+    self%diagnostic_mode = diagnostic_mode
+    if (diagnostic_mode) then
+       allocate(self%likelihood_saved(n_iter))
+       allocate(self%temp_saved(n_iter))
+       allocate(self%k_saved(n_iter))
+    end if
     allocate(self%n_propose(self%prop%get_n_proposal()))
     allocate(self%n_accept(prop%get_n_proposal()))
     self%n_propose = 0
@@ -206,10 +210,12 @@ contains
     self%i_iter = self%i_iter + 1
 
     ! Save models etc.
-    self%likelihood_saved(self%i_iter) = self%log_likelihood
-    self%k_saved(self%i_iter) = self%tm%get_k()
-    self%temp_saved(self%i_iter) = self%temp
-
+    if (self%diagnostic_mode) then
+       self%likelihood_saved(self%i_iter) = self%log_likelihood
+       self%k_saved(self%i_iter) = self%tm%get_k()
+       self%temp_saved(self%i_iter) = self%temp
+    end if
+    
 
     return 
   end subroutine mcmc_judge_model

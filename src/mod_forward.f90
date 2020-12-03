@@ -46,13 +46,14 @@ contains
        call vm%sphere2flat(r_earth, vm_flattened)
     end if
 
+    
     if (.not. is_ok) then
        log_likelihood = minus_infty
        return
     end if
-
-    !log_likelihood = 0.d0  !!!!!!!!!!!!!!!!!!!!!!
-    !return !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    !log_likelihood = 0.d0
+    !return
     
     do i = 1, obs%get_n_rf()
        if (is_sphere) then

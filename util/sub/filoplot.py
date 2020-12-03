@@ -500,44 +500,70 @@ class InvResult:
     
     def _plot_likelihood_history(self, fig, ax):
         param = self._param
-        file = "likelihood.history"
-        df = pd.read_csv(file, delim_whitespace=True, header=None)
-        n_all = len(df.columns)
-        if n_all > 5:
-            df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
-            n1 = 0
-            nn = n_all // 4
-            n2 = nn * 1
-            n3 = nn * 2
-            n4 = nn * 3
-            n5 = n_all - 1
-            df = df.iloc[:, [n1, n2, n3, n4, n5]]
-        df.plot(ax=ax, legend=None, linewidth=2.0)
-        ax.set_ylim([-5000,1000])
-        ax.set_xlabel("Iteration #")
-        ax.set_ylabel("Log-likelihood")
-        
+        if "diagnostic_mode" in param:
+            diagnostic = param["diagnostic_mode"].lower()
+        else:
+            diagnostic = ".true."
+
+        if diagnostic == ".true.":
+            file = "likelihood.history"
+            df = pd.read_csv(file, delim_whitespace=True, header=None)
+            n_all = len(df.columns)
+            if n_all > 5:
+                df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
+                n1 = 0
+                nn = n_all // 4
+                n2 = nn * 1
+                n3 = nn * 2
+                n4 = nn * 3
+                n5 = n_all - 1
+                df = df.iloc[:, [n1, n2, n3, n4, n5]]
+                df.plot(ax=ax, legend=None, linewidth=2.0)
+                ax.set_ylim([-5000,1000])
+                ax.set_xlabel("Iteration #")
+                ax.set_ylabel("Log-likelihood")
+        else:
+            ax.text(0.5, 0.5, "N/A (set diagnostic_mode=.true.)", \
+                    size=20, \
+                    horizontalalignment="center", \
+                    verticalalignment="center")
+            ax.set_xlabel("Iteration #")
+            ax.set_ylabel("Log-likelihood")
+            
     #---------------------------------------------------------------
 
     def _plot_temp_history(self, fig, ax):
         param = self._param
-        file = "temp.history"
-        df = pd.read_csv(file, delim_whitespace=True, header=None,
-                         dtype=np.float64)
-        n_all = len(df.columns)
-        if n_all > 5:
-            df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
-            n1 = 0
-            nn = n_all // 4
-            n2 = nn * 1
-            n3 = nn * 2
-            n4 = nn * 3
-            n5 = n_all - 1
+        if "diagnostic_mode" in param:
+            diagnostic = param["diagnostic_mode"].lower()
+        else:
+            diagnostic = ".true."
+
+        if diagnostic == ".true.":
+            file = "temp.history"
+            df = pd.read_csv(file, delim_whitespace=True, header=None,
+                             dtype=np.float64)
+            n_all = len(df.columns)
+            if n_all > 5:
+                df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
+                n1 = 0
+                nn = n_all // 4
+                n2 = nn * 1
+                n3 = nn * 2
+                n4 = nn * 3
+                n5 = n_all - 1
             df = df.iloc[:, [n1, n2, n3, n4, n5]]
-        df.plot(ax=ax, legend=None, linewidth=2.0)
-    
-        ax.set_xlabel("Iteration #")
-        ax.set_ylabel("Temperature")
+            df.plot(ax=ax, legend=None, linewidth=2.0)
+            
+            ax.set_xlabel("Iteration #")
+            ax.set_ylabel("Temperature")
+        else:
+            ax.text(0.5, 0.5, "N/A (set diagnostic_mode=.true.)", \
+                    size=20, \
+                    horizontalalignment="center", \
+                    verticalalignment="center")
+            ax.set_xlabel("Iteration #")
+            ax.set_ylabel("Temperature")
 
     #---------------------------------------------------------------
     

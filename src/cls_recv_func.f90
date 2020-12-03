@@ -395,6 +395,56 @@ contains
 
   !---------------------------------------------------------------------
 
+  function recv_func_solid_propagator_q(self, i, omega) result(rslt)
+    class(recv_func), intent(inout) :: self
+    integer, intent(in) :: i
+    double precision, intent(in) :: omega
+    complex(kind(0d0)) :: alpha, beta
+    double precision :: rho, h, p
+    double precision :: eta, xi, beta2, p2, bp
+    double precision :: cos_xi, cos_eta, sin_xi, sin_eta
+    complex(kind(0d0)) :: rslt(4, 4)
+
+    alpha = self%vmodel%get_vp(i)
+    beta  = self%vmodel%get_vs(i)
+    rho   = self%vmodel%get_rho(i)
+    h     = self%vmodel%get_h(i)
+    p     = self%rayp
+    
+    beta2 = beta*beta
+    p2 =p*p
+    bp = 1.d0 -2.d0*beta2*p2
+    eta = sqrt(1.d0/(beta2) - p2)
+    xi  = sqrt(1.d0/(alpha*alpha) - p2)
+    cos_xi = cos(omega*xi*h)
+    cos_eta = cos(omega*eta*h)
+    sin_xi = sin(omega*xi*h)
+    sin_eta = sin(omega*eta*h)
+
+    rslt(1,1) = 2.d0*beta2*p2*cos_xi + bp*cos_eta
+    rslt(2,1) = p*( 2.d0*beta2*xi*sin_xi - bp/eta*sin_eta ) * ei
+    rslt(3,1) = omega*rho*&
+         & ( -4.d0*beta2*beta2*p2*xi*sin_xi - bp*bp/eta*sin_eta )
+    rslt(4,1) = 2.d0*omega*beta2*rho*p*bp*( cos_xi - cos_eta ) * ei
+    rslt(1,2) = p*( bp/xi*sin_xi - 2.d0*beta2*eta*sin_eta ) * ei
+    rslt(2,2) = bp*cos_xi + 2.d0*beta2*p2*cos_eta
+    rslt(3,2) = rslt(4,1)
+    rslt(4,2) = -omega*rho*&
+         & ( bp*bp/xi*sin_xi + 4.d0*beta2*beta2*p2*eta*sin_eta  )    
+    rslt(1,3) = (p2/xi*sin_xi + eta*sin_eta)/(omega*rho)
+    rslt(2,3) = p*(-cos_xi + cos_eta)/(omega*rho) * ei  
+    rslt(3,3) = rslt(1,1)
+    rslt(4,3) = rslt(1,2)  
+    rslt(1,4) = rslt(2,3)
+    rslt(2,4) = (xi*sin_xi + p2/eta*sin_eta)/(omega*rho)
+    rslt(3,4) = rslt(2,1)
+    rslt(4,4) = rslt(2,2)
+    
+    return 
+  end function recv_func_solid_propagator_q
+
+  !---------------------------------------------------------------------
+
   function recv_func_liquid_propagator(self, omega) result(rslt)
     class(recv_func), intent(inout) :: self
     double precision, intent(in) :: omega

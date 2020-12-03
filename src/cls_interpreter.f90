@@ -360,7 +360,8 @@ contains
                   & self%dz_ref) + 1
           end if
           ! Vs
-          vel = self%vs_ref(iz) + self%wrk_vs(i)
+          !vel = self%vs_ref(iz) + self%wrk_vs(i)
+          vel = self%vs_ref(iz) * (1.d0 + self%wrk_vs(i) / 100.d0)
           if (vel < self%vs_min .or. vel > self%vs_max) then
              is_ok = .false.
              return
@@ -368,7 +369,8 @@ contains
           call vm%set_vs(i+i1, vel)
           ! Vp
           if (self%solve_vp) then
-             vel = self%vp_ref(iz) + self%wrk_vp(i)
+             !vel = self%vp_ref(iz) + self%wrk_vp(i)
+             vel = self%vp_ref(iz) * (1.d0 + self%wrk_vp(i) / 100.d0)
              if (vel < self%vp_min .or. vel > self%vp_max) then
                 is_ok = .false.
                 return
@@ -516,6 +518,7 @@ contains
     tmpz = 0.d0
     model: do ilay = 1, nlay
        iz1 = int(tmpz / self%dz) + 1
+       
        if (ilay < nlay) then
           iz2 = int((tmpz + vm%get_h(ilay)) / self%dz) + 1
        else
@@ -527,6 +530,7 @@ contains
           vs = vm%get_vs(ilay)
           
           iv = int((vs - self%vs_min) / self%dvs) + 1
+          
           if (iv < 1) then
              iv = 1 ! This should occur for ocean
           end if
