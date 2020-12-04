@@ -433,7 +433,7 @@ contains
          & * (1.d0 - ei / (2.d0 * qp))
     beta = b * (4.d0 * qs * qs / (4.d0 * qs * qs + 1.d0))  &
          & * (1.d0 - ei / (2.d0 * qs))
-    
+
     beta2 = beta*beta
     p2 =p*p
     bp = 1.d0 -2.d0*beta2*p2

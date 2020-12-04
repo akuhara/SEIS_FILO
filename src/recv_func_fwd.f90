@@ -61,7 +61,7 @@ program main
      write(0,*)"ERROR: while checking parameters"
      stop
   end if
-
+  
   ! Set velocity model
   call vm%read_file(para%get_vmod_in(), &
        & is_attenuative = para%get_is_attenuative())

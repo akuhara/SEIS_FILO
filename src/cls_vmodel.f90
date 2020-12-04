@@ -317,9 +317,10 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine vmodel_display(self, io)
+  subroutine vmodel_display(self, io, is_attenuative)
     class(vmodel), intent(inout) :: self
     integer, intent(in), optional :: io
+    logical, intent(in), optional :: is_attenuative
     integer :: i,  i_unit
     
     i_unit = output_unit
@@ -327,10 +328,26 @@ contains
        i_unit = io
     end if
 
-    do i = 1, self%nlay
-       write(i_unit,'(I5, 4F10.3)') i, self%vp(i), self%vs(i), &
-            & self%rho(i), self%h(i)
-    end do
+    block 
+      logical :: flag 
+      if (present(is_attenuative)) then
+         flag = is_attenuative
+      else
+         flag = .false.
+      end if
+      do i = 1, self%nlay
+         if (flag) then
+            write(i_unit,'(I5, 6F10.3)') &
+                 & i, self%vp(i), self%vs(i), &
+                 & self%rho(i), self%h(i), &
+                 & self%qp(i), self%qs(i)
+         else
+            write(i_unit,'(I5, 4F10.3)') &
+                 & i, self%vp(i), self%vs(i), &
+                 & self%rho(i), self%h(i)
+         end if
+      end do
+    end block
     
     return 
   end subroutine vmodel_display
@@ -377,7 +394,7 @@ contains
       else 
          flag = .false.
       end if
-      
+
       do i = 1, self%nlay
          do 
             read(io, '(a)')line
@@ -396,9 +413,10 @@ contains
          end do
       end do
       close(io)
+      call self%display(is_attenuative=flag)
     end block
 
-    call self%display()
+
     
     write(*,*)
 
@@ -558,7 +576,10 @@ contains
        r = r - 0.5d0 * self%h(i)
        zbot = r_earth * log(r_earth / r)
        vm_out%h(i) = zbot - ztop
+       vm_out%qp(i) = self%qp(i)
+       vm_out%qs(i) = self%qs(i)
     end do
+
     return 
   end subroutine vmodel_sphere2flat
     
