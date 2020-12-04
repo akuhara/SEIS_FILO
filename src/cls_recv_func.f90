@@ -57,6 +57,8 @@ module cls_recv_func
      double precision, allocatable :: t_data(:,:)
      double precision, allocatable :: rf_data(:)
      
+     logical :: is_attenuative = .false.
+
      ! for MCMC
      integer, allocatable :: n_syn_rf(:, :)
      integer :: n_bin_amp = 100
@@ -71,6 +73,7 @@ module cls_recv_func
      procedure :: do_propagation => recv_func_do_propagation
      procedure :: init_propagation => recv_func_init_propagation
      procedure :: solid_propagator => recv_func_solid_propagator
+     procedure :: solid_propagator_q => recv_func_solid_propagator_q
      procedure :: liquid_propagator => recv_func_liquid_propagator
      procedure :: water_level_deconv => recv_func_water_level_deconv
      procedure :: first_arrival => recv_func_first_arrival
@@ -97,7 +100,7 @@ contains
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
        & rf_phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
-       & amp_min, amp_max, noise_added) result(self)
+       & amp_min, amp_max, noise_added, is_attenuative) result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
@@ -111,7 +114,7 @@ contains
     double precision, intent(in), optional :: amp_min
     double precision, intent(in), optional :: amp_max
     double precision, intent(in), optional :: noise_added
-    
+    logical, intent(in), optional :: is_attenuative
     
     self%vmodel = vm
     self%n = n
@@ -145,6 +148,9 @@ contains
     end if
     if (present(noise_added)) then
        self%noise_added = noise_added
+    end if
+    if (present(is_attenuative)) then
+       self%is_attenuative = is_attenuative
     end if
     
     allocate(self%rf_data(self%n))
@@ -262,10 +268,19 @@ contains
        
        call self%init_propagation(omega)
        
-       do ilay = nlay - 1, ilay0, -1
-          self%p_mat = &
-               & matmul(self%p_mat, self%solid_propagator(ilay, omega))
-       end do
+       if (self%is_attenuative) then
+          do ilay = nlay - 1, ilay0, -1
+             self%p_mat = &
+                  & matmul(self%p_mat, &
+                  & self%solid_propagator_q(ilay, omega))
+          end do
+       else
+          do ilay = nlay - 1, ilay0, -1
+             self%p_mat = &
+                  & matmul(self%p_mat, &
+                  & self%solid_propagator(ilay, omega))
+          end do
+       end if
        
        if (.not. self%is_ocean) then
           ! On-land
@@ -400,16 +415,24 @@ contains
     integer, intent(in) :: i
     double precision, intent(in) :: omega
     complex(kind(0d0)) :: alpha, beta
-    double precision :: rho, h, p
-    double precision :: eta, xi, beta2, p2, bp
-    double precision :: cos_xi, cos_eta, sin_xi, sin_eta
+    double precision :: rho, h, p, a, b, qp, qs, p2
+    complex(kind(0d0)) :: eta, xi, beta2, bp
+    complex(kind(0d0)) :: cos_xi, cos_eta, sin_xi, sin_eta
     complex(kind(0d0)) :: rslt(4, 4)
 
-    alpha = self%vmodel%get_vp(i)
-    beta  = self%vmodel%get_vs(i)
+    a     = self%vmodel%get_vp(i)
+    b     = self%vmodel%get_vs(i)
     rho   = self%vmodel%get_rho(i)
     h     = self%vmodel%get_h(i)
     p     = self%rayp
+    qp    = self%vmodel%get_qp(i)
+    qs    = self%vmodel%get_qs(i)
+    
+    ! Equations below are borrowed from Clowes & Kanasewich (1970)
+    alpha = a * (4.d0 * qp * qp / (4.d0 * qp * qp + 1.d0))  &
+         & * (1.d0 - ei / (2.d0 * qp))
+    beta = b * (4.d0 * qs * qs / (4.d0 * qs * qs + 1.d0))  &
+         & * (1.d0 - ei / (2.d0 * qs))
     
     beta2 = beta*beta
     p2 =p*p

@@ -373,7 +373,7 @@ contains
     block
       logical :: flag
       if (present(is_attenuative)) then
-         flag = is_attenuatvie
+         flag = is_attenuative
       else 
          flag = .false.
       end if
@@ -384,13 +384,20 @@ contains
             lt = line_text(line, ignore_space = .false.)
             line = lt%get_line()
             if (len_trim(line) == 0) cycle
-            read(line, *) &
-                 & self%vp(i), self%vs(i), self%rho(i), self%h(i)
+            if (flag) then
+               read(line, *) &
+                    & self%vp(i), self%vs(i), self%rho(i), &
+                    & self%h(i), self%qp(i), self%qs(i)
+            else
+               read(line, *) &
+                    & self%vp(i), self%vs(i), self%rho(i), self%h(i)
+            end if
             exit
          end do
       end do
       close(io)
     end block
+
     call self%display()
     
     write(*,*)

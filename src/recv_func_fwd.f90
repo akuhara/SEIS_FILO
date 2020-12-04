@@ -63,7 +63,8 @@ program main
   end if
 
   ! Set velocity model
-  call vm%read_file(para%get_vmod_in())
+  call vm%read_file(para%get_vmod_in(), &
+       & is_attenuative = para%get_is_attenuative())
   if (para%get_is_sphere()) then
      call vm%sphere2flat(para%get_r_earth(), vm2)
   else 
@@ -89,7 +90,8 @@ program main
        & deconv_flag = para%get_deconv_flag(), &
        & t_pre = para%get_t_pre(), &
        & correct_amp = para%get_correct_amp(), &
-       & noise_added = para%get_noise_added() &
+       & noise_added = para%get_noise_added(), &
+       & is_attenuative = para%get_is_attenuative() &
        & )
   
   ! Main
