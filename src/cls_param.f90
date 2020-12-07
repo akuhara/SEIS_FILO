@@ -127,7 +127,7 @@ module cls_param
      double precision :: vp_bottom = 8.1d0
      double precision :: rho_bottom = 3.3d0
      
-     logical :: diagnostic_mode = .true.
+     logical :: diagnostic_mode = .false.
      logical :: verb = .false.
 
 

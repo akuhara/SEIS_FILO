@@ -382,7 +382,7 @@ contains
     integer :: icol, n_all, n_iter
     double precision, allocatable :: hist_all(:,:), hist_all2(:,:)
     character(50) :: fmt
-    write(*,*)self%n_chain,  self%n_proc
+    !write(*,*)self%n_chain,  self%n_proc
     n_all = self%n_chain * self%n_proc
     mc = self%mc(1)
     n_iter = mc%get_n_iter()
