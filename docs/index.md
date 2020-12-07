@@ -55,3 +55,4 @@ ace wave dispersion curves
     * [Receiver function amplitude](receiver_function_amplitude.md)
     * [Verification](verification.md)
     * [Spherical Earth mode](spherical_earth_mode.md)
+    * [Diagnostic mode](diagnostic_mode.md)
