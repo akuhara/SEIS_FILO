@@ -503,9 +503,9 @@ class InvResult:
         if "diagnostic_mode" in param:
             diagnostic = param["diagnostic_mode"].lower()
         else:
-            diagnostic = ".true."
+            diagnostic = ".false."
 
-        if diagnostic == ".true.":
+        if diagnostic == ".true." or diagnostic == "t":
             file = "likelihood.history"
             df = pd.read_csv(file, delim_whitespace=True, header=None)
             n_all = len(df.columns)
@@ -537,9 +537,9 @@ class InvResult:
         if "diagnostic_mode" in param:
             diagnostic = param["diagnostic_mode"].lower()
         else:
-            diagnostic = ".true."
+            diagnostic = ".false."
 
-        if diagnostic == ".true.":
+        if diagnostic == ".true." or diagnostic == "t":
             file = "temp.history"
             df = pd.read_csv(file, delim_whitespace=True, header=None,
                              dtype=np.float64)
@@ -623,7 +623,7 @@ class InvResult:
         self._plot_vz(fig, ax, "vs")
 
         # Vp-z
-        if param["solve_vp"].lower() == ".true.":
+        if param["solve_vp"].lower() == ".true." or param["solve_vp"].lower() == "t":
             ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2, fig=fig)
             self._plot_vz(fig, ax, "vp")
             
@@ -677,7 +677,7 @@ class InvResult:
         self._plot_vz(fig, ax, "vs")
 
         # Vp-z
-        if param["solve_vp"].lower() == ".true.":
+        if param["solve_vp"].lower() == ".true." or param["solve_vp"].lower() == "t":
             ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2, fig=fig)
             self._plot_vz(fig, ax, "vp")
             
