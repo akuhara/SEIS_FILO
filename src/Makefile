@@ -14,7 +14,8 @@ FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 # Example 3. Intel compmiler for fast computation
 #FC = mpiifort
-#FFLAGS = -assume byterecl -lmpi -xAVX -O3
+#FFLAGS = -assume byterecl -lmpi -xAVX -O3 -g 
+#FFLAGS = -assume byterecl -lmpi -xAVX -O0 -g -check bounds -traceback
 
 # Example 4. EIC
 #FC      = mpif90

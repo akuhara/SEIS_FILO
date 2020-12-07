@@ -57,6 +57,8 @@ module cls_recv_func
      double precision, allocatable :: t_data(:,:)
      double precision, allocatable :: rf_data(:)
      
+     logical :: is_attenuative = .false.
+
      ! for MCMC
      integer, allocatable :: n_syn_rf(:, :)
      integer :: n_bin_amp = 100
@@ -71,6 +73,7 @@ module cls_recv_func
      procedure :: do_propagation => recv_func_do_propagation
      procedure :: init_propagation => recv_func_init_propagation
      procedure :: solid_propagator => recv_func_solid_propagator
+     procedure :: solid_propagator_q => recv_func_solid_propagator_q
      procedure :: liquid_propagator => recv_func_liquid_propagator
      procedure :: water_level_deconv => recv_func_water_level_deconv
      procedure :: first_arrival => recv_func_first_arrival
@@ -97,7 +100,7 @@ contains
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
        & rf_phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
-       & amp_min, amp_max, noise_added) result(self)
+       & amp_min, amp_max, noise_added, is_attenuative) result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
@@ -111,7 +114,7 @@ contains
     double precision, intent(in), optional :: amp_min
     double precision, intent(in), optional :: amp_max
     double precision, intent(in), optional :: noise_added
-    
+    logical, intent(in), optional :: is_attenuative
     
     self%vmodel = vm
     self%n = n
@@ -145,6 +148,9 @@ contains
     end if
     if (present(noise_added)) then
        self%noise_added = noise_added
+    end if
+    if (present(is_attenuative)) then
+       self%is_attenuative = is_attenuative
     end if
     
     allocate(self%rf_data(self%n))
@@ -262,10 +268,19 @@ contains
        
        call self%init_propagation(omega)
        
-       do ilay = nlay - 1, ilay0, -1
-          self%p_mat = &
-               & matmul(self%p_mat, self%solid_propagator(ilay, omega))
-       end do
+       if (self%is_attenuative) then
+          do ilay = nlay - 1, ilay0, -1
+             self%p_mat = &
+                  & matmul(self%p_mat, &
+                  & self%solid_propagator_q(ilay, omega))
+          end do
+       else
+          do ilay = nlay - 1, ilay0, -1
+             self%p_mat = &
+                  & matmul(self%p_mat, &
+                  & self%solid_propagator(ilay, omega))
+          end do
+       end if
        
        if (.not. self%is_ocean) then
           ! On-land
@@ -392,6 +407,64 @@ contains
     
     return 
   end function recv_func_solid_propagator
+
+  !---------------------------------------------------------------------
+
+  function recv_func_solid_propagator_q(self, i, omega) result(rslt)
+    class(recv_func), intent(inout) :: self
+    integer, intent(in) :: i
+    double precision, intent(in) :: omega
+    complex(kind(0d0)) :: alpha, beta
+    double precision :: rho, h, p, a, b, qp, qs, p2
+    complex(kind(0d0)) :: eta, xi, beta2, bp
+    complex(kind(0d0)) :: cos_xi, cos_eta, sin_xi, sin_eta
+    complex(kind(0d0)) :: rslt(4, 4)
+
+    a     = self%vmodel%get_vp(i)
+    b     = self%vmodel%get_vs(i)
+    rho   = self%vmodel%get_rho(i)
+    h     = self%vmodel%get_h(i)
+    p     = self%rayp
+    qp    = self%vmodel%get_qp(i)
+    qs    = self%vmodel%get_qs(i)
+    
+    ! Equations below are borrowed from Clowes & Kanasewich (1970)
+    alpha = a * (4.d0 * qp * qp / (4.d0 * qp * qp + 1.d0))  &
+         & * (1.d0 - ei / (2.d0 * qp))
+    beta = b * (4.d0 * qs * qs / (4.d0 * qs * qs + 1.d0))  &
+         & * (1.d0 - ei / (2.d0 * qs))
+
+    beta2 = beta*beta
+    p2 =p*p
+    bp = 1.d0 -2.d0*beta2*p2
+    eta = sqrt(1.d0/(beta2) - p2)
+    xi  = sqrt(1.d0/(alpha*alpha) - p2)
+    cos_xi = cos(omega*xi*h)
+    cos_eta = cos(omega*eta*h)
+    sin_xi = sin(omega*xi*h)
+    sin_eta = sin(omega*eta*h)
+
+    rslt(1,1) = 2.d0*beta2*p2*cos_xi + bp*cos_eta
+    rslt(2,1) = p*( 2.d0*beta2*xi*sin_xi - bp/eta*sin_eta ) * ei
+    rslt(3,1) = omega*rho*&
+         & ( -4.d0*beta2*beta2*p2*xi*sin_xi - bp*bp/eta*sin_eta )
+    rslt(4,1) = 2.d0*omega*beta2*rho*p*bp*( cos_xi - cos_eta ) * ei
+    rslt(1,2) = p*( bp/xi*sin_xi - 2.d0*beta2*eta*sin_eta ) * ei
+    rslt(2,2) = bp*cos_xi + 2.d0*beta2*p2*cos_eta
+    rslt(3,2) = rslt(4,1)
+    rslt(4,2) = -omega*rho*&
+         & ( bp*bp/xi*sin_xi + 4.d0*beta2*beta2*p2*eta*sin_eta  )    
+    rslt(1,3) = (p2/xi*sin_xi + eta*sin_eta)/(omega*rho)
+    rslt(2,3) = p*(-cos_xi + cos_eta)/(omega*rho) * ei  
+    rslt(3,3) = rslt(1,1)
+    rslt(4,3) = rslt(1,2)  
+    rslt(1,4) = rslt(2,3)
+    rslt(2,4) = (xi*sin_xi + p2/eta*sin_eta)/(omega*rho)
+    rslt(3,4) = rslt(2,1)
+    rslt(4,4) = rslt(2,2)
+    
+    return 
+  end function recv_func_solid_propagator_q
 
   !---------------------------------------------------------------------
 

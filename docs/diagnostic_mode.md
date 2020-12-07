@@ -1,0 +1,3 @@
+# Diagnostic mode
+
+The diagnostic mode outputs complete log regarding temperature and likelihood history during MCMC sampling. The output files are `temp.history` and `likelihood.history`, both of which can be visualize by [plot utilties](plot_utility.md). It also shows verbose outputs on standard outputs. One can activate this mode by setting [diagnostic_mode](parameter_list.md#diagnostic_mode)=.true. (or T) on [main paramter file](main_parameter_file.md) (default is .false.). Note that this mode slows down computation speed.

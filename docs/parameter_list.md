@@ -419,6 +419,27 @@ The filename of the [data summary file](data_summary_file.md) for receiver funct
 
 * Type: Character (length=200)
 
+### diagnostic_mode
+
+If .true. (or T), it activates diagnostic mode (see [diagnostic_mode](diagnostic_mode.md)). Default is .false..
+
+* Type: logical
+
+
+## Common for all
+
+### is_sphere
+
+Given (or output) velocity model is for spherical Earth (T) or not (F). When it is true, the earth-flattening transformation is applied to the given velocity model before forward computation. Consider setting this parameter to be "T" for studies on Mantle structure (>~ 100 km depth).
+
+* Type: logical
+
+### r_earth
+
+The earth's radius in kilo-meter used for the earth-flattening transformation. The default value is 6371.
+
+* Type: double precision  
+
 ### i_seed1
 
 The number to initialize pseudo-random numbers. The Xorshift algorithm is used for the random number generation. 
@@ -442,18 +463,3 @@ The number to initialize pseudo-random numbers. The Xorshift algorithm is used f
 The number to initialize pseudo-random numbers. The Xorshift algorithm is used for the random number generation. 
 
 * Type: Integer
-
-## Common for all
-
-### is_sphere
-
-Given (or output) velocity model is for spherical Earth (T) or not (F). When it is true, the earth-flattening transformation is applied to the given velocity model before forward computation. Consider setting this parameter to be "T" for studies on Mantle structure (>~ 100 km depth).
-
-* Type: logical
-
-### r_earth
-
-The earth's radius in kilo-meter used for the earth-flattening transformation. The default value is 6371.
-
-* Type: double precision  
-
