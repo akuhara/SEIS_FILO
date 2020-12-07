@@ -9,12 +9,12 @@
 	 -pg
 
 # Example 2. GNU fortran for fast computation
-#FC     = mpifort
-#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+FC     = mpifort
+FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 # Example 3. Intel compmiler for fast computation
-FC = mpiifort
-FFLAGS = -assume byterecl -lmpi -xAVX -O3 -g 
+#FC = mpiifort
+#FFLAGS = -assume byterecl -lmpi -xAVX -O3 -g 
 #FFLAGS = -assume byterecl -lmpi -xAVX -O0 -g -check bounds -traceback
 
 # Example 4. EIC
@@ -28,12 +28,12 @@ FFLAGS = -assume byterecl -lmpi -xAVX -O3 -g
 #-----------------------------------------------------------------------
 
 # Example 1-2. Free library
-#FFTW   = -I/usr/local/include -lfftw3
-#LAPACK = -llapack -lblas
+FFTW   = -I/usr/local/include -lfftw3
+LAPACK = -llapack -lblas
 
 # Example 3. Intel library
-FFTW = -I/opt/intel/mkl/include/fftw -mkl=parallel
-LAPACK =
+#FFTW = -I/opt/intel/mkl/include/fftw -mkl=parallel
+#LAPACK =
 
 # Example 4. EIC
 #FFTW    = -I$(MKLROOT)/include/fftw -mkl=parallel
