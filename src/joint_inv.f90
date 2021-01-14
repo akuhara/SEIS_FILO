@@ -406,15 +406,6 @@ program main
              & is_ok, log_prior_ratio, &
              & log_proposal_ratio)
 
-
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !if (para%get_diagnostic_mode()) then
-           call intpr%construct_vmodel(tm_tmp, vm, is_ok2)
-           write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
-           call vm%display(io_vmod_all)
-           flush(io_vmod_all)
-        !end if
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
         ! Forward computation
         if (is_ok) then
@@ -479,7 +470,7 @@ program main
            call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
            write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
            call vm%display(io_vmod_all)
-           
+           flush(io_vmod_all)
         end if
      end do
      
