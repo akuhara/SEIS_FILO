@@ -93,6 +93,7 @@ module cls_param
      double precision :: t_pre
      double precision :: amp_min = -0.6d0
      double precision :: amp_max = 0.6d0
+     double precision :: damp = 0.d0 ! damping factor for water level
      character(len=1) :: rf_phase
      logical :: deconv_flag
      logical :: correct_amp
@@ -202,6 +203,7 @@ module cls_param
      procedure :: get_delta => param_get_delta
      procedure :: get_amp_min => param_get_amp_min
      procedure :: get_amp_max => param_get_amp_max
+     procedure :: get_damp => param_get_damp
      procedure :: get_deconv_flag => param_get_deconv_flag
      procedure :: get_correct_amp => param_get_correct_amp
      procedure :: get_recv_func_out => param_get_recv_func_out
@@ -426,6 +428,8 @@ contains
        read(val, *) self%amp_min
     else if (name == "amp_max") then
        read(val, *) self%amp_max
+    else if (name == "damp") then
+       read(val, *) self%damp
     else if (name == "rayp") then
        read(val, *) self%rayp
     else if (name == "a_gauss") then
@@ -1079,6 +1083,16 @@ contains
 
   !---------------------------------------------------------------------
 
+  double precision function param_get_damp(self) result(damp)
+    class(param), intent(in) :: self
+
+    damp = self%damp
+    
+    return
+  end function param_get_damp
+
+  !---------------------------------------------------------------------
+
   double precision function param_get_t_pre(self) result(t_pre)
     class(param), intent(in) :: self
 
@@ -1342,7 +1356,10 @@ contains
        if (self%verb) write(0,*)"ERROR: rf_phase must be P or S"
        is_ok = .false.
     end if
-    
+    if (self%damp < 0.d0) then
+       if (self%verb) write(0,*)"ERROR damp must be >= 0.0"
+       is_ok = .false.
+    end if
     
     return 
   end subroutine param_check_recv_func_fwd_params

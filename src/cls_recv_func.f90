@@ -45,7 +45,7 @@ module cls_recv_func
      double precision :: df
      double precision :: rayp
      double precision :: a_gauss
-     double precision :: damp = 0.001d0
+     double precision :: damp = 0.d0
      double precision :: t_pre
      character(len=1) :: rf_phase
      
@@ -100,7 +100,8 @@ contains
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
        & rf_phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
-       & amp_min, amp_max, noise_added, is_attenuative) result(self)
+       & amp_min, amp_max, damp, noise_added, is_attenuative) &
+       & result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
@@ -113,6 +114,7 @@ contains
     integer, intent(in), optional :: n_bin_amp
     double precision, intent(in), optional :: amp_min
     double precision, intent(in), optional :: amp_max
+    double precision, intent(in), optional :: damp
     double precision, intent(in), optional :: noise_added
     logical, intent(in), optional :: is_attenuative
     
@@ -142,6 +144,9 @@ contains
     end if
     if (present(amp_min)) then
        self%amp_min = amp_min
+    end if
+    if (present(damp)) then
+       self%damp = damp
     end if
     if (present(amp_max)) then
        self%amp_max = amp_max
