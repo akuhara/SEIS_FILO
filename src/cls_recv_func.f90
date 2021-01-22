@@ -30,7 +30,6 @@ module cls_recv_func
   use cls_covariance
   use mod_random
   implicit none 
-  
   complex(kind(0d0)), private, parameter :: ei = (0.d0, 1.d0)
   double precision, private, parameter :: pi = acos(-1.d0)
   integer, private, parameter :: ir = 1, iz = 2
@@ -45,7 +44,7 @@ module cls_recv_func
      double precision :: df
      double precision :: rayp
      double precision :: a_gauss
-     double precision :: damp = 0.001d0
+     double precision :: damp = 0.d0
      double precision :: t_pre
      character(len=1) :: rf_phase
      
@@ -100,7 +99,8 @@ contains
 
   type(recv_func) function init_recv_func(vm, n, delta, rayp, a_gauss, &
        & rf_phase, deconv_flag, t_pre, correct_amp, n_bin_amp, &
-       & amp_min, amp_max, noise_added, is_attenuative) result(self)
+       & amp_min, amp_max, damp, noise_added, is_attenuative) &
+       & result(self)
     type(vmodel), intent(in) :: vm
     integer, intent(in) :: n
     double precision, intent(in) :: delta
@@ -113,6 +113,7 @@ contains
     integer, intent(in), optional :: n_bin_amp
     double precision, intent(in), optional :: amp_min
     double precision, intent(in), optional :: amp_max
+    double precision, intent(in), optional :: damp
     double precision, intent(in), optional :: noise_added
     logical, intent(in), optional :: is_attenuative
     
@@ -142,6 +143,9 @@ contains
     end if
     if (present(amp_min)) then
        self%amp_min = amp_min
+    end if
+    if (present(damp)) then
+       self%damp = damp
     end if
     if (present(amp_max)) then
        self%amp_max = amp_max
@@ -326,7 +330,8 @@ contains
     class(recv_func), intent(inout) :: self
     double precision, intent(in) :: omega
     double precision :: alpha, beta, p, rho, eta, xi, bp
-    integer :: nlay
+    double precision :: xi2
+    integer :: nlay, ierr
     
     nlay  = self%vmodel%get_nlay()
     alpha = self%vmodel%get_vp(nlay)
@@ -335,8 +340,15 @@ contains
     p     = self%rayp
     
     self%p_mat(:,:) = (0.d0, 0.d0)
+    xi2  = 1.d0/(alpha*alpha) - p*p
+    if (xi2 <= 0.0) then
+       write(0,*)"ERROR: too high Vp for bottom layer"
+       write(0,*)"rayp = ", p, ",", "Vp = ", alpha
+       stop
+    end if
+
     eta = sqrt(1.d0/(beta*beta) - p*p)
-    xi  = sqrt(1.d0/(alpha*alpha) - p*p)
+    xi  = sqrt(xi2)
     bp = 1.d0 - 2.d0*beta*beta*p*p
 
     self%p_mat(1,1) = beta*beta*p/alpha

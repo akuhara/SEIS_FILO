@@ -136,6 +136,12 @@ Time length (sec) preceding the direct P arrival on receiver functions.
 
 * Type: Double precision
 
+### damp
+
+Damping factor for water-level deconvolution. Default is 0.
+
+* Type: Double precision
+
 ### rf_phase
 
 The phase-type of receiver functions: P (P-wave); S (S-wave).

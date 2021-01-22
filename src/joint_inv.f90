@@ -299,17 +299,17 @@ program main
         rf(i) = recv_func( &
              & vm = vm, &
              & n = 1024, &!obs_rf%get_n_smp(i) * 2, &
-          & delta = obs_rf%get_delta(i), &
-          & rayp = obs_rf%get_rayp(i), &
-          & a_gauss = obs_rf%get_a_gauss(i), &
-          & rf_phase = obs_rf%get_rf_phase(i), &
-          & deconv_flag = obs_rf%get_deconv_flag(i), &
-          & t_pre = -obs_rf%get_t_start(i), &
-          & correct_amp = obs_rf%get_correct_amp(i), &
-          & amp_min = para%get_amp_min(), &
-          & amp_max = para%get_amp_max() &
-
-          & )
+             & delta = obs_rf%get_delta(i), &
+             & rayp = obs_rf%get_rayp(i), &
+             & a_gauss = obs_rf%get_a_gauss(i), &
+             & rf_phase = obs_rf%get_rf_phase(i), &
+             & deconv_flag = obs_rf%get_deconv_flag(i), &
+             & t_pre = -obs_rf%get_t_start(i), &
+             & correct_amp = obs_rf%get_correct_amp(i), &
+             & amp_min = para%get_amp_min(), &
+             & amp_max = para%get_amp_max(), &
+             & damp    = para%get_damp() &
+             & )
         
      end do
   end if

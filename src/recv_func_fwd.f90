@@ -91,7 +91,8 @@ program main
        & t_pre = para%get_t_pre(), &
        & correct_amp = para%get_correct_amp(), &
        & noise_added = para%get_noise_added(), &
-       & is_attenuative = para%get_is_attenuative() &
+       & is_attenuative = para%get_is_attenuative(), &
+       & damp = para%get_damp() &
        & )
   
   ! Main
