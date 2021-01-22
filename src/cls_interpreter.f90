@@ -386,6 +386,11 @@ contains
        call vm%vp2rho_brocher(i+i1)
     end do
     ! Bottom layer
+    ! Thickness 
+    ! - Bottom layer thickness is not necessary for forward calc.
+    ! - This is just for sphere2flat transform
+    call vm%set_h(k+1+i1,  self%z_max - self%wrk_z(k)) 
+
     ! Vs
     if (self%vs_bottom > 0.d0) then
        call vm%set_vs(k+1+i1, self%vs_bottom) ! <- Fixed
@@ -396,21 +401,14 @@ contains
     if (self%vp_bottom > 0.d0) then
        call vm%set_vp(k+1+i1, self%vp_bottom)
     else
-       if (self%solve_vp) then
-          call vm%set_vp(k+1+i1, vm%get_vp(k+i1))
-       else
-          call vm%vs2vp_brocher(k+1+i1)
-       end if
+       call vm%set_vp(k+1+i1, vm%get_vp(k+i1)) ! <- Same as layer above
     end if
-    ! Thickness 
-    !!! -- Bottom layer thickness is not necessary for forward calc.
-    !!!    This is just for sphere2flat transform
-    call vm%set_h(k+1+i1,  self%z_max - self%wrk_z(k)) 
+
     ! Density
     if (self%rho_bottom > 0.d0) then
        call vm%set_rho(k+1+i1, self%rho_bottom)
     else
-       call vm%vp2rho_brocher(k+1+i1)
+       call vm%set_rho(k+1+i1, vm%get_rho(k+i1)) ! <- Same as layer above
     end if
     
     if (any(self%wrk_vs(i1+1:i1+k+1) > self%vs_max)) then
