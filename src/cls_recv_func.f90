@@ -30,7 +30,6 @@ module cls_recv_func
   use cls_covariance
   use mod_random
   implicit none 
-  
   complex(kind(0d0)), private, parameter :: ei = (0.d0, 1.d0)
   double precision, private, parameter :: pi = acos(-1.d0)
   integer, private, parameter :: ir = 1, iz = 2
@@ -331,7 +330,8 @@ contains
     class(recv_func), intent(inout) :: self
     double precision, intent(in) :: omega
     double precision :: alpha, beta, p, rho, eta, xi, bp
-    integer :: nlay
+    double precision :: xi2
+    integer :: nlay, ierr
     
     nlay  = self%vmodel%get_nlay()
     alpha = self%vmodel%get_vp(nlay)
@@ -340,8 +340,15 @@ contains
     p     = self%rayp
     
     self%p_mat(:,:) = (0.d0, 0.d0)
+    xi2  = 1.d0/(alpha*alpha) - p*p
+    if (xi2 <= 0.0) then
+       write(0,*)"ERROR: too high Vp for bottom layer"
+       write(0,*)"rayp = ", p, ",", "Vp = ", alpha
+       stop
+    end if
+
     eta = sqrt(1.d0/(beta*beta) - p*p)
-    xi  = sqrt(1.d0/(alpha*alpha) - p*p)
+    xi  = sqrt(xi2)
     bp = 1.d0 - 2.d0*beta*beta*p*p
 
     self%p_mat(1,1) = beta*beta*p/alpha

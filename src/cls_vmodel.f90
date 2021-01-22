@@ -571,6 +571,7 @@ contains
        ztop = r_earth * log(r_earth / r)
        r = r - 0.5d0 * self%h(i) ! Get radius at layer center
        vm_out%vp(i) = self%vp(i) * r_earth / r
+       !write(*,*)i, self%vp(i), vm_out%vp(i)
        vm_out%vs(i) = self%vs(i) * r_earth / r
        vm_out%rho(i) = self%rho(i) * r / r_earth
        r = r - 0.5d0 * self%h(i)
