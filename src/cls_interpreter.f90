@@ -402,8 +402,10 @@ contains
           call vm%vs2vp_brocher(k+1+i1)
        end if
     end if
-    ! Thickness
-    call vm%set_h(k+1+i1,  -99.d0) ! <- half space
+    ! Thickness 
+    !!! -- Bottom layer thickness is not necessary for forward calc.
+    !!!    This is just for sphere2flat transform
+    call vm%set_h(k+1+i1,  self%z_max - self%wrk_z(k)) 
     ! Density
     if (self%rho_bottom > 0.d0) then
        call vm%set_rho(k+1+i1, self%rho_bottom)
