@@ -11,6 +11,9 @@ The joint inversion program, `joint_inv`,  samples the posterior probability dis
 
 Alternatively, one can solve for velocity anomalies centered on the given reference velocity, as is done by [Akuhara et al. (2020)](https://doi.org/10.1029/2020GL088280). This mode is activated by setting [solve_anomaly](parameter_list.md#solve_anomaly) to be 'T' in [the main parameter file](main_parameter_file.md). 
 
+![prior probability](./img/model_prior.png)
+
+
 
 !!! NOTE
     * The ocean and bottom half-space layers are not counted for \\(k\\).

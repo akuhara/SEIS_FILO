@@ -1,4 +1,5 @@
-# SEIS_FILO 
+![SEIS_FILO](img/SEIS_FILO_LOGO.png ) 
+
 SEISmological transdimensional inversion tools for Flat and Isotropic Layered medium in the Ocean
 
 ## Package contents
