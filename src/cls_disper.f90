@@ -242,7 +242,7 @@ contains
        end if
     end do
 
-    if (present(is_ok)) is_ok = .false.
+    if (present(is_ok)) is_ok = .true.
     return 
   end subroutine disper_dispersion
   

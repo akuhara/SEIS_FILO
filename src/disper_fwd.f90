@@ -37,7 +37,7 @@ program main
   type(param) :: para
   type(vmodel) :: vm, vm2
   type(disper) :: disp
-  logical :: verb
+  logical :: verb, is_ok
 
   verb = .true.
   
@@ -85,8 +85,10 @@ program main
        & noise_added = para%get_noise_added() &
        & )
   
-  call disp%dispersion()
- 
-  
+  call disp%dispersion(is_ok=is_ok)
+  if (.not. is_ok) then
+     error stop 
+  end if
+    
   stop
 end program main
