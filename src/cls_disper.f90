@@ -183,8 +183,9 @@ contains
     
   !---------------------------------------------------------------------
 
-  subroutine disper_dispersion(self)
+  subroutine disper_dispersion(self, is_ok)
     class(disper), intent(inout) :: self
+    logical, intent(out), optional :: is_ok
     double precision :: omega, c_start, prev_rslt, grad
     double precision :: c, u
     logical :: first_flag
@@ -223,6 +224,7 @@ contains
              self%c(:) = 0.d0
              self%u(:) = 0.d0
              write(*,*)"END dispersion calculation"
+             if (present(is_ok)) is_ok = .false.
              return
           end if
           self%c(i) = c
@@ -240,7 +242,7 @@ contains
        end if
     end do
 
-    
+    if (present(is_ok)) is_ok = .false.
     return 
   end subroutine disper_dispersion
   
