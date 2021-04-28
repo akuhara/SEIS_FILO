@@ -48,8 +48,7 @@ program main
   ! Get parameter file name from command line argument
   n_arg = command_argument_count()
   if (n_arg /= 1) then
-     write(0, *)"USAGE: disper_fwd [parameter file]"
-     stop
+     error stop "USAGE: disper_fwd [parameter file]"
   end if
   call get_command_argument(1, param_file)
 

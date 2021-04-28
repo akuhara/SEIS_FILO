@@ -25,6 +25,7 @@
 !
 !=======================================================================
 module cls_disper
+  use iso_fortran_env, only: error_unit
   use cls_vmodel
   use mod_random
   implicit none 
@@ -115,8 +116,7 @@ contains
     self%vmodel = vm
     nlay = self%vmodel%get_nlay()
     if (nlay < 1) then
-       write(0,*)"ERROR: velocity model is not defined"
-       stop
+       error stop "velocity model is not defined"
     end if
     if (self%vmodel%get_vs(1) < 0.d0) then
        self%is_ocean = .true.
@@ -130,8 +130,7 @@ contains
     self%df = df
     self%nf = nint((fmax - fmin) / df) + 1
     if (self%nf < 1) then
-       write(0,*)"ERROR: fmax must be .gt. fmin (self)"
-       stop
+       error stop "fmax must be .gt. fmin (self)"
     end if
     allocate(self%c(self%nf), &
          &   self%u(self%nf))
@@ -141,8 +140,7 @@ contains
     self%dc = dc
     self%nc = nint((cmax - cmin) / dc) + 1
     if (self%nc < 1) then
-       write(0,*)"ERROR: cmax must be .gt. cmin (self)"
-       stop
+       error stop "cmax must be .gt. cmin (self)"
     end if
     self%n_mode = n_mode
 
@@ -152,12 +150,10 @@ contains
     
     self%disper_phase = disper_phase
     if (self%disper_phase == "L") then
-       write(0,*)"ERROR: Love wave it not supported yet"
-       stop
+       error stop "Love wave it not supported yet"
     end if
     if (self%disper_phase /= "L" .and. self%disper_phase /= "R") then
-       write(0,*)"ERROR: disper_phase must be L or R"
-       stop
+       error stop "disper_phase must be L or R"
     end if
 
     if (present(noise_added)) then
@@ -171,9 +167,8 @@ contains
        open(newunit = self%io, status = "unknown", &
             & file = disper_out, iostat=ierr)
        if (ierr /= 0) then
-          write(0, *)"ERROR: cannot creat ", trim(disper_out)
-          write(0, *)"     : (init_disper)"
-          stop
+          write(error_unit, *)"ERROR: cannot creat ", trim(disper_out)
+          call exit(1)
        end if
        self%out_flag = .true.
     end if
@@ -188,8 +183,9 @@ contains
     
   !---------------------------------------------------------------------
 
-  subroutine disper_dispersion(self)
+  subroutine disper_dispersion(self, is_ok)
     class(disper), intent(inout) :: self
+    logical, intent(out), optional :: is_ok
     double precision :: omega, c_start, prev_rslt, grad
     double precision :: c, u
     logical :: first_flag
@@ -228,6 +224,7 @@ contains
              self%c(:) = 0.d0
              self%u(:) = 0.d0
              write(*,*)"END dispersion calculation"
+             if (present(is_ok)) is_ok = .false.
              return
           end if
           self%c(i) = c
@@ -245,7 +242,7 @@ contains
        end if
     end do
 
-    
+    if (present(is_ok)) is_ok = .false.
     return 
   end subroutine disper_dispersion
   
