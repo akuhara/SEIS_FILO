@@ -1,4 +1,4 @@
-# SEIS_FILO (Beta version) test test
+# SEIS_FILO (Beta version) 
 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
