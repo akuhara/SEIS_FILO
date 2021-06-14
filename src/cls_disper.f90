@@ -168,7 +168,7 @@ contains
             & file = disper_out, iostat=ierr)
        if (ierr /= 0) then
           write(error_unit, *)"ERROR: cannot creat ", trim(disper_out)
-          call exit(1)
+          stop
        end if
        self%out_flag = .true.
     end if

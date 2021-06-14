@@ -1,4 +1,4 @@
-# SEIS_FILO (Beta version)
+# SEIS_FILO (Beta version) 
 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
@@ -8,9 +8,9 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/akuhara/seis-filo)
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 
-Copyright (C) 2019-2020 Takeshi Akuhara
+Copyright (C) 2019-2021 Takeshi Akuhara
 
-![plot](./img/disper01.png)
+![LOGO](./img/SEIS_FILO_LOGO.png)
 ---
 
 The SEIS_FILO program package aims to carry out transdimensional joint inversion of surface waves and receiver functions for ocean-bottom observatories. The main features are: 

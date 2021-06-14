@@ -25,12 +25,12 @@
 !
 !=======================================================================
 program main
+  use mod_mpi
   use cls_param
   use cls_vmodel
   use cls_disper
   use mod_random
   implicit none 
-  include 'mpif.h'
 
   integer :: n_arg, ierr
   character(len=200) :: param_file
