@@ -25,6 +25,7 @@
 !
 !=======================================================================
 program main
+  use mod_mpi
   use cls_parallel  
   use mod_random
   use cls_trans_d_model
