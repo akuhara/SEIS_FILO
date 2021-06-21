@@ -139,7 +139,7 @@ contains
        nu = 0
        sc = hyp%get_x(2*j-1)
        su = hyp%get_x(2*j)
-       do i = 1, obs%get_nf(j)
+       do i = 1, obs%get_nx(j)
           if (disp(j)%get_c(i) == 0.d0 .or. &
                & disp(j)%get_u(i) == 0.d0) then
              ! Failer in root search

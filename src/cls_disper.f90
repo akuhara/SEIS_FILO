@@ -1,7 +1,7 @@
 !=======================================================================
 !   SEIS_FILO: 
 !   SEISmological tools for Flat Isotropic Layered structure in the Ocean
-!   Copyright (C) 2019 Takeshi Akuhara
+!   Copyright (C) 2019-2021 Takeshi Akuhara
 !
 !   This program is free software: you can redistribute it and/or modify
 !   it under the terms of the GNU General Public License as published by
@@ -41,11 +41,12 @@ module cls_disper
      private
      type(vmodel) :: vmodel
      
-     double precision :: fmin 
-     double precision :: fmax
-     double precision :: df  
-     integer :: nf
-
+     character(6) :: freq_or_period
+     double precision :: xmin 
+     double precision :: xmax
+     double precision :: dx  
+     integer :: nx
+     
      double precision :: cmin 
      double precision :: cmax
      double precision :: dc  
@@ -79,7 +80,7 @@ module cls_disper
      procedure :: set_full_calculation => disper_set_full_calculation
      procedure :: do_full_calculation => disper_do_full_calculation
      procedure :: set_vmodel => disper_set_vmodel
-     procedure :: get_nf => disper_get_nf
+     procedure :: get_nx => disper_get_nx
      procedure :: get_nc => disper_get_nc
      procedure :: get_c => disper_get_c
      procedure :: get_c_array => disper_get_c_array
@@ -99,14 +100,16 @@ contains
   
   !---------------------------------------------------------------------
   
-  type(disper) function init_disper(vm, fmin, fmax, df, &
+  type(disper) function init_disper(vm, freq_or_period, xmin, xmax, dx, &
        & cmin, cmax, dc, disper_phase, n_mode, noise_added, &
        & disper_out) result(self)
     type(vmodel), intent(in) :: vm
-    double precision, intent(in) :: fmin, fmax, df
+    character(*), intent(in) :: freq_or_period
+    double precision, intent(in) :: xmin, xmax, dx
     double precision, intent(in) :: cmin, cmax, dc
     double precision, intent(in), optional :: noise_added
     character(*), intent(in) :: disper_phase
+
     integer, intent(in) :: n_mode
     
     character(*), intent(in), optional :: disper_out
@@ -125,15 +128,20 @@ contains
     end if
     
     ! Check parameters
-    self%fmin = fmin
-    self%fmax = fmax
-    self%df = df
-    self%nf = nint((fmax - fmin) / df) + 1
-    if (self%nf < 1) then
-       error stop "fmax must be .gt. fmin (self)"
+    self%freq_or_period = freq_or_period
+    if (self%freq_or_period /= "freq" .and. self%freq_or_period /= "period")  then
+       error stop "frep_or_period must be 'freq' or 'period'"
     end if
-    allocate(self%c(self%nf), &
-         &   self%u(self%nf))
+    self%xmin = xmin
+    self%xmax = xmax
+    self%dx = dx
+    self%nx = nint((xmax - xmin) / dx) + 1
+    if (self%nx < 1) then
+       error stop "xmax must be .gt. xmin (self)"
+    end if
+    allocate(self%c(self%nx), &
+         &   self%u(self%nx))
+    
     
     self%cmin = cmin
     self%cmax = cmax
@@ -174,7 +182,7 @@ contains
     end if
     
     ! for MCMC
-    allocate(self%n_fc(self%nf, self%nc), self%n_fu(self%nf, self%nc))
+    allocate(self%n_fc(self%nx, self%nc), self%n_fu(self%nx, self%nc))
     self%n_fc(:,:) = 0
     self%n_fu(:,:) = 0
    
@@ -194,19 +202,19 @@ contains
     prev_rslt = 0.d0
     c_start = self%cmin
     first_flag = .true.
-    do i = 1, self%nf
-       omega = 2.d0 * pi * (self%fmin  + (i - 1) * self%df)
+    do i = 1, self%nx
+       omega = 2.d0 * pi * (self%xmin  + (i - 1) * self%dx)
        if (.not. self%full_calculation) then
           ! find root
           if (i /= 1) then
              first_flag = .false.
              if (self%u(i-1) /= 0.d0) then
                 grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
-                     & self%c(i-1) / (omega - 2.d0 * pi * self%df)
+                     & self%c(i-1) / (omega - 2.d0 * pi * self%dx)
                 
                 if (grad < 0.d0) then
                    c_start = self%c(i-1) + &
-                        & 3.5d0 * grad * 2.d0 * pi * self%df ! 3.5
+                        & 3.5d0 * grad * 2.d0 * pi * self%dx ! 3.5
                 else 
                    c_start = self%cmin
                    first_flag = .true.
@@ -348,9 +356,9 @@ contains
     call self%do_propagation(omega, c2, rslt2_c)
     del_c = (rslt2_c - rslt1_c) / (c2 - c1)
     ! derivative by omega
-    omega1 = omega - 0.001d0 * self%df * 2.d0 * pi 
+    omega1 = omega - 0.001d0 * self%dx * 2.d0 * pi 
     call self%do_propagation(omega1, c, rslt1_omg)
-    omega2 = omega + 0.001d0 * self%df * 2.d0 * pi 
+    omega2 = omega + 0.001d0 * self%dx * 2.d0 * pi 
     call self%do_propagation(omega2, c, rslt2_omg)
     del_omega = (rslt2_omg - rslt1_omg) / (omega2 - omega1)
     ! group velocity from the two derivatives
@@ -590,13 +598,13 @@ contains
 
   !---------------------------------------------------------------------
 
-  integer function disper_get_nf(self) result(nf)
+  integer function disper_get_nx(self) result(nx)
     class(disper), intent(in) :: self
 
-    nf = self%nf
+    nx = self%nx
     
     return 
-  end function disper_get_nf
+  end function disper_get_nx
 
   !---------------------------------------------------------------------
 
@@ -623,7 +631,7 @@ contains
   
   function disper_get_c_array(self) result(c)
     class(disper), intent(in) :: self
-    double precision :: c(self%nf)
+    double precision :: c(self%nx)
   
     c(:) = self%c(:)
 
@@ -645,7 +653,7 @@ contains
 
   function disper_get_u_array(self) result(u)
     class(disper), intent(in) :: self
-    double precision :: u(self%nf)
+    double precision :: u(self%nx)
   
     u(:) = self%u(:)
 
@@ -658,7 +666,7 @@ contains
     class(disper), intent(inout) :: self
     integer :: i, j
     
-    do i = 1, self%nf
+    do i = 1, self%nx
        j = int((self%c(i) - self%cmin) / self%dc) + 1
        if (j < 1 .or. j > self%nc) cycle
        self%n_fc(i, j) = self%n_fc(i, j) + 1
@@ -675,7 +683,7 @@ contains
 
   function disper_get_n_fc(self) result(n_fc)
     class(disper), intent(in) :: self
-    integer :: n_fc(self%nf, self%nc)
+    integer :: n_fc(self%nx, self%nc)
     
     n_fc(:,:) = self%n_fc(:,:)
 
@@ -686,7 +694,7 @@ contains
 
   function disper_get_n_fu(self) result(n_fu)
     class(disper), intent(in) :: self
-    integer :: n_fu(self%nf, self%nc)
+    integer :: n_fu(self%nx, self%nc)
     
     n_fu(:,:) = self%n_fu(:,:)
 
