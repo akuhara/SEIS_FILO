@@ -418,18 +418,24 @@ class InvResult:
             ppd_file = "syn_group" + str(curve_id).zfill(3) + ".ppd"
             vlabel = ulabel
             used_label = u_used
-        flabel = "Frequency (Hz)"
+
+        if param["freq_or_period"] == "freq":
+            xlabel = "Frequency (Hz)"
+        elif param["freq_or_period"] == "period":
+            xlabel = "Period (s)"
+            
+        
         plabel = "Probability"
         df = pd.read_csv(ppd_file, delim_whitespace=True, header=None, \
-                         names=(flabel, vlabel, plabel))
+                         names=(xlabel, vlabel, plabel))
         
-        f_min = float(param["fmin"])
-        del_f = float(param["df"])
-        nf    = int(param["nf"])
-        f_max = f_min + (nf -1) * del_f
+        x_min = float(param["xmin"])
+        del_x = float(param["dx"])
+        nx    = int(param["nx"])
+        x_max = x_min + (nx -1) * del_x
         v_tmp = df[df[vlabel].duplicated()==False][vlabel]
-        f_tmp = df[df[flabel].duplicated()==False][flabel]
-        data = df.pivot(vlabel, flabel, plabel)
+        x_tmp = df[df[xlabel].duplicated()==False][xlabel]
+        data = df.pivot(vlabel, xlabel, plabel)
 
         # Observation
         df = pd.read_csv(param["obs_disper_file"],\
@@ -437,24 +443,24 @@ class InvResult:
                          header=None, \
                          names=(clabel, c_used, ulabel, u_used), \
                          comment='#')
-        df[flabel] = np.arange(f_min, f_max + 0.5 * del_f, del_f)
+        df[xlabel] = np.arange(x_min, x_max + 0.5 * del_x, del_x)
         df_obs = df[df[used_label] == "T"]
         
         # Draw
         if len(df_obs) > 0:
-            mappable = ax.pcolormesh(f_tmp, v_tmp, data, cmap='hot_r', \
+            mappable = ax.pcolormesh(x_tmp, v_tmp, data, cmap='hot_r', \
                                      shading='nearest')
-            ax.set_xlabel(flabel)
+            ax.set_xlabel(xlabel)
             ax.set_ylabel(vlabel)
             cbar = fig.colorbar(mappable, ax=ax)
             cbar.ax.set_ylabel(plabel)
-            df_obs.plot.scatter(flabel, vlabel, ax=ax, s=8, \
+            df_obs.plot.scatter(xlabel, vlabel, ax=ax, s=8, \
                                 marker=".", c="blue")
         else:
             ax.text(0.5, 0.5, "N/A", size=40, \
                     horizontalalignment="center", \
                     verticalalignment="center")
-            ax.set_xlabel(flabel)
+            ax.set_xlabel(xlabel)
             ax.set_ylabel(vlabel)
 
     #---------------------------------------------------------------       
@@ -484,11 +490,14 @@ class InvResult:
                     if iloc == 0:
                         self._param["obs_disper_file"] = tmp_line.replace('\'','')
                         self._param["obs_disper_file"] = self._param["obs_disper_file"].replace('\"','')
+                    elif iloc == 1:
+                        item = tmp_line.split(" ")
+                        self._param["freq_or_period"] = item[2]
                     elif iloc == 2:
                         item = tmp_line.split(" ")
-                        self._param["nf"]   = item[0]
-                        self._param["fmin"] = item[1]
-                        self._param["df"]   = item[2]
+                        self._param["nx"]   = item[0]
+                        self._param["xmin"] = item[1]
+                        self._param["dx"]   = item[2]
                     elif iloc == 3:
                         item = tmp_line.split(" ")
                         self._param["cmin"] = item[0]
