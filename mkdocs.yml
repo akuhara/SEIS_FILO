@@ -1,7 +1,6 @@
 site_name: SEIS_FILO
 
 nav: 
-  - Home: index.md
   - Before use:
     - Overview: overview.md
     - Requirements: requirements.md
@@ -23,20 +22,20 @@ nav:
       - Receiver function ensemble: receiver_function_ensemble.md
       - Standard deviation of noise: standard_deviation_of_noise.md
     - Plot utilities: plot_utilities.md
-  - Forward calculation:
-    - Dispersion curve: dispersion_curve.md 
-    - Receiver function: receiver_function.md
-  - Inversion analysis: 
-    - Model parameters: model_parameters.md
-    - Prior probability: prior_probability.md
-    - MCMC step: mcmc_step.md
-    - Prallel tempering: parallel_tempering.md
-  - Miscellaneous:
-    - Receiver function amplitude: receiver_function_amplitude.md
-    - Verification: verification.md
-    - Spherical Earth mode: spherical_earth_mode.md
-    - Diagnostic mode: diagnostic_mode.md
-    - Docker container: docker_container.md 
+    - Forward calculation:
+      - Dispersion curve: dispersion_curve.md 
+      - Receiver function: receiver_function.md
+    - Inversion analysis: 
+      - Model parameters: model_parameters.md
+      - Prior probability: prior_probability.md
+      - MCMC step: mcmc_step.md
+      - Prallel tempering: parallel_tempering.md
+    - Miscellaneous:
+      - Receiver function amplitude: receiver_function_amplitude.md
+      - Verification: verification.md
+      - Spherical Earth mode: spherical_earth_mode.md
+      - Diagnostic mode: diagnostic_mode.md
+      - Docker container: docker_container.md 
 theme: readthedocs
 
 markdown_extensions:
