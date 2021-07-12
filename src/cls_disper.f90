@@ -230,9 +230,9 @@ contains
                 if (self%freq_or_period == "freq" .and. grad < -0.01d0) then
                    c_start = self%c(i-1) + &
                         & 3.5d0 * grad * 2.d0 * pi * self%dx ! 3.5
-                else if (self%freq_or_period == "period" .and. grad > 0.01d0) then
+                else if (self%freq_or_period == "period" .and. grad > 0.1d0) then
                    c_start = self%c(i-1) + &
-                        & 0.5d0 * grad * self%dx ! 0.5
+                        & 0.07d0 * grad * self%dx ! 0.5
                 else 
                    c_start = self%cmin
                    first_flag = .true.
