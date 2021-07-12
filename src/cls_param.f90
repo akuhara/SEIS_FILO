@@ -102,9 +102,10 @@ module cls_param
 
      ! Parameter for dispersion
      ! only used by rayleigh_fwd 
-     double precision :: fmin = -999.d0
-     double precision :: fmax = -999.d0
-     double precision :: df = -999.d0
+     character(6) :: freq_or_period = "freq"
+     double precision :: xmin = -999.d0
+     double precision :: xmax = -999.d0
+     double precision :: dx = -999.d0
      double precision :: cmin = -999.d0
      double precision :: cmax = -999.d0
      double precision :: dc = -999.d0
@@ -153,9 +154,10 @@ module cls_param
      procedure :: get_n_bin_c => param_get_n_bin_c
      
      procedure :: get_temp_high => param_get_temp_high
-     procedure :: get_fmin => param_get_fmin
-     procedure :: get_fmax => param_get_fmax
-     procedure :: get_df => param_get_df
+     procedure :: get_freq_or_period => param_get_freq_or_period
+     procedure :: get_xmin => param_get_xmin
+     procedure :: get_xmax => param_get_xmax
+     procedure :: get_dx => param_get_dx
      procedure :: get_cmin => param_get_cmin
      procedure :: get_cmax => param_get_cmax
      procedure :: get_dc => param_get_dc
@@ -248,9 +250,9 @@ contains
     
     self%param_file = param_file
     self%vmod_in = ""
-    self%fmin = -999.d0
-    self%fmax = -999.d0
-    self%df = -999.d0
+    self%xmin = -999.d0
+    self%xmax = -999.d0
+    self%dx = -999.d0
     self%cmin = -999.d0
     self%cmax = -999.d0
     self%dc = -999.d0
@@ -312,12 +314,14 @@ contains
     if (self%verb) then
        write(*,*)trim(name), " <- ", trim(val)
     end if
-    if (name == "fmin") then
-       read(val, *) self%fmin
-    else if (name == "fmax") then
-       read(val, *) self%fmax 
-    else if (name == "df") then
-       read(val, *) self%df 
+    if (name == "xmin") then
+       read(val, *) self%xmin
+    else if (name == "xmax") then
+       read(val, *) self%xmax 
+    else if (name == "dx") then
+       read(val, *) self%dx 
+    else if (name == "freq_or_period") then
+       self%freq_or_period = val
     else if (name == "cmin") then
        read(val, *) self%cmin 
     else if (name == "cmax") then
@@ -644,32 +648,42 @@ contains
   
   !---------------------------------------------------------------------
   
-  double precision function param_get_fmin(self) result(fmin)
+  character(6) function param_get_freq_or_period(self) result(freq_or_period)
+    class(param), intent(in) :: self
+    
+    freq_or_period = self%freq_or_period
+    
+    return 
+  end function param_get_freq_or_period
+
+  !---------------------------------------------------------------------
+
+  double precision function param_get_xmin(self) result(xmin)
     class(param), intent(in) :: self
 
-    fmin = self%fmin
+    xmin = self%xmin
 
     return
-  end function param_get_fmin
+  end function param_get_xmin
   
   !---------------------------------------------------------------------
 
-  double precision function param_get_fmax(self) result(fmax)
+  double precision function param_get_xmax(self) result(xmax)
     class(param), intent(in) :: self
 
-    fmax = self%fmax
+    xmax = self%xmax
 
     return
-  end function param_get_fmax
+  end function param_get_xmax
   !---------------------------------------------------------------------
 
-  double precision function param_get_df(self) result(df)
+  double precision function param_get_dx(self) result(dx)
     class(param), intent(in) :: self
 
-    df = self%df
+    dx = self%dx
 
     return
-  end function param_get_df
+  end function param_get_dx
   
   !---------------------------------------------------------------------
 

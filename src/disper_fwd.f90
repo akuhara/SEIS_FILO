@@ -25,12 +25,12 @@
 !
 !=======================================================================
 program main
+  use mod_mpi
   use cls_param
   use cls_vmodel
   use cls_disper
   use mod_random
   implicit none 
-  include 'mpif.h'
 
   integer :: n_arg, ierr
   character(len=200) :: param_file
@@ -73,9 +73,10 @@ program main
     ! Calculate dispersion curve
   disp = disper(&
        & vm     = vm2, &
-       & fmin   = para%get_fmin(), &
-       & fmax   = para%get_fmax(), &
-       & df     = para%get_df(), &
+       & freq_or_period = para%get_freq_or_period(), &
+       & xmin   = para%get_xmin(), &
+       & xmax   = para%get_xmax(), &
+       & dx     = para%get_dx(), &
        & cmin   = para%get_cmin(), &
        & cmax   = para%get_cmax(), &
        & dc     = para%get_dc(), &

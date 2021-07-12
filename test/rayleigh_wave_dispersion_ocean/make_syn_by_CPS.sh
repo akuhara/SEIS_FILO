@@ -5,5 +5,6 @@ distance_file=distance_file
 
 sprep96 -M $model_file -d $distance_file -R -NMOD 8
 sdisp96
+sregn96  -HR 2.00001
 sdpsrf96 -R -TXT
-
+sdpegn96 -R -E -TXT

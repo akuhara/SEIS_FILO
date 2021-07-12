@@ -32,8 +32,8 @@ module cls_observation_disper
      private
      ! surface wave
      integer :: n_disp
-     integer, allocatable :: nf(:)
-     double precision, allocatable :: fmin(:), df(:), fmax(:)
+     integer, allocatable :: nx(:)
+     double precision, allocatable :: xmin(:), dx(:), xmax(:)
      double precision, allocatable :: c(:,:) ! phase velocity
      double precision, allocatable :: u(:,:) ! group velocity
      double precision, allocatable :: sig_c(:) ! uncertainties in c
@@ -46,14 +46,16 @@ module cls_observation_disper
      logical, allocatable :: c_use(:,:), u_use(:,:)
      integer, allocatable :: n_mode(:)
      character(1), allocatable :: disper_phase(:)
+     character(6), allocatable :: freq_or_period(:)
      logical :: verb = .false.
      
 
    contains
-     procedure :: get_nf => observation_disper_get_nf
-     procedure :: get_fmin => observation_disper_get_fmin
-     procedure :: get_fmax => observation_disper_get_fmax
-     procedure :: get_df => observation_disper_get_df
+     procedure :: get_nx => observation_disper_get_nx
+     procedure :: get_freq_or_period => observation_disper_get_freq_or_period
+     procedure :: get_xmin => observation_disper_get_xmin
+     procedure :: get_xmax => observation_disper_get_xmax
+     procedure :: get_dx => observation_disper_get_dx
      procedure :: get_cmin => observation_disper_get_cmin
      procedure :: get_cmax => observation_disper_get_cmax
      procedure :: get_dc => observation_disper_get_dc
@@ -134,14 +136,16 @@ contains
     end do
     
     ! allocate
-    allocate(self%nf(self%n_disp), self%fmin(self%n_disp))
-    allocate(self%fmax(self%n_disp))
-    allocate(self%df(self%n_disp))
+    allocate(self%nx(self%n_disp))
+    allocate(self%xmin(self%n_disp))
+    allocate(self%xmax(self%n_disp))
+    allocate(self%dx(self%n_disp))
     allocate(self%disper_phase(self%n_disp))
     allocate(self%cmin(self%n_disp), self%cmax(self%n_disp))
     allocate(self%dc(self%n_disp))
     allocate(filename(self%n_disp))
     allocate(self%n_mode(self%n_disp))
+    allocate(self%freq_or_period(self%n_disp))
     allocate(self%sig_c(self%n_disp))
     allocate(self%sig_u(self%n_disp))
     allocate(self%sig_c_min(self%n_disp))
@@ -166,18 +170,21 @@ contains
              exit
           end if
        end do
-       ! disper_phase
+       ! disper_phase, n_mode, freq_or_period
        do 
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) /= 0) then
-             read(line, *) self%disper_phase(i), self%n_mode(i)
+             read(line, *) self%disper_phase(i), self%n_mode(i), &
+                  & self%freq_or_period(i)
              if (self%verb) then
                 write(*,'(2A)')"Phase type (disper_phase) = ", &
                      & self%disper_phase(i)
                 write(*,'(A,I5)')"Mode (n_mode) = ", &
                      & self%n_mode(i)
+                write(*,'(2A)')"Frequency or period = ", &
+                     & self%freq_or_period(i)
              end if
              exit
           end if
@@ -189,17 +196,17 @@ contains
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) == 0) cycle
-          read(line, *) self%nf(i), self%fmin(i), self%df(i)
+          read(line, *) self%nx(i), self%xmin(i), self%dx(i)
           if (self%verb) then
-             write(*,'(A,I5)')"# of measurements (nf) = ", &
-                  & self%nf(i)
-             write(*,'(A,F12.5)')"Minimum frequency (fmin) = ", &
-                  & self%fmin(i)
-             write(*,'(A,F12.5)')"Frequency interval (df) = ", &
-                  & self%df(i)
+             write(*,'(A,I5)')"# of measurements (nx) = ", &
+                  & self%nx(i)
+             write(*,'(A,F12.5)')"Minimum frequency/period (xmin) = ", &
+                  & self%xmin(i)
+             write(*,'(A,F12.5)')"Frequency/period interval (dx) = ", &
+                  & self%dx(i)
           end if
-          self%fmax(i) = &
-               & self%fmin(i) + self%df(i) * (self%nf(i) - 1)
+          self%xmax(i) = &
+               & self%xmin(i) + self%dx(i) * (self%nx(i) - 1)
           exit
        end do
        
@@ -287,10 +294,10 @@ contains
     close(io)
     
     ! Read data files
-    allocate(self%c(maxval(self%nf(:)), self%n_disp))
-    allocate(self%u(maxval(self%nf(:)), self%n_disp))
-    allocate(self%c_use(maxval(self%nf(:)), self%n_disp))
-    allocate(self%u_use(maxval(self%nf(:)), self%n_disp))
+    allocate(self%c(maxval(self%nx(:)), self%n_disp))
+    allocate(self%u(maxval(self%nx(:)), self%n_disp))
+    allocate(self%c_use(maxval(self%nx(:)), self%n_disp))
+    allocate(self%u_use(maxval(self%nx(:)), self%n_disp))
     
     do i = 1, self%n_disp
        call self%read_data(filename(i), i)
@@ -301,50 +308,62 @@ contains
   
   !---------------------------------------------------------------------
   
-  integer function observation_disper_get_nf(self, i) result(nf)
+  integer function observation_disper_get_nx(self, i) result(nx)
     class(observation_disper), intent(in) :: self
     integer, intent(in) :: i
     
-    nf = self%nf(i)
+    nx = self%nx(i)
 
     return 
-  end function observation_disper_get_nf
+  end function observation_disper_get_nx
 
   !---------------------------------------------------------------------
   
-  double precision function observation_disper_get_fmin(self, i) &
-       & result(fmin)
+  character(6) function observation_disper_get_freq_or_period(self, i) &
+       & result(freq_or_period)
     class(observation_disper), intent(in) :: self
     integer, intent(in) :: i
     
-    fmin = self%fmin(i)
+    freq_or_period = self%freq_or_period(i)
+    
+    return 
+  end function observation_disper_get_freq_or_period
+
+  !---------------------------------------------------------------------
+  
+  double precision function observation_disper_get_xmin(self, i) &
+       & result(xmin)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    xmin = self%xmin(i)
 
     return 
-  end function observation_disper_get_fmin
+  end function observation_disper_get_xmin
   
   !---------------------------------------------------------------------
 
-  double precision function observation_disper_get_fmax(self, i) &
-       & result(fmax)
+  double precision function observation_disper_get_xmax(self, i) &
+       & result(xmax)
     class(observation_disper), intent(in) :: self
     integer, intent(in) :: i
     
-    fmax = self%fmax(i)
+    xmax = self%xmax(i)
 
     return 
-  end function observation_disper_get_fmax
+  end function observation_disper_get_xmax
   
   !---------------------------------------------------------------------
   
-  double precision function observation_disper_get_df(self, i) &
-       & result(df)
+  double precision function observation_disper_get_dx(self, i) &
+       & result(dx)
     class(observation_disper), intent(in) :: self
     integer, intent(in) :: i
     
-    df = self%df(i)
+    dx = self%dx(i)
 
     return 
-  end function observation_disper_get_df
+  end function observation_disper_get_dx
 
   !---------------------------------------------------------------------
 
@@ -399,7 +418,7 @@ contains
   function observation_disper_get_c_array(self, i) result(c)
     class(observation_disper), intent(in) :: self
     integer, intent(in) :: i
-    double precision :: c(self%nf(i))
+    double precision :: c(self%nx(i))
     
     c(:) = self%c(:, i)
     
@@ -423,7 +442,7 @@ contains
   function observation_disper_get_u_array(self, i) result(u)
     class(observation_disper), intent(in) :: self
     integer, intent(in) :: i
-    double precision :: u(self%nf(i))
+    double precision :: u(self%nx(i))
     
     u(:) = self%u(:, i)
     
@@ -611,7 +630,7 @@ contains
        call mpi_finalize(ierr)
        stop
     end if
-    do j = 1, self%nf(i)
+    do j = 1, self%nx(i)
        do
           read(io, '(a)')line
           lt = line_text(line, ignore_space = .false.)

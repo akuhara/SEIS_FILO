@@ -25,6 +25,7 @@
 !
 !=======================================================================
 program main
+  use mod_mpi
   use cls_parallel  
   use mod_random
   use cls_trans_d_model
@@ -326,9 +327,10 @@ program main
           & disp_tmp(obs_disp%get_n_disp()))
      do i = 1, obs_disp%get_n_disp()
         disp(i) = disper(vm=vm, &
-             & fmin=obs_disp%get_fmin(i), &
-             & fmax=obs_disp%get_fmax(i), &
-             & df=obs_disp%get_df(i), &
+             & freq_or_period = obs_disp%get_freq_or_period(i), &
+             & xmin=obs_disp%get_xmin(i), &
+             & xmax=obs_disp%get_xmax(i), &
+             & dx=obs_disp%get_dx(i), &
              & cmin=obs_disp%get_cmin(i), &
              & cmax=obs_disp%get_cmax(i), &
              & dc=obs_disp%get_dc(i), &
@@ -551,16 +553,16 @@ program main
   do i = 1, obs_disp%get_n_disp()
      ! Synthetic phase velocity
      write(filename, '(A9,I3.3,A4)')"syn_phase", i, ".ppd"
-     call output_ppd_2d(filename, rank, disp(i)%get_nf(), &
+     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
           & disp(i)%get_nc(), disp(i)%get_n_fc(), &
-          & n_mod, obs_disp%get_fmin(i), obs_disp%get_df(i), &
+          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
           & obs_disp%get_cmin(i), obs_disp%get_dc(i))
      
      ! Synthetic group velocity
      write(filename, '(A9,I3.3,A4)')"syn_group", i, ".ppd"
-     call output_ppd_2d(filename, rank, disp(i)%get_nf(), &
+     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
           & disp(i)%get_nc(), disp(i)%get_n_fu(), &
-          & n_mod, obs_disp%get_fmin(i), obs_disp%get_df(i), &
+          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
           & obs_disp%get_cmin(i), obs_disp%get_dc(i))
 
      ! Noise phase velocity

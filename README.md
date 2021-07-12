@@ -1,4 +1,4 @@
-# SEIS_FILO (Beta version)
+# SEIS_FILO (Beta version) 
 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
@@ -8,9 +8,9 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/akuhara/seis-filo)
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 
-Copyright (C) 2019-2020 Takeshi Akuhara
+Copyright (C) 2019-2021 Takeshi Akuhara
 
-![plot](./img/disper01.png)
+![LOGO](./img/SEIS_FILO_LOGO.png)
 ---
 
 The SEIS_FILO program package aims to carry out transdimensional joint inversion of surface waves and receiver functions for ocean-bottom observatories. The main features are: 
@@ -60,5 +60,6 @@ Alternatively, you can choose to use [docker container](https://hub.docker.com/r
 ## For More Details
 See [online documentation](https://seis-filo.readthedocs.io).
 
-
+## Publications
+* Yamaya, L., Mochizuki, K., Akuhara, T., Nishida, K. (2021). Sedimentary structure derived from multi-mode ambient noise tomography with dense OBS network at the Japan Trench. _Journal of Geophysical Research: Solid Earth_, 126, e2021JB021789. https://doi.org/10.1029/2021JB021789
 

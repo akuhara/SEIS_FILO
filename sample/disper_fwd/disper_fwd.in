@@ -5,9 +5,10 @@
 #-----------------------------------------------------------------------
 
 # Output frequencies (Hz)
-fmin = 0.01
-fmax = 1.0
-df   = 0.05
+freq_or_period = freq
+xmin = 0.01
+xmax = 1.0
+dx   = 0.05
 
 # Input velocity model
 vmod_in = ../vmod/vmod.in

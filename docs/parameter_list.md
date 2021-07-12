@@ -6,7 +6,7 @@ SEIS_FILO's programs involve a number of tuning parameters. The complete list is
 
 ### freq_or_period
 
-Input dispersion curve type. This parameter must be either 'freq' or 'period' (freq: dispersion curve as a function of frequency; period: as a functon of period).
+Input type of dispersion measurements. This parameter must be either 'freq' or 'period' (freq: dispersion curve as a function of frequency; period: as a functon of period).
 
 * Type: Character(6)
 

@@ -27,8 +27,8 @@
 
 module cls_parallel
   use cls_mcmc
+  use mod_mpi
   implicit none 
-  include 'mpif.h'
 
   type parallel
      private
