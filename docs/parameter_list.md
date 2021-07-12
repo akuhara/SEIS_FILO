@@ -4,21 +4,27 @@ SEIS_FILO's programs involve a number of tuning parameters. The complete list is
 
 ## Surface wave 
 
-### fmin
+### freq_or_period
 
-The minimum frequency of a dispersion curve (Hz).
+Input dispersion curve type. This parameter must be either 'freq' or 'period' (freq: dispersion curve as a function of frequency; period: as a functon of period).
+
+* Type: Character(6)
+
+### xmin
+
+The minimum frequency or period of a dispersion curve (Hz or s).
 
 * Type: Double precision
 
-### fmax
+### xmax
 
-The maximum frequency of a dispersion curve (Hz).
+The maximum frequency or period of a dispersion curve (Hz or s).
 
 * Type: Double precision
 
-### df
+### dx
 
-The frequency interval of a dispersion curve (Hz).
+The frequency or period interval of a dispersion curve (Hz or s).
 
 * Type: Double precision
 

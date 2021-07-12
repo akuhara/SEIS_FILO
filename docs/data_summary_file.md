@@ -16,9 +16,9 @@ __Format__
 * Line 2 and after: Summary of each data file (must be repeated n_disp times)
     * Line i: data file name
     
-    * Line ii: [disper_phase](parameter_list.md#disper_phase), [n_mode](parameter_list.md#n_mode)
+    * Line ii: [disper_phase](parameter_list.md#disper_phase), [n_mode](parameter_list.md#n_mode), [freq_or_period](parameter_list.md#freq_or_period)
     
-    * Line iii: [nf](parameter_list.md#nf), [fmin](parameter_list.md#fmin), [df](parameter_list.md#df)
+    * Line iii: [nx](parameter_list.md#nx), [xmin](parameter_list.md#xmin), [dx](parameter_list.md#dx)
 
     * Line iv: [cmin](parameter_list.md#cmin), [cmax](parameter_list.md#cmax), [dc](parameter_list.md#dc)
 
@@ -26,7 +26,7 @@ __Format__
 
     * Line vi: [sig_u_min](parameter_list.md#sig_u_min), [sig_u_max](parameter_list.md#sig_u_max), [dev_sig_u](parameter_list.md#dev_sig_u) 
 
-* The example is [here](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/disper.in).
+* The example is [here](https://github.com/akuhara/SEIS_FILO/blob/main/sample/joint_inv/disper.in).
 
  
 
@@ -53,4 +53,4 @@ __Format__
 
     * Line vi: [deconv_flag](parameter_list.md#deconv_flag), [correct_amp](parameter_list.md#correct_amp)
 
-* The example is [here](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/recv_func.in).
+* The example is [here](https://github.com/akuhara/SEIS_FILO/blob/main/sample/joint_inv/recv_func.in).
