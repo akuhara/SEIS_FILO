@@ -198,7 +198,7 @@ contains
     class(disper), intent(inout) :: self
     logical, intent(out), optional :: is_ok
     double precision :: omega, c_start, prev_rslt, grad
-    double precision :: c, u, h_v
+    double precision :: c, u, h_v, period
     logical :: first_flag
     integer :: i
     
@@ -206,18 +206,33 @@ contains
     c_start = self%cmin
     first_flag = .true.
     do i = 1, self%nx
-       omega = 2.d0 * pi * (self%xmin  + (i - 1) * self%dx)
+       if (self%freq_or_period == "freq") then
+          omega = 2.d0 * pi * (self%xmin + (i - 1) * self%dx)
+       else if (self%freq_or_period == "period") then
+          period = self%xmin + (i - 1) * self%dx
+          omega = 2.d0 * pi / period
+       end if
        if (.not. self%full_calculation) then
           ! find root
           if (i /= 1) then
              first_flag = .false.
              if (self%u(i-1) /= 0.d0) then
-                grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
-                     & self%c(i-1) / (omega - 2.d0 * pi * self%dx)
+                if (self%freq_or_period == "freq") then
+                   ! dc/dw
+                   grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
+                        & self%c(i-1) / (omega - 2.d0 * pi * self%dx)
+                else if (self%freq_or_period == "period") then
+                   ! dc/dT
+                   grad = -(1.d0 - self%c(i-1) / self%u(i-1)) * &
+                        & self%c(i-1) / (period - self%dx)
+                end if
                 
-                if (grad < 0.d0) then
+                if (self%freq_or_period == "freq" .and. grad < -0.01d0) then
                    c_start = self%c(i-1) + &
                         & 3.5d0 * grad * 2.d0 * pi * self%dx ! 3.5
+                else if (self%freq_or_period == "period" .and. grad > 0.01d0) then
+                   c_start = self%c(i-1) + &
+                        & 0.5d0 * grad * self%dx ! 0.5
                 else 
                    c_start = self%cmin
                    first_flag = .true.
@@ -243,13 +258,21 @@ contains
           self%c(i) = c
           self%u(i) = u
           self%h_v(i) = h_v
-          write(*,*)"AAA", omega / (2.d0 * pi), c, u, h_v
+          !write(*,*)"AAA", omega / (2.d0 * pi), c, u, h_v
           if (self%out_flag) then
-             write(self%io, '(4F10.4)') &
-                  & omega / (2.d0 * pi), &
-                  & self%c(i) + rand_g() * self%noise_added, &
-                  & self%u(i) + rand_g() * self%noise_added, &
-                  & self%h_v(i) + rand_g() * self%noise_added
+             if (self%freq_or_period == "freq") then
+                write(self%io, '(4F10.4)') &
+                     & omega / (2.d0 * pi), &
+                     & self%c(i) + rand_g() * self%noise_added, &
+                     & self%u(i) + rand_g() * self%noise_added, &
+                     & self%h_v(i) + rand_g() * self%noise_added
+             else 
+                write(self%io, '(4F10.4)') &
+                     & (2.d0 * pi) / omega, &
+                     & self%c(i) + rand_g() * self%noise_added, &
+                     & self%u(i) + rand_g() * self%noise_added, &
+                     & self%h_v(i) + rand_g() * self%noise_added
+             end if
           end if
        else
           ! full calculation
