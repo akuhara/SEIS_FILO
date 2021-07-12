@@ -1,7 +1,8 @@
 #
-fmin = 0.01
-fmax = 1.0
-df   = 0.002
+freq_or_period = freq
+xmin = 0.01
+xmax = 1.0
+dx   = 0.002
 vmod_in = ../vmod/vmod_land.in
 cmin    = 2.5
 cmax    = 4.6

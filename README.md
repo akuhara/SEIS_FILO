@@ -60,5 +60,6 @@ Alternatively, you can choose to use [docker container](https://hub.docker.com/r
 ## For More Details
 See [online documentation](https://seis-filo.readthedocs.io).
 
-
+## Publications
+* Yamaya, L., Mochizuki, K., Akuhara, T., Nishida, K. (2021). Sedimentary structure derived from multi-mode ambient noise tomography with dense OBS network at the Japan Trench. _Journal of Geophysical Research: Solid Earth_, 126, e2021JB021789. https://doi.org/10.1029/2021JB021789
 
