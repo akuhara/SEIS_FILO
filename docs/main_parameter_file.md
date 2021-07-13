@@ -27,9 +27,10 @@ n_ bu rn= 500 0 0
 
 ## Required parameters for _disper_fwd_
 
-* [fmin](parameter_list.md#fmin): minimum frequecny of dispersion curve (Hz)
-* [fmax](parameter_list.md#fmax): maximum frequency of dispersion curve (Hz)
-* [df](parameter_list.md#df): freqeuncy interval of dispersion curve (Hz)
+* [freq_or_period](parameter_list.md#freq_or_period): dispersion measurement type (freq: dispersion curve as a function of frequency; period: as a function of period)
+* [xmin](parameter_list.md#xmin): minimum frequecny or period of dispersion curve (Hz or s)
+* [xmax](parameter_list.md#xmax): maximum frequency or period of dispersion curve (Hz or s)
+* [dx](parameter_list.md#dx): freqeuncy or period interval of dispersion curve (Hz or s)
 * [cmin](parameter_list.md#cmin): minimum phase velocity for root search (km/s)
 * [cmax](parameter_list.md#cmax): maximum phase velocity for root search (km/s)
 * [dc](parameter_list.md#dc): inverval of phase velocity (km/s)
