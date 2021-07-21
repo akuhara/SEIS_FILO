@@ -261,26 +261,19 @@ contains
           !write(*,*)"AAA", omega / (2.d0 * pi), c, u, h_v
           if (self%out_flag) then
              if (self%freq_or_period == "freq") then
-                write(self%io, '(3F10.4)') &
+
+                write(self%io, '(4F10.4)') &
                      & omega / (2.d0 * pi), &
                      & self%c(i) + rand_g() * self%noise_added, &
-                     & self%u(i) + rand_g() * self%noise_added
-
-                !write(self%io, '(4F10.4)') &
-                !     & omega / (2.d0 * pi), &
-                !     & self%c(i) + rand_g() * self%noise_added, &
-                !     & self%u(i) + rand_g() * self%noise_added, &
-                !     & self%h_v(i) + rand_g() * self%noise_added
+                     & self%u(i) + rand_g() * self%noise_added, &
+                     & self%h_v(i) + rand_g() * self%noise_added
              else 
-                write(self%io, '(3F10.4)') &
+
+                write(self%io, '(4F10.4)') &
                      & (2.d0 * pi) / omega, &
                      & self%c(i) + rand_g() * self%noise_added, &
-                     & self%u(i) + rand_g() * self%noise_added
-                !write(self%io, '(4F10.4)') &
-                !     & (2.d0 * pi) / omega, &
-                !     & self%c(i) + rand_g() * self%noise_added, &
-                !     & self%u(i) + rand_g() * self%noise_added, &
-                !     & self%h_v(i) + rand_g() * self%noise_added
+                     & self%u(i) + rand_g() * self%noise_added, &
+                     & self%h_v(i) + rand_g() * self%noise_added
              end if
           end if
        else
