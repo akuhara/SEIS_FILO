@@ -263,24 +263,29 @@ program main
 
   if (obs_disp%get_n_disp() > 0) then
      hyp_disp = hyper_model(                   &
-          & nx    = obs_disp%get_n_disp() * 2, &
+          & nx    = obs_disp%get_n_disp() * 3, &
           & verb  = verb                       &
           & )
      if (para%get_solve_disper_sig()) then
         do i = 1, obs_disp%get_n_disp()
-           call hyp_disp%set_prior(2*i - 1, &
+           call hyp_disp%set_prior(3*i - 2, &
                 & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_max(i))
-           call hyp_disp%set_perturb(2*i - 1, obs_disp%get_dev_sig_c(i))
-           call hyp_disp%set_prior(2*i, &
+           call hyp_disp%set_perturb(3*i - 2, obs_disp%get_dev_sig_c(i))
+           call hyp_disp%set_prior(3*i - 1, &
                 & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_max(i))
-           call hyp_disp%set_perturb(2*i, obs_disp%get_dev_sig_u(i))
+           call hyp_disp%set_perturb(3*i - 1, obs_disp%get_dev_sig_u(i))
+           call hyp_disp%set_prior(3*i, &
+                & obs_disp%get_sig_hv_min(i), obs_disp%get_sig_hv_max(i))
+           call hyp_disp%set_perturb(3*i, obs_disp%get_dev_sig_hv(i))
         end do
      else
         do i = 1, obs_disp%get_n_disp()
-           call hyp_disp%set_prior(2*i - 1, &
+           call hyp_disp%set_prior(3*i - 2, &
                 & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_min(i))
-           call hyp_disp%set_prior(2*i, &
+           call hyp_disp%set_prior(3*i - 1, &
                 & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_min(i))
+           call hyp_disp%set_prior(3*i, &
+                & obs_disp%get_sig_hv_min(i), obs_disp%get_sig_hv_min(i))
            !call hyp_disp%set_x(2*i - 1, obs_disp%get_sig_c_min(i))
            !call hyp_disp%set_x(2*i    , obs_disp%get_sig_u_min(i))
         end do
