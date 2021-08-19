@@ -91,6 +91,9 @@ module cls_disper
      procedure :: set_vmodel => disper_set_vmodel
      procedure :: get_nx => disper_get_nx
      procedure :: get_nc => disper_get_nc
+     procedure :: get_nhv => disper_get_nhv
+     procedure :: get_hv_min => disper_get_hv_min
+     procedure :: get_dhv => disper_get_dhv
      procedure :: get_c => disper_get_c
      procedure :: get_c_array => disper_get_c_array
      procedure :: get_u => disper_get_u
@@ -668,6 +671,37 @@ contains
     
     return 
   end function disper_get_nc
+
+  !---------------------------------------------------------------------
+
+  integer function disper_get_nhv(self) result(nhv)
+    class(disper), intent(in) :: self
+
+    nhv = self%nhv
+    
+    return 
+  end function disper_get_nhv
+
+  !---------------------------------------------------------------------
+
+  double precision function disper_get_hv_min(self) result(hv_min)
+    class(disper), intent(in) :: self
+    
+    hv_min = self%hv_min
+    
+    return 
+  end function disper_get_hv_min
+
+  !---------------------------------------------------------------------
+
+
+  double precision function disper_get_dhv(self) result(dhv)
+    class(disper), intent(in) :: self
+    
+    dhv = self%dhv
+    
+    return 
+  end function disper_get_dhv
 
   !---------------------------------------------------------------------
 

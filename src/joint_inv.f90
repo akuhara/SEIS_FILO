@@ -570,21 +570,37 @@ program main
           & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
           & obs_disp%get_cmin(i), obs_disp%get_dc(i))
 
+     ! Synthetic H/V
+     write(filename, '(A6,I3.3,A4)')"syn_hv", i, ".ppd"
+     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
+          & disp(i)%get_nhv(), disp(i)%get_n_fhv(), &
+          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
+          & disp(i)%get_hv_min(), disp(i)%get_dhv())
+
      ! Noise phase velocity
-     del_amp = (hyp_disp%get_prior_param(2*i-1, 2) - &
-          & hyp_disp%get_prior_param(2*i-1, 1)) / para%get_n_bin_sig()
+     del_amp = (hyp_disp%get_prior_param(3*i-2, 2) - &
+          & hyp_disp%get_prior_param(3*i-2, 1)) / para%get_n_bin_sig()
      write(filename, '(A,I3.3,A)')"phase_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(2*i-1), n_mod, &
-          & hyp_disp%get_prior_param(2*i-1, 1), del_amp)
+          & intpr%get_n_disp_sig(3*i-2), n_mod, &
+          & hyp_disp%get_prior_param(3*i-2, 1), del_amp)
 
      ! Noise group velocity
-     del_amp = (hyp_disp%get_prior_param(2*i, 2) - &
-          & hyp_disp%get_prior_param(2*i, 1)) / para%get_n_bin_sig()
+     del_amp = (hyp_disp%get_prior_param(3*i-1, 2) - &
+          & hyp_disp%get_prior_param(3*i-1, 1)) / para%get_n_bin_sig()
      write(filename, '(A,I3.3,A)')"group_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(2*i), n_mod, &
-          & hyp_disp%get_prior_param(2*i, 1), del_amp)
+          & intpr%get_n_disp_sig(3*i-1), n_mod, &
+          & hyp_disp%get_prior_param(3*i-1, 1), del_amp)
+
+     ! Noise H/V
+     del_amp = (hyp_disp%get_prior_param(3*i, 2) - &
+          & hyp_disp%get_prior_param(3*i, 1)) / para%get_n_bin_sig()
+     write(filename, '(A,I3.3,A)')"group_sigma", i, ".ppd"
+     call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+          & intpr%get_n_disp_sig(3*i), n_mod, &
+          & hyp_disp%get_prior_param(3*i, 1), del_amp)
+
   end do
   
   ! Likelihood history
