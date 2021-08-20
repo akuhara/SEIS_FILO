@@ -304,35 +304,7 @@ contains
           
           exit
        end do
-       ! sig_u_min, sig_u_max, dev_sig_u
-       do 
-          read(io, '(a)')line
-          lt = line_text(line, ignore_space=.false.)
-          line = lt%get_line()
-          if (len_trim(line) == 0) cycle
-          read(line, *) self%sig_u_min(i), self%sig_u_max(i), &
-               & self%dev_sig_u(i)
-          if (self%verb) then
-             write(*,'(A,F12.5)') &
-                  & "Min. sigma of phase velocity (sig_u_min) = ", &
-                  & self%sig_u_min(i)
-             write(*,'(A,F12.5)') &
-                  & "Max. sigma of phase velocity (sig_u_max) = ", &
-                  & self%sig_u_max(i)
-             write(*,'(A,F12.5)')"Stdev. sigma of phase velocity " &
-                  & // "(dev_sig_u) = ", &
-                  & self%dev_sig_u(i)
-          end if
-          
-          ! ERROR 
-          if (self%sig_u_min(i) + self%dev_sig_u(i) > self%sig_u_max(i)) then
-             write(0,*)"ERROR: following relation must be satisfied"
-             write(0,*)"       sig_u_min + dev_sig_u <= sig_u_max"
-             call mpi_abort(ierr)
-          end if
-          
-          exit
-       end do
+       
 
        ! sig_hv_min, sig_hv_max, dev_sig_hv
        do 
