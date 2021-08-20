@@ -91,7 +91,7 @@ class InvResult:
             file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
             used_label = c_used
         elif mode == "hv":
-            file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
+            file = "hv_sigma" + str(trace_id).zfill(3) + ".ppd"
             used_label = hv_used
         elif mode == "recv_func":
             file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
