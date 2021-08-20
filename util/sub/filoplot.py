@@ -95,8 +95,9 @@ class InvResult:
             used_label = hv_used
         elif mode == "recv_func":
             file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
+
         
-        if mode == "group" or mode == "phase":
+        if mode == "group" or mode == "phase" or mode == "hv":
             df = pd.read_csv(param["obs_disper_file"],\
                              delim_whitespace=True, \
                              header=None, \
@@ -107,7 +108,7 @@ class InvResult:
         else:
             df_obs = (999,)
 
-        xlabel = "Standard deviation of data noise"
+        xlabel = "STDV of data noise"
         ylabel = "Probability"
         if len(df_obs) > 0:
             df = pd.read_csv(file, delim_whitespace=True, header=None, \
@@ -120,48 +121,7 @@ class InvResult:
             ax.set_xlabel(xlabel)
             
         ax.set_ylabel(ylabel)
-
-    #---------------------------------------------------------------
-
-    def _plot_sigma(self, fig, ax, mode, trace_id):
-        param = self._param
-        clabel = "Phase vel. (km/s)"
-        c_used = "Phase velocity is used?"
-        ulabel = "Group vel. (km/s)"
-        u_used = "Group velocity is used?"
-
-        if mode == "group":
-            file = "group_sigma" + str(trace_id).zfill(3) + ".ppd"
-            used_label = u_used
-        elif mode == "phase":
-            file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
-            used_label = c_used
-        elif mode == "recv_func":
-            file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
         
-        if mode == "group" or mode == "phase":
-            df = pd.read_csv(param["obs_disper_file"],\
-                             delim_whitespace=True, \
-                             header=None, \
-                             names=(clabel, c_used, ulabel, u_used), \
-                             comment='#')
-            df_obs = df[df[used_label] == "T"]
-        else:
-            df_obs = (999,)
-
-        xlabel = "Standard deviation of data noise"
-        ylabel = "Probability"
-        if len(df_obs) > 0:
-            df = pd.read_csv(file, delim_whitespace=True, header=None, \
-                             names=(xlabel, ylabel))
-            df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
-        else:
-            ax.text(0.5, 0.5, "N/A", size=40, \
-                    horizontalalignment="center", \
-                    verticalalignment="center")
-            ax.set_xlabel(xlabel)
-            
-        ax.set_ylabel(ylabel)
 
     #---------------------------------------------------------------
 
@@ -644,9 +604,9 @@ class InvResult:
         ax = plt.subplot2grid(grid_geom, (2, 1), fig=fig)
         self._plot_sigma(fig, ax, "group", curve_id)
 
-        # Sigma group velocity
+        # Sigma H/V
         ax = plt.subplot2grid(grid_geom, (2, 2), fig=fig)
-        self._plot_sigma(fig, ax, "group", curve_id)
+        self._plot_sigma(fig, ax, "hv", curve_id)
 
         # Vs-z
         ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
