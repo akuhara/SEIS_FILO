@@ -818,7 +818,7 @@ contains
 
   function disper_get_n_fhv(self) result(n_fhv)
     class(disper), intent(in) :: self
-    integer :: n_fhv(self%nx, self%nc)
+    integer :: n_fhv(self%nx, self%nhv)
     
     n_fhv(:,:) = self%n_fhv(:,:)
 
