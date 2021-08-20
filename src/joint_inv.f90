@@ -596,7 +596,7 @@ program main
      ! Noise H/V
      del_amp = (hyp_disp%get_prior_param(3*i, 2) - &
           & hyp_disp%get_prior_param(3*i, 1)) / para%get_n_bin_sig()
-     write(filename, '(A,I3.3,A)')"group_sigma", i, ".ppd"
+     write(filename, '(A,I3.3,A)')"hv_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
           & intpr%get_n_disp_sig(3*i), n_mod, &
           & hyp_disp%get_prior_param(3*i, 1), del_amp)
