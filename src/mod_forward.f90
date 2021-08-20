@@ -160,7 +160,7 @@ contains
                   & + (disp(j)%get_u(i) - obs%get_u(i,j)) ** 2 
              nu = nu + 1
           end if
-          if (obs%get_hv_use(j,i)) then
+          if (obs%get_hv_use(i,j)) then
              misfit_hv = misfit_hv &
                   & + (disp(j)%get_hv(i) - obs%get_hv(i,j)) ** 2
              nhv = nhv + 1
