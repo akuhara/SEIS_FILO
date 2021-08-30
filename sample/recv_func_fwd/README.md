@@ -35,7 +35,7 @@ correct_amp     = T     # Amplitude correction (T or F)
 
 # Deconvolution
 deconv_flag     = T     # Deconvolved by vertical component (T) or not (F)
-damp            = 0.00  # Water-level damping for deconvolution		 
+damp            = 0.001 # Water-level damping for deconvolution		 
 
 # Timewindow
 t_pre           = 3.0   # Time length before direct arrival [s]
