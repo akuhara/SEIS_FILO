@@ -9,7 +9,7 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4082670.svg)](https://doi.org/10.5281/zenodo.4082670)
 
-Copyright (C) 2019-2021 Takeshi Akuhara[![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6129-8459)
+Copyright (C) 2019-2021 _Takeshi Akuhara_[![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6129-8459)
 
 
 ![LOGO](./img/SEIS_FILO_LOGO.png)
@@ -53,9 +53,14 @@ Alternatively, you can choose to use [docker container](https://hub.docker.com/r
 
 ---
 
-## For More Details
-See [online documentation](https://seis-filo.readthedocs.io).
+## Online documentation
+
+Available [here](https://seis-filo.readthedocs.io).
 
 ## Publications
-* Yamaya, L., Mochizuki, K., Akuhara, T., Nishida, K. (2021). Sedimentary structure derived from multi-mode ambient noise tomography with dense OBS network at the Japan Trench. _Journal of Geophysical Research: Solid Earth_, 126, e2021JB021789. https://doi.org/10.1029/2021JB021789
 
+### Rayleigh wave dispersion curves
+* Yamaya, L., Mochizuki, K., Akuhara, T., Nishida, K. (2021). Sedimentary structure derived from multi-mode ambient noise tomography with dense OBS network at the Japan Trench. _Journal of Geophysical Research: Solid Earth_, 126(6), e2021JB021789. https://doi.org/10.1029/2021JB021789
+
+### S receiver functions
+* Akuhara, T., Nakahigashi, K., Shinohara, M., Yamada, T., Shiobara, H., Yamashita, Y., et al. (2021). Lithosphere–asthenosphere boundary beneath the Sea of Japan from transdimensional inversion of S-receiver functions. Earth, Planets and Space, 73(1), 171. https://doi.org/10.1186/s40623-021-01501-5
