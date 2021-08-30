@@ -9,9 +9,8 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4082670.svg)](https://doi.org/10.5281/zenodo.4082670)
 
-Copyright (C) 2019-2021 Takeshi Akuhara
+Copyright (C) 2019-2021 Takeshi Akuhara[![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6129-8459)
 
-<div itemscope itemtype="https://schema.org/Person"><a itemprop="sameAs" content="https://orcid.org/0000-0002-6129-8459" href="https://orcid.org/0000-0002-6129-8459" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;"><img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width:1em;margin-right:.5em;" alt="ORCID iD icon">https://orcid.org/0000-0002-6129-8459</a></div>
 
 ![LOGO](./img/SEIS_FILO_LOGO.png)
 ---
