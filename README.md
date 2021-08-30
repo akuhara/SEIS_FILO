@@ -1,4 +1,4 @@
-# SEIS_FILO (Beta version) 
+# SEIS_FILO 
 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
@@ -9,11 +9,11 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4082670.svg)](https://doi.org/10.5281/zenodo.4082670)
 
-Copyright (C) 2019-2021 _Takeshi Akuhara_[![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6129-8459)
+Copyright (C) 2019-2021 __Takeshi Akuhara__[![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6129-8459)
+
+___
 
 
-![LOGO](./img/SEIS_FILO_LOGO.png)
----
 
 The SEIS_FILO program package aims to carry out transdimensional joint inversion of surface waves and receiver functions for ocean-bottom observatories. The main features are: 
 
@@ -64,3 +64,7 @@ Available [here](https://seis-filo.readthedocs.io).
 
 ### S receiver functions
 * Akuhara, T., Nakahigashi, K., Shinohara, M., Yamada, T., Shiobara, H., Yamashita, Y., et al. (2021). Lithosphere–asthenosphere boundary beneath the Sea of Japan from transdimensional inversion of S-receiver functions. Earth, Planets and Space, 73(1), 171. https://doi.org/10.1186/s40623-021-01501-5
+
+___
+
+![LOGO](./img/SEIS_FILO_LOGO.png)
