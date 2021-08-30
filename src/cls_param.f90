@@ -102,15 +102,16 @@ module cls_param
 
      ! Parameter for dispersion
      ! only used by rayleigh_fwd 
-     character(6) :: freq_or_period = "freq"
-     double precision :: xmin = -999.d0
-     double precision :: xmax = -999.d0
-     double precision :: dx = -999.d0
-     double precision :: cmin = -999.d0
-     double precision :: cmax = -999.d0
-     double precision :: dc = -999.d0
-     integer :: n_mode = -999
-     character(len=1) :: disper_phase
+     character(6)     :: freq_or_period = ""
+     double precision :: xmin           = -12345.d0
+     double precision :: xmax           = -12345.d0
+     double precision :: dx             = -12345.d0
+     double precision :: cmin           = -12345.d0
+     double precision :: cmax           = -12345.d0
+     double precision :: dc             = -12345.d0
+     character(1)     :: disper_phase   = ""
+     integer          :: n_mode         = -12345
+
      
 
      ! Noise level added to forward computation 
@@ -224,7 +225,16 @@ module cls_param
      procedure :: check_mcmc_params => param_check_mcmc_params
      procedure :: check_recv_func_fwd_params &
           & => param_check_recv_func_fwd_params
+     procedure :: check_disper_fwd_params &
+          & => param_check_disper_fwd_params
      
+     procedure :: is_given_double  => param_is_given_double
+     procedure :: is_given_integer => param_is_given_integer
+     procedure :: is_given_char    => param_is_given_char
+     generic :: is_given => is_given_double, is_given_integer, &
+          & is_given_char
+
+
   end type param
   
   interface param
@@ -249,13 +259,6 @@ contains
     end if    
     
     self%param_file = param_file
-    self%vmod_in = ""
-    self%xmin = -999.d0
-    self%xmax = -999.d0
-    self%dx = -999.d0
-    self%cmin = -999.d0
-    self%cmax = -999.d0
-    self%dc = -999.d0
     call self%read_file()
 
     if (self%verb) then
@@ -1371,11 +1374,103 @@ contains
        is_ok = .false.
     end if
     if (self%damp < 0.d0) then
-       if (self%verb) write(0,*)"ERROR damp must be >= 0.0"
+       if (self%verb) write(0,*)"ERROR: damp must be >= 0.0"
        is_ok = .false.
     end if
     
     return 
   end subroutine param_check_recv_func_fwd_params
+
+  !---------------------------------------------------------------------
+  
+  logical function param_check_disper_fwd_params(self) result(is_ok)
+    class(param), intent(in) :: self
+
+    is_ok = .true.
+    if (.not. self%is_given(self%disper_out, 'disper_out')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%vmod_in, 'vmod_in')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%freq_or_period, &
+         & 'freq_or_period')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%xmin, 'xmin')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%xmax, 'xmax')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%dx, 'dx')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%cmin, 'cmin')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%cmax, 'cmax')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%dc, 'dc')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%disper_phase, 'disper_phase')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%n_mode, 'n_mode')) then
+       is_ok = .false.
+    end if
+
+    
+    return 
+  end function param_check_disper_fwd_params
+  
+  !---------------------------------------------------------------------
+  
+  logical function param_is_given_double(self, x, key) result(is_given)
+    class(param), intent(in) :: self
+    double precision, intent(in) :: x
+    character(*), intent(in) :: key
+     
+    is_given = .true.
+    if (abs(x + 12345.d0) <= 1.0e-8) then
+       is_given = .false.
+       if (self%verb) then
+          write(0,*)"ERROR: ", trim(key), " is not given"
+        end if
+     end if
+     
+     return 
+   end function param_is_given_double
+   
+   !---------------------------------------------------------------------
+   
+   logical function param_is_given_char(self, a, key) result(is_given)
+     class(param), intent(in) :: self
+     character,    intent(in) :: a
+     character(*), intent(in) :: key
+     
+     is_given = .true.
+     if (a ==  "") then
+        is_given = .false.
+        if (self%verb) then
+           write(0,*)"ERROR: ", trim(key), " is not given"
+        end if
+     end if
+   
+     return 
+   end function param_is_given_char
+ 
+   !---------------------------------------------------------------------
+ 
+   logical function param_is_given_integer(self, i, key) result(is_given)
+     class(param), intent(in) :: self
+     integer, intent(in) :: i
+     character(*), intent(in) :: key
+     
+     is_given = .true.
+     if (i == -12345) then
+        is_given = .false.
+        if (self%verb) then
+           write(0,*)"ERROR: ", trim(key), " is not given"
+        end if
+     end if
+     
+     return 
+   end function param_is_given_integer
+ 
+   !---------------------------------------------------------------------
+  
 
 end module cls_param

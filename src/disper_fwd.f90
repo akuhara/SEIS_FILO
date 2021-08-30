@@ -54,6 +54,10 @@ program main
 
   ! Read parameter file
   para = init_param(param_file, verb=verb)
+  is_ok = para%check_disper_fwd_params()
+  if (.not. is_ok) then
+     error stop
+  end if
   
   ! Set velocity model
   vm = init_vmodel()
@@ -70,7 +74,7 @@ program main
        &           para%get_i_seed3(), &
        &           para%get_i_seed4())
 
-    ! Calculate dispersion curve
+  ! Calculate dispersion curve
   disp = disper(&
        & vm     = vm2, &
        & freq_or_period = para%get_freq_or_period(), &
