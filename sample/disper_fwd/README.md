@@ -8,6 +8,10 @@
 ## Inputs
 
 ### Main parameter file
+
+* The filename must be specified as the first command line argument.
+* The following can be used as a template.
+
 ```
 #-----------------------------------------------------------------------
 # Sample input to disper_fwd of SEIS_FILO package
@@ -48,20 +52,25 @@ i_seed1        = 1001
 i_seed2        = 22002
 i_seed3        = 333003
 i_seed4        = 4444004
-
-
 ```
 
-* [../vmod/vmod.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/vmod/vmod.in): input velocity model
+### Velocity model file
 
-
-## Output 
-* disper.out: ASCII format file
+* The filename must be specified in the parameter file.
+* The following can be used as a template.
+* For the ocean layer, set Vs to a negative value. This is allowed only for topmost layer.
+* Thickness of the bottom layer is ignored.
 
 ```
-
-test 
-
-  test
-
+#-----------------------------------------------------------------------
+# Velocity model file:
+# Sample input to disper_fwd & recv_func_fwd of SEIS_FILO package
+#-----------------------------------------------------------------------
+# Number of layers (including ocean & bottom layers)
+         4
+# Vp(km/s) Vs(km/s) Density(g/cm^3) Thickness(km)
+       1.5     -3.0             1.0           2.0
+       5.0      3.0             2.5           5.0
+       7.0      4.0             3.0          10.0
+       8.0      4.6             3.3           0.0
 ```
