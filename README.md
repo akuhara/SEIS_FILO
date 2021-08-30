@@ -46,16 +46,11 @@ Type `make` in the `src` directory. Please edit the [Makefile](https://github.co
 
 Alternatively, you can choose to use [docker container](https://hub.docker.com/r/akuhara/seis-filo) in which ready-to-use executable files are stored. 
 
-## Quick Start with Sample
+## Quick Guidance
 * [__disper_fwd__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/disper_fwd): Surface wave forward computation (phase & group velocities)
 * [__recv_func_fwd__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/recv_func_fwd): Receiver function forward computation
 * [__joint_inv__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/joint_inv): Surface wave and receiver function joint inversion by RJMCMC
-
----
-
-## Online documentation
-
-Available [here](https://seis-filo.readthedocs.io).
+* Online documentation is also available [here](https://seis-filo.readthedocs.io).
 
 ## Publications
 
