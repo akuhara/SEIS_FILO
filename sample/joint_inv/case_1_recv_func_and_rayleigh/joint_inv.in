@@ -1,7 +1,5 @@
 #-----------------------------------------------------------------------
-# Parameter file for inversion
 # Sample int to joint_inv of SEIS_FILO
-# by Takeshi Akuhara
 #-----------------------------------------------------------------------
 
 # MCMC iteration
