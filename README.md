@@ -7,8 +7,11 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 ![GitHub](https://img.shields.io/github/license/akuhara/SEIS_FILO)
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/akuhara/seis-filo)
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4082670.svg)](https://doi.org/10.5281/zenodo.4082670)
 
 Copyright (C) 2019-2021 Takeshi Akuhara
+
+<div itemscope itemtype="https://schema.org/Person"><a itemprop="sameAs" content="https://orcid.org/0000-0002-6129-8459" href="https://orcid.org/0000-0002-6129-8459" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;"><img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width:1em;margin-right:.5em;" alt="ORCID iD icon">https://orcid.org/0000-0002-6129-8459</a></div>
 
 ![LOGO](./img/SEIS_FILO_LOGO.png)
 ---
@@ -16,25 +19,19 @@ Copyright (C) 2019-2021 Takeshi Akuhara
 The SEIS_FILO program package aims to carry out transdimensional joint inversion of surface waves and receiver functions for ocean-bottom observatories. The main features are: 
 
 * __Transdimensional MCMC__
-    * Automatically determines the number of unknowns (i.e., the number of layers in the structure model).
-    * Uncertainty estimates
-* __Parallel computing__
-    * Paralle tempring technique is available  
+* __Parallel tempering__
 * __Ocean layer__
-    * Acoustic solution for the ocean layer and elastic solution for solid layers
-* __Multiple inputs__
-    * Dispersion curves of the fundamental and higher mode Rayleigh waves (Love wave is not implimented yet but is planned)
-    * Rayleigh wave ellipticity & admittance (planned)
-    * P and S receiver functions with different filter parameters and ray parameters
-    * Works fine with any combination of inputs above 
-* __Flexible inversion setting__
-    * Vp solved or fixed
-    * Ocean exists or not
-    * Flat or spherical Earth model
-    * Solve for noise standard deviation
-    * Prior constraint applied or not
-* __Easy to visualize__
-    * Plot utilities also available
+* __Supported input types__
+    * Dispersion curves of the fundamental and higher mode Rayleigh waves
+    * Rayleigh wave ellipticity
+    * P receiver functions
+    * S receiver functions
+* __Model parameters__
+    * Absolute Vp & Vs
+    * Vp and Vs anomalies relative to the reference
+    * Number of layers
+    * Layer depths
+    * Standard deviation of noise
 
 ---
 
