@@ -86,15 +86,18 @@ module cls_param
 
      ! Parameters for receiver functions
      ! only used by recv_func_fwd
-     integer :: n_smp 
-     double precision :: rayp
-     double precision :: a_gauss
-     double precision :: delta
-     double precision :: t_pre
+     integer          :: n_smp    = -12345
+     double precision :: rayp     = -12345.d0
+     double precision :: a_gauss  = -12345.d0
+     double precision :: delta    = -12345.d0
+     double precision :: t_pre    = -12345.d0
+     character(1)     :: rf_phase = ""
+     double precision :: damp     = -12345.d0 ! damping factor for water level
+     
      double precision :: amp_min = -0.6d0
      double precision :: amp_max = 0.6d0
-     double precision :: damp = 0.d0 ! damping factor for water level
-     character(len=1) :: rf_phase
+
+     
      logical :: deconv_flag
      logical :: correct_amp
      
@@ -1347,39 +1350,30 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine param_check_recv_func_fwd_params(self, is_ok)
+  logical function param_check_recv_func_fwd_params(self) result(is_ok)
     class(param), intent(in) :: self
-    logical, intent(out) :: is_ok
 
     is_ok = .true.
-
-    if (self%n_smp <= 0) then
-       if (self%verb) write(0,*)"ERROR: n_smp must > 0"
+    if (.not. self%is_given(self%recv_func_out, 'recv_func_out')) then
        is_ok = .false.
-    end if
-    if (self%rayp <= 0.d0) then
-       if (self%verb) write(0,*)"ERROR: rayp must > 0.0"
+    else if (.not. self%is_given(self%vmod_in, 'vmod_in')) then
        is_ok = .false.
-    end if
-    if (self%a_gauss <= 0.d0) then
-       if (self%verb) write(0,*)"ERROR: a_gauss must > 0.0"
+    else if (.not. self%is_given(self%rayp, 'rayp')) then
        is_ok = .false.
-    end if
-    if (self%delta <= 0.d0) then
-       if (self%verb) write(0,*)"ERROR: delta must > 0.0"
+    else if (.not. self%is_given(self%rf_phase, 'rf_phase')) then
        is_ok = .false.
-    end if
-    if (self%rf_phase /= "P" .and. self%rf_phase /= "S") then
-       if (self%verb) write(0,*)"ERROR: rf_phase must be P or S"
+    else if (.not. self%is_given(self%a_gauss, 'a_gauss')) then
        is_ok = .false.
-    end if
-    if (self%damp < 0.d0) then
-       if (self%verb) write(0,*)"ERROR: damp must be >= 0.0"
+    else if (.not. self%is_given(self%t_pre, 't_pre')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%n_smp, 'n_smp')) then
+       is_ok = .false.
+    else if (.not. self%is_given(self%delta, 'delta')) then
        is_ok = .false.
     end if
     
     return 
-  end subroutine param_check_recv_func_fwd_params
+  end function param_check_recv_func_fwd_params
 
   !---------------------------------------------------------------------
   

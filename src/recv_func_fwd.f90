@@ -56,7 +56,7 @@ program main
   
   ! Read parameter file
   para = param(param_file, verb=verb)
-  call para%check_recv_func_fwd_params(is_ok)
+  is_ok = para%check_recv_func_fwd_params()
   if (.not. is_ok) then
      write(0,*)"ERROR: while checking parameters"
      stop
