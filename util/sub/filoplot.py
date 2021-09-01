@@ -42,14 +42,14 @@ class InvResult:
                 i = tmp_line.find('#')
                 if i >= 0:
                     tmp_line = line[0:i]
+
+                # Remove space
+                tmp_line = tmp_line.replace(' ', '')
                 
                 # Skip if line is null
                 if len(tmp_line) == 0:
                     continue
 
-                # Remove space
-                tmp_line = tmp_line.replace(' ', '')
-                
                 # Get parameter
                 item = tmp_line.split("=")
                 if len(item) == 2:

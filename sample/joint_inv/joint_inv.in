@@ -34,7 +34,7 @@ temp_high      = 30.0      # The hottest temperature
 # Prior probability 
 k_min = 1                  # Lower limit of layer number
 k_max = 21                 # Upper limit of layer number
-# NOTE: k_min <= k < k_max
+ # NOTE: k_min <= k < k_max
 vs_min  = 1.0              # Lower limit of Vs [km/s]
 vs_max  = 5.0              # Upper limit of Vs [km/s]
 dvs_sig = 0.5              # Prior width for Vs anomaly [km/s]
