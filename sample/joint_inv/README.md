@@ -71,14 +71,11 @@ n_bin_vp  = 100            # Number of bin for Vp
 n_bin_z   = 100            # Number of bin for depth 
 n_bin_sig = 100            # Number of bin for data error
 
-
 #----- Optional parameters ----------------------------------------------
-
 
 # For different planets
 #r_earth = 6371.0           # Earth radius [km]
 
-# 
 # Random number seeds
 i_seed1 = 99999999  
 i_seed2 = 33333333
@@ -88,6 +85,47 @@ i_seed4 = 99887622
 #-----------------------------------------------------------------------
 
 ```
+
+### Dispersion curve data summary file
+
+* The filename must be gien in the parameter file via a parameter "disper_in".
+* The following can be used as a template.
+* Parameters must apper in this order.
+
+```
+#------------------------------------------------
+# Sample input to joint_inv of SEIS_FILO
+#------------------------------------------------
+# n_disp
+1
+#------------------------------------------------
+# file name
+# disper_phase, n_mode, freq_or_period
+# nx, xmin, dx
+# cmin, cmax, dc
+# sig_c_min, sig_c_max, dev_sig_c
+# sig_u_min, sig_u_max, dev_sig_u
+# sig_hv_min, sig_hv_max, dev_sig_hv
+#------------------------------------------------
+rayleigh.0th
+R 0 period
+30 1.0 1.0
+0.3 4.5 0.05
+0.005 0.09 0.03
+0.005 0.1 0.01
+0.005 0.09 0.03
+#------------------------------------------------
+# If multiple inputs (n_disp >= 2), write them below.
+#------------------------------------------------
+#rayleigh.1th
+#R 1 period
+#30 1.0 1.0
+#0.3 4.5 0.05
+#0.005 0.09 0.03
+#0.005 0.1 0.01
+#0.005 0.09 0.03
+```
+
 ## How to make plots
 
 1. `python ../../../util/plot_disper.py joint_inv.in 1`, which produces `disper01.png`.
