@@ -49,5 +49,5 @@ __Format__
 
     * Line v: [sig_rf_min](parameter_list.md#sig_rf_min), [sig_rf_max](parameter_list.md#sig_rf_max), [dev_sig_rf](parameter_list.md#dev_sig_rf) 
 
-    * Line vi: [deconv_flag](parameter_list.md#deconv_flag), [correct_amp](parameter_list.md#correct_amp)
+    * Line vi: [deconv_flag](parameter_list.md#deconv_flag), [correct_amp](parameter_list.md#correct_amp), [damp](parameter_list.md#damp)
 
