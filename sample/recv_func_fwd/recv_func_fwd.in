@@ -5,7 +5,7 @@
 #--- Required parameters -----------------------------------------------
 
 # Output filename
-recv_func_out   = recv_func_fwd.out
+#recv_func_out   = recv_func_fwd.out
 
 # Input velocity model
 vmod_in         = ../vmod/vmod.in

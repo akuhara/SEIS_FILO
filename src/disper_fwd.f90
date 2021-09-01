@@ -24,7 +24,27 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
+
+module mod_disper_fwd_required
+  ! Parameters that must be specified in a parameter file
+  character(200), dimension(11), parameter :: required_params = &
+       & ["disper_out    ", &
+       &  "vmod_in       ", &
+       &  "freq_or_period", &
+       &  "xmin          ", &
+       &  "xmax          ", &
+       &  "dx            ", &
+       &  "cmin          ", &
+       &  "cmax          ", &
+       &  "dc            ", &
+       &  "disper_phase  ", &
+       &  "n_mode        "]
+end module mod_disper_fwd_required
+
+!=======================================================================
+
 program main
+  use mod_disper_fwd_required
   use mod_mpi
   use cls_param
   use cls_vmodel
@@ -54,7 +74,7 @@ program main
 
   ! Read parameter file
   para = init_param(param_file, verb=verb)
-  is_ok = para%check_disper_fwd_params()
+  is_ok = para%check_given_param(required_params)
   if (.not. is_ok) then
      error stop
   end if

@@ -31,44 +31,53 @@ module cls_param
   type param
      private
      character(len=line_max) :: param_file
+     character(len=line_max), allocatable :: given(:)
+     
+     ! Iteration numbers
+     integer :: n_iter = -12345
+     integer :: n_burn = -12345
+     integer :: n_corr = -12345
 
-     ! General Parametes for MCMC
-     integer :: n_iter = 500000
-     integer :: n_burn = 250000
-     integer :: n_corr = 100
-     double precision :: temp_high = 30.d0
-     integer :: n_chain = 5
-     integer :: n_cool = 1
+     ! Parallel tempering
+     double precision :: temp_high = -12345.d0
+     integer          :: n_chain   = -12345
+     integer          :: n_cool  = -12345
+     
+     !Prior probability
+     integer          :: k_min = -12345
+     integer          :: k_max = -12345
+     double precision :: z_min = -12345.d0
+     double precision :: z_max = -12345.d0
+     double precision :: vs_min = -12345.d0
+     double precision :: vs_max = -12345.d0
+     double precision :: vp_min = -12345.d0
+     double precision :: vp_max = -12345.d0 
+
+     ! MCMC proposal
      integer :: i_seed1 = 11111111
      integer :: i_seed2 = 22222222
      integer :: i_seed3 = 33333333
      integer :: i_seed4 = 44444444
 
-     ! Parameters defining model space
-     integer :: k_min = 1
-     integer :: k_max = 21
-     double precision :: z_min = 0.d0
-     double precision :: z_max = 70.d0
+     
+     
      logical :: solve_vp = .false.
      logical :: solve_anomaly = .false.
      logical :: solve_rf_sig = .true.
      logical :: solve_disper_sig = .true.
      logical :: is_sphere = .false.
      double precision :: r_earth = 6371.d0
-     double precision :: vp_min = 4.5d0
-     double precision :: vp_max = 9.0d0
-     double precision :: vs_min = 2.5d0
-     double precision :: vs_max = 5.0d0
+
      double precision :: dvp_sig = 0.1d0
      double precision :: dvs_sig = 0.1d0
      double precision :: rf_sig_min = 0.005d0
      double precision :: rf_sig_max = 0.1d0
      double precision :: disper_sig_min = 0.01d0
      double precision :: disper_sig_max = 0.2d0
-     integer :: n_bin_z  = 50
-     integer :: n_bin_vs = 50
-     integer :: n_bin_vp = 50
-     integer :: n_bin_sig = 50
+     integer :: n_bin_z  = 100
+     integer :: n_bin_vs = 100
+     integer :: n_bin_vp = 100
+     integer :: n_bin_sig = 100
      
      ! Parameters for random perturbation
      double precision :: dev_z  = 0.1d0
@@ -226,17 +235,17 @@ module cls_param
      procedure :: get_diagnostic_mode => param_get_diagnostic_mode
 
      procedure :: check_mcmc_params => param_check_mcmc_params
-     procedure :: check_recv_func_fwd_params &
-          & => param_check_recv_func_fwd_params
-     procedure :: check_disper_fwd_params &
-          & => param_check_disper_fwd_params
+     !procedure :: check_recv_func_fwd_params &
+     !     & => param_check_recv_func_fwd_params
+     !procedure :: check_disper_fwd_params &
+     !     & => param_check_disper_fwd_params
      
-     procedure :: is_given_double  => param_is_given_double
-     procedure :: is_given_integer => param_is_given_integer
-     procedure :: is_given_char    => param_is_given_char
-     generic :: is_given => is_given_double, is_given_integer, &
-          & is_given_char
-
+     !procedure :: is_given_double  => param_is_given_double
+     !procedure :: is_given_integer => param_is_given_integer
+     !procedure :: is_given_char    => param_is_given_char
+     !generic :: is_given => is_given_double, is_given_integer, &
+     !     & is_given_char
+     procedure :: check_given_param => param_check_given_param
 
   end type param
   
@@ -262,6 +271,7 @@ contains
     end if    
     
     self%param_file = param_file
+    self%given = [ character(line_max) :: ]
     call self%read_file()
 
     if (self%verb) then
@@ -315,7 +325,7 @@ contains
     class(param), intent(inout) :: self
     character(len=*), intent(in) :: name, val
     integer :: ierr
-
+    character(line_max), allocatable :: tmp(:)
     
     if (self%verb) then
        write(*,*)trim(name), " <- ", trim(val)
@@ -476,6 +486,13 @@ contains
        call mpi_finalize(ierr)
        stop
     end if
+    
+    tmp = name
+    call move_alloc(self%given, tmp)
+    allocate(self%given(size(tmp)+1))
+    self%given(1:size(tmp)) = tmp(:)
+    self%given(size(tmp)+1) = name
+    
     return 
   end subroutine param_set_value
 
@@ -1350,121 +1367,144 @@ contains
 
   !---------------------------------------------------------------------
 
-  logical function param_check_recv_func_fwd_params(self) result(is_ok)
-    class(param), intent(in) :: self
-
-    is_ok = .true.
-    if (.not. self%is_given(self%recv_func_out, 'recv_func_out')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%vmod_in, 'vmod_in')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%rayp, 'rayp')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%rf_phase, 'rf_phase')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%a_gauss, 'a_gauss')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%t_pre, 't_pre')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%n_smp, 'n_smp')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%delta, 'delta')) then
-       is_ok = .false.
-    end if
-    
-    return 
-  end function param_check_recv_func_fwd_params
-
+  !ogical function param_check_recv_func_fwd_params(self) result(is_ok)
+  ! class(param), intent(in) :: self
+  !
+  ! write(*,*)self%given
+  ! is_ok = .true.
+  ! if (.not. self%is_given(self%recv_func_out, 'recv_func_out')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%vmod_in, 'vmod_in')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%rayp, 'rayp')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%rf_phase, 'rf_phase')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%a_gauss, 'a_gauss')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%t_pre, 't_pre')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%n_smp, 'n_smp')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%delta, 'delta')) then
+  !    is_ok = .false.
+  ! end if
+  ! 
+  ! return 
+  !nd function param_check_recv_func_fwd_params
+  !
   !---------------------------------------------------------------------
-  
-  logical function param_check_disper_fwd_params(self) result(is_ok)
-    class(param), intent(in) :: self
-
-    is_ok = .true.
-    if (.not. self%is_given(self%disper_out, 'disper_out')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%vmod_in, 'vmod_in')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%freq_or_period, &
-         & 'freq_or_period')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%xmin, 'xmin')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%xmax, 'xmax')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%dx, 'dx')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%cmin, 'cmin')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%cmax, 'cmax')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%dc, 'dc')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%disper_phase, 'disper_phase')) then
-       is_ok = .false.
-    else if (.not. self%is_given(self%n_mode, 'n_mode')) then
-       is_ok = .false.
-    end if
-
-    
-    return 
-  end function param_check_disper_fwd_params
-  
+  !
+  !ogical function param_check_disper_fwd_params(self) result(is_ok)
+  ! class(param), intent(in) :: self
+  !
+  ! is_ok = .true.
+  ! if (.not. self%is_given(self%disper_out, 'disper_out')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%vmod_in, 'vmod_in')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%freq_or_period, &
+  !      & 'freq_or_period')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%xmin, 'xmin')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%xmax, 'xmax')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%dx, 'dx')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%cmin, 'cmin')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%cmax, 'cmax')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%dc, 'dc')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%disper_phase, 'disper_phase')) then
+  !    is_ok = .false.
+  ! else if (.not. self%is_given(self%n_mode, 'n_mode')) then
+  !    is_ok = .false.
+  ! end if
+  !
+  ! 
+  ! return 
+  !nd function param_check_disper_fwd_params
+  !
   !---------------------------------------------------------------------
-  
-  logical function param_is_given_double(self, x, key) result(is_given)
-    class(param), intent(in) :: self
-    double precision, intent(in) :: x
-    character(*), intent(in) :: key
-     
-    is_given = .true.
-    if (abs(x + 12345.d0) <= 1.0e-8) then
-       is_given = .false.
-       if (self%verb) then
-          write(0,*)"ERROR: ", trim(key), " is not given"
-        end if
-     end if
-     
-     return 
-   end function param_is_given_double
-   
-   !---------------------------------------------------------------------
-   
-   logical function param_is_given_char(self, a, key) result(is_given)
-     class(param), intent(in) :: self
-     character,    intent(in) :: a
-     character(*), intent(in) :: key
-     
-     is_given = .true.
-     if (a ==  "") then
-        is_given = .false.
-        if (self%verb) then
-           write(0,*)"ERROR: ", trim(key), " is not given"
-        end if
-     end if
-   
-     return 
-   end function param_is_given_char
+  !
+  !ogical function param_is_given_double(self, x, key) result(is_given)
+  ! class(param), intent(in) :: self
+  ! double precision, intent(in) :: x
+  ! character(*), intent(in) :: key
+  !  
+  ! is_given = .true.
+  ! if (abs(x + 12345.d0) <= 1.0e-8) then
+  !    is_given = .false.
+  !    if (self%verb) then
+  !       write(0,*)"ERROR: ", trim(key), " is not given"
+  !     end if
+  !  end if
+  !  
+  !  return 
+  !end function param_is_given_double
+  !
+  !!---------------------------------------------------------------------
+  !
+  !logical function param_is_given_char(self, a, key) result(is_given)
+  !  class(param), intent(in) :: self
+  !  character,    intent(in) :: a
+  !  character(*), intent(in) :: key
+  !  
+  !  is_given = .true.
+  !  if (a ==  "") then
+  !     is_given = .false.
+  !     if (self%verb) then
+  !        write(0,*)"ERROR: ", trim(key), " is not given"
+  !     end if
+  !  end if
+  !
+  !  return 
+  !end function param_is_given_char
+  !
+  !!---------------------------------------------------------------------
+  !
+  !logical function param_is_given_integer(self, i, key) result(is_given)
+  !  class(param), intent(in) :: self
+  !  integer, intent(in) :: i
+  !  character(*), intent(in) :: key
+  !  
+  !  is_given = .true.
+  !  if (i == -12345) then
+  !     is_given = .false.
+  !     if (self%verb) then
+  !        write(0,*)"ERROR: ", trim(key), " is not given"
+  !     end if
+  !  end if
+  !  
+  !  return 
+  !end function param_is_given_integer
  
    !---------------------------------------------------------------------
- 
-   logical function param_is_given_integer(self, i, key) result(is_given)
-     class(param), intent(in) :: self
-     integer, intent(in) :: i
-     character(*), intent(in) :: key
-     
-     is_given = .true.
-     if (i == -12345) then
-        is_given = .false.
-        if (self%verb) then
-           write(0,*)"ERROR: ", trim(key), " is not given"
-        end if
-     end if
-     
-     return 
-   end function param_is_given_integer
- 
-   !---------------------------------------------------------------------
-  
 
+   logical function param_check_given_param(self, required_params) &
+        & result(is_ok)
+     class(param), intent(in) :: self
+     character(*), intent(in) :: required_params(:)
+     logical :: found
+     integer :: i
+
+     is_ok = .true.
+     do i = 1, size(required_params)
+        found = any(self%given == required_params(i))
+        if (.not. found) then
+           if (self%verb) then
+              write(0,*)
+              write(0,*) "ERROR: ", &
+                   & trim(required_params(i)), " must be given"
+              write(0,*)
+           end if
+           is_ok = .false.
+        end if
+     end do
+     
+     return 
+   end function param_check_given_param
 end module cls_param

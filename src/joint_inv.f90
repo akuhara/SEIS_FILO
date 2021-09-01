@@ -24,7 +24,54 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
+
+
+module mod_joint_inv_required
+  ! Parameters that must be specified in a parameter file
+  character(200), dimension(36), parameter :: required_params = &
+       & ["recv_func_in    ", &
+       &  "disper_in       ", &
+       &  "solve_anomaly   ", &
+       &  "ref_vmod_in     ", &
+       &  "solve_vp        ", &
+       &  "solve_rf_sig    ", &
+       &  "solve_disper_sig", &
+       &  "is_sphere       ", &
+       &  "is_ocean        ", &
+       &  "ocean_thick     ", &
+       &  "vp_bottom       ", &
+       &  "vs_bottom       ", &
+       &  "rho_bottom      ", &
+       &  "n_iter          ", &
+       &  "n_burn          ", &
+       &  "n_corr          ", &
+       &  "n_chain         ", &
+       &  "n_cool          ", &
+       &  "temp_high       ", &
+       &  "k_min           ", &
+       &  "k_max           ", &
+       &  "vs_min          ", &
+       &  "vs_max          ", &
+       &  "dvs_sig         ", &
+       &  "vp_min          ", &
+       &  "vp_max          ", &
+       &  "dvp_sig         ", &
+       &  "z_min           ", &
+       &  "z_max           ", &
+       &  "dev_vs          ", &
+       &  "dev_vp          ", &
+       &  "dev_z           ", &
+       &  "n_bin_vs        ", &
+       &  "n_bin_vp        ", &
+       &  "n_bin_z         ", &
+       &  "n_bin_sig       "  &
+       & ]
+end module mod_joint_inv_required
+
+!=======================================================================
+
 program main
+  use mod_joint_inv_required
   use mod_mpi
   use cls_parallel  
   use mod_random
@@ -107,10 +154,10 @@ program main
  
   ! Read parameter file
   para = param(param_file, verb)
-  call para%check_mcmc_params(is_ok)
+  is_ok = para%check_given_param(required_params)
   if (.not. is_ok) then
      if (verb) then
-        write(0,*)"ERROR: while checking MCMC parameters"
+        error stop
      end if
      call mpi_finalize(ierr)
      stop
