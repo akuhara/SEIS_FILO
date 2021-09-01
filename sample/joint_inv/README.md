@@ -1,18 +1,93 @@
-# Transdimensional joint inversion of surface wave and receiver function
+# Transdimensional Joint Inversion 
 
 ## How to run
 
-`mpirun -np 20 ../../../bin/joint_inv joint_inv.in`
-* The number after the "-np" flag represents the number of processes. Any numbers >= 1 is acceptable, but for small numbers, the convergence will be slow (i.e., requiring more numbers of iterations).
+`mpirun -np 20 ../../bin/joint_inv joint_inv.in`
+* The number after the "-np" flag represents the number of processes.
 
-## Input files
+## Inputs
 
-* [joint_inv.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/joint_inv.in): main parameter file
-* [disper.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/disper.in): data summary file for dispersion curves
-* [rayleigh.0th](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/rayleigh.0th): data file (phase & group velocities of the fundamental Rayleigh mode)
-* [recv_func.in](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/recv_func.in): data summary file for receiver functions
-* [recv_func.sac](https://github.com/akuhara/SEIS_FILO/blob/master/sample/joint_inv/case_1_recv_func_and_rayleigh/recv_func.sac): data file (P receiver function)
+### Main parameter file
 
+* The filename must be specified as the first command line argument.
+* The following can be used as a template.
+
+```
+#-----------------------------------------------------------------------
+# Sample int to joint_inv of SEIS_FILO
+#-----------------------------------------------------------------------
+
+#--- Required parameters -----------------------------------------------
+
+# Input data summary files
+recv_func_in     = recv_func.in 
+disper_in        = disper.in
+
+# Model setting
+solve_anomaly    = F       # Solve for velocity anomaly (T) or absolute velocity (F)
+ref_vmod_in      =         # Filename of reference velocity model
+solve_vp         = F       # Vp is solved (T) or not (F)
+solve_rf_sig     = T       # Receiver function error is solved (T) or not (F)
+solve_disper_sig = T       # Dispersion curve error is solved (T) or not (F)
+is_sphere        = F       # Earth flattening is applied (T) or not (F)
+is_ocean         = T       # Ocean layer exists (T) or not (F)
+ocean_thick      = 2.0     # Ocean layer thickness [km]
+vp_bottom        = 8.1     # Bottom half-space Vp [km/s]
+vs_bottom        = 4.7     # Bottom half-space Vs [km/s]
+rho_bottom       = 3.4     # Bottom half-space density [g/cm^3]
+
+# Iteration numbers
+n_iter           = 200  # Number of total iterations
+n_burn           = 100  # Number of iterations for burn-in period
+n_corr           = 1	   # Interval of iterations to evaluate models
+
+# Parallel temerping
+n_chain        = 5         # Number of MCMC chains per process 
+n_cool         = 1         # Number of non-tempered MCMC chains per process
+temp_high      = 30.0      # The hottest temperature
+
+# Prior probability 
+k_min = 1                  # Lower limit of layer number
+k_max = 21                 # Upper limit of layer number
+# NOTE: k_min <= k < k_max
+vs_min  = 1.0              # Lower limit of Vs [km/s]
+vs_max  = 5.0              # Upper limit of Vs [km/s]
+dvs_sig = 0.5              # Prior width for Vs anomaly [km/s]
+vp_min  = 2.0              # Lower limit of Vp [km/s]
+vp_max  = 8.5              # Upper limit of Vp [km/s]
+dvp_sig = 0.5              # Prior width for Vp anomaly [km/s]
+z_min   = 2.0              # Lower limit of layer interface depth [km]
+z_max   = 23.0             # Upper limit of layer interface depth [km]
+
+ 
+# MCMC proposal
+dev_vs = 0.03              # Standard deviation for Vs random walk [km/s]
+dev_vp = 0.08              # Standard deviation for Vp random walk [km/s]
+dev_z  = 0.2               # Standard deviation for depth random walk [km]
+
+# Output format
+n_bin_vs  = 100            # Number of bin for Vs
+n_bin_vp  = 100            # Number of bin for Vp
+n_bin_z   = 100            # Number of bin for depth 
+n_bin_sig = 100            # Number of bin for data error
+
+
+#----- Optional parameters ----------------------------------------------
+
+
+# For different planets
+#r_earth = 6371.0           # Earth radius [km]
+
+# 
+# Random number seeds
+i_seed1 = 99999999  
+i_seed2 = 33333333
+i_seed3 = 24242424 
+i_seed4 = 99887622
+
+#-----------------------------------------------------------------------
+
+```
 ## How to make plots
 
 1. `python ../../../util/plot_disper.py joint_inv.in 1`, which produces `disper01.png`.
