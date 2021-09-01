@@ -1,0 +1,20 @@
+# Observation summary file for receiver function
+# 
+# n_rf
+1
+#
+#----------------------------
+# File name 
+# a_gauss, rayp, delta
+# phase
+# t_start, t_end
+# sig_rf_min, sig_rf_max, dev_sig_rf
+# deconv_flag, correct_amp
+# -----------------------------
+recv_func.sac
+8.0 0.05 0.05
+P
+0.0 2.5
+0.005 0.05 0.005
+F T
+
