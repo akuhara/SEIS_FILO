@@ -104,6 +104,24 @@ The standard deviation of random perturbation amount added to the standard devia
 
 * Type: Double precision
 
+### sig_hv_min
+
+The minimum standard deviation for data noise in H/V ratio. Only used for inversion.
+
+* Type: Double precision
+
+### sig_hv_max
+
+The maximum standard deviation for data noise in H/V ratio. Only used for inversion.
+
+* Type: Double precision
+
+### dev_sig_hv
+
+The standard deviation of random perturbation amount added to the standard deviation of H/V ratio. Only used for inversion.
+
+* Type: Double precision
+
 ### disper_out
 
 The output filename for _disper_fwd_.

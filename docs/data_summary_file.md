@@ -25,7 +25,7 @@ __Format__
     * Line v: [sig_c_min](parameter_list.md#sig_c_min), [sig_c_max](parameter_list.md#sig_c_max), [dev_sig_c](parameter_list.md#dev_sig_c)
 
     * Line vi: [sig_u_min](parameter_list.md#sig_u_min), [sig_u_max](parameter_list.md#sig_u_max), [dev_sig_u](parameter_list.md#dev_sig_u) 
-
+    * Line vii: [sig_hv_min](parameter_list.md#sig_hv_min), [sig_hv_max](parameter_list.md#sig_hv_max), [dev_sig_hv](parameter_list.md#dev_sig_hv) 
 * The example is [here](https://github.com/akuhara/SEIS_FILO/blob/main/sample/joint_inv/disper.in).
 
  
