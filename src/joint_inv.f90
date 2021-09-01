@@ -361,7 +361,7 @@ program main
              & correct_amp = obs_rf%get_correct_amp(i), &
              & amp_min = para%get_amp_min(), &
              & amp_max = para%get_amp_max(), &
-             & damp    = para%get_damp() &
+             & damp    = obs_rf%get_damp(i) &
              & )
         
      end do

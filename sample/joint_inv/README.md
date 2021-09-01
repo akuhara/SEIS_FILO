@@ -126,6 +126,45 @@ R 0 period
 #0.005 0.09 0.03
 ```
 
+
+### Receiver function data summary file
+* The filename must be gien in the parameter file via a parameter "recv_func_in".
+* The following can be used as a template.
+* Parameters must apper in this order.
+
+```
+#----------------------------------------------------------
+# Sample input to joint_inv of SEIS_FILO
+#----------------------------------------------------------
+# n_rf
+1
+#
+#----------------------------------------------------------
+# File name 
+# a_gauss, rayp, delta
+# rf_phase
+# t_start, t_end
+# sig_rf_min, sig_rf_max, dev_sig_rf
+# deconv_flag, correct_amp, damp
+#----------------------------------------------------------
+recv_func.sac
+8.0 0.05 0.05
+P
+0.0 2.5
+0.005 0.05 0.005
+T T 0.001
+#----------------------------------------------------------
+# If multiple inputs (n_rf <= 2), write them below.
+#----------------------------------------------------------
+#recv_func2.sac
+#8.0 0.06 0.05
+#P
+#0.0 3.5
+#0.005 0.05 0.005
+#T T 0.001
+
+```
+
 ## How to make plots
 
 1. `python ../../../util/plot_disper.py joint_inv.in 1`, which produces `disper01.png`.

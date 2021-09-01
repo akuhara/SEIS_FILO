@@ -44,6 +44,7 @@ module cls_observation_recv_func
      double precision, allocatable :: rf_data(:,:)
      double precision, allocatable :: t_start(:)
      double precision, allocatable :: t_end(:)
+     double precision, allocatable :: damp(:)
      character(len=1), allocatable :: rf_phase(:)
      logical, allocatable          :: deconv_flag(:)
      logical, allocatable          :: correct_amp(:)
@@ -70,6 +71,7 @@ module cls_observation_recv_func
           & observation_recv_func_get_deconv_flag
      procedure :: get_correct_amp => &
           & observation_recv_func_get_correct_amp
+     procedure :: get_damp => observation_recv_func_get_damp
   end type observation_recv_func
   
   interface observation_recv_func
@@ -138,6 +140,7 @@ contains
     allocate(self%deconv_flag(self%n_rf))
     allocate(self%correct_amp(self%n_rf))
     allocate(filename(self%n_rf))
+    allocate(self%damp(self%n_rf))
 
 
     do i = 1, self%n_rf
@@ -234,13 +237,14 @@ contains
           end if
           exit
        end do
-       ! deconv_flag, correct_amp
+       ! deconv_flag, correct_amp, damp
        do
           read(io, '(a)')line
           lt = line_text(line, ignore_space=.false.)
           line = lt%get_line()
           if (len_trim(line) /= 0) then
-             read(line, *) self%deconv_flag(i), self%correct_amp(i)
+             read(line, *) self%deconv_flag(i), self%correct_amp(i), &
+                  & self%damp(i)
              if (self%verb) then
                 write(*,'(A,L1)') &
                      & "Deconvolution flag (deconv_flag) = ", &
@@ -248,6 +252,9 @@ contains
                 write(*,'(A,L1)') &
                      & "Correct amplitude (correct_amp) = ", &
                      & self%correct_amp(i)
+                write(*,'(A,L1)') &
+                     & "Damping factor (damp) = ", &
+                     & self%damp(i)
              end if
              exit
           end if
@@ -498,7 +505,17 @@ contains
   
   !---------------------------------------------------------------------
 
+  double precision function &
+       & observation_recv_func_get_damp(self, i) result(damp)
+    class(observation_recv_func), intent(in) :: self
+    integer, intent(in) :: i
+    
+    damp = self%damp(i)
+    
+    return 
+  end function observation_recv_func_get_damp
 
+  !---------------------------------------------------------------------
 
   
 end module cls_observation_recv_func

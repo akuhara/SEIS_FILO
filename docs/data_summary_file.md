@@ -1,7 +1,7 @@
 # Data summary file
 
 
-The data summary file passes the summary of input data to the inversion program `joint_inv`. Different file formats are used for surface wave dispersion curves and receiver functions. The filename can be arbitrary, which are to be specified in [the parameter file](https://github.com/akuhara/SEIS_FILO/wiki/Parameter-File) via the parameters [disper_in](parameter_list.md#disper_in) and [recv_func_in](parameter_list.md#recv_func_in).
+The data summary file passes the summary of input data to the inversion program `joint_inv`. Different file formats are used for surface wave dispersion curves and receiver functions. The filename can be arbitrary, which are to be specified in [main parameter file](main_parameter_file.md) via the parameters [disper_in](parameter_list.md#disper_in) and [recv_func_in](parameter_list.md#recv_func_in).
 
 ## Surface wave dispersion curves 
 
@@ -26,8 +26,6 @@ __Format__
 
     * Line vi: [sig_u_min](parameter_list.md#sig_u_min), [sig_u_max](parameter_list.md#sig_u_max), [dev_sig_u](parameter_list.md#dev_sig_u) 
     * Line vii: [sig_hv_min](parameter_list.md#sig_hv_min), [sig_hv_max](parameter_list.md#sig_hv_max), [dev_sig_hv](parameter_list.md#dev_sig_hv) 
-* The example is [here](https://github.com/akuhara/SEIS_FILO/blob/main/sample/joint_inv/disper.in).
-
  
 
 ## Receiver functions
@@ -53,4 +51,3 @@ __Format__
 
     * Line vi: [deconv_flag](parameter_list.md#deconv_flag), [correct_amp](parameter_list.md#correct_amp)
 
-* The example is [here](https://github.com/akuhara/SEIS_FILO/blob/main/sample/joint_inv/recv_func.in).
