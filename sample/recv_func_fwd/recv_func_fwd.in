@@ -1,44 +1,41 @@
 #-----------------------------------------------------------------------
-# Parameter file:
 # Sample input to recv_func_fwd of SEIS_FILO package
-# by Takeshi Akuhara
 #-----------------------------------------------------------------------
 
-# Ray parameter (s/km)
-rayp = 0.05
-
-# Gaussian parameter
-a_gauss = 8.0
-
-# Phase (P or S)
-rf_phase = P
-
-# Input velocity model
-vmod_in = ../vmod/vmod.in
-
-# Time length prior to direct arrival
-t_pre = 3.0
-
-# Number of elements in time series
-n_smp = 2048
-
-# Time interval (s)
-delta = 0.05
-
-# Deconvolve by vertical component (T)  or not (F)
-deconv_flag = F
-
-# Correct for amplitude loss by filter (T) or not (F)
-correct_amp = T
-
-# Noise level
-noise_added = 0.01
-
-# Random number seed
-i_seed1 = 1001
-i_seed2 = 22002
-i_seed3 = 333003
-i_seed4 = 4444004
+#--- Required parameters -----------------------------------------------
 
 # Output filename
-recv_func_out = recv_func.sac
+recv_func_out   = recv_func_fwd.out
+
+# Input velocity model
+vmod_in         = ../vmod/vmod.in
+
+# Incident wave
+rayp            = 0.05  # Ray parameter [s/km]
+rf_phase        = P     # phase type P or S
+
+# Low-pass filter
+a_gauss         = 8.0   # Gaussian parameter
+correct_amp     = T     # Amplitude correction (T or F)
+
+# Deconvolution
+deconv_flag     = T     # Deconvolved by vertical component (T) or not (F)
+damp            = 0.001 # Water-level damping for deconvolution		 
+
+# Timewindow
+t_pre           = 3.0   # Time length before direct arrival [s]
+n_smp           = 2048  # Number of elements in time series
+delta           = 0.05  # Time interval [s]
+
+#-----------------------------------------------------------------------
+
+# Additive
+noise_added = 0.0      # Standard deviation of noise (default=0.0)
+
+# Random number seed (used for noise generation)
+i_seed1     = 1001
+i_seed2     = 22002
+i_seed3     = 333003
+i_seed4     = 4444004
+
+

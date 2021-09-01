@@ -24,7 +24,27 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
+
+module mod_rf_fwd_required
+  ! Parameters that must be specified in a parameter file
+  character(200), dimension(11), parameter :: required_params = &
+       & ["recv_func_out", &
+       &  "vmod_in      ", &
+       &  "rayp         ", &
+       &  "rf_phase     ", &
+       &  "a_gauss      ", &
+       &  "correct_amp  ", &
+       &  "deconv_flag  ", &
+       &  "damp         ", &
+       &  "t_pre        ", &
+       &  "n_smp        ", &
+       &  "delta        "]
+end module mod_rf_fwd_required
+
+!=======================================================================
+
 program main
+  use mod_rf_fwd_required
   use mod_mpi
   use cls_param
   use cls_vmodel
@@ -38,7 +58,6 @@ program main
   type(vmodel) :: vm, vm2
   type(recv_func) :: rf
   logical :: is_ok, verb
-
   verb = .true.
 
   ! MPI init
@@ -56,10 +75,9 @@ program main
   
   ! Read parameter file
   para = param(param_file, verb=verb)
-  call para%check_recv_func_fwd_params(is_ok)
+  is_ok = para%check_given_param(required_params)
   if (.not. is_ok) then
-     write(0,*)"ERROR: while checking parameters"
-     stop
+     error stop
   end if
   
   ! Set velocity model

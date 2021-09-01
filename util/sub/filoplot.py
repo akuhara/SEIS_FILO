@@ -42,14 +42,14 @@ class InvResult:
                 i = tmp_line.find('#')
                 if i >= 0:
                     tmp_line = line[0:i]
+
+                # Remove space
+                tmp_line = tmp_line.replace(' ', '')
                 
                 # Skip if line is null
                 if len(tmp_line) == 0:
                     continue
 
-                # Remove space
-                tmp_line = tmp_line.replace(' ', '')
-                
                 # Get parameter
                 item = tmp_line.split("=")
                 if len(item) == 2:
@@ -81,27 +81,34 @@ class InvResult:
         c_used = "Phase velocity is used?"
         ulabel = "Group vel. (km/s)"
         u_used = "Group velocity is used?"
-
+        hvlabel = "H/V"
+        hv_used = "H/V is used?"
+        
         if mode == "group":
             file = "group_sigma" + str(trace_id).zfill(3) + ".ppd"
             used_label = u_used
         elif mode == "phase":
             file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
             used_label = c_used
+        elif mode == "hv":
+            file = "hv_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = hv_used
         elif mode == "recv_func":
             file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
+
         
-        if mode == "group" or mode == "phase":
+        if mode == "group" or mode == "phase" or mode == "hv":
             df = pd.read_csv(param["obs_disper_file"],\
                              delim_whitespace=True, \
                              header=None, \
-                             names=(clabel, c_used, ulabel, u_used), \
+                             names=(clabel, c_used, ulabel, u_used, \
+                                    hvlabel, hv_used), \
                              comment='#')
             df_obs = df[df[used_label] == "T"]
         else:
             df_obs = (999,)
 
-        xlabel = "Standard deviation of data noise"
+        xlabel = "STDV of data noise"
         ylabel = "Probability"
         if len(df_obs) > 0:
             df = pd.read_csv(file, delim_whitespace=True, header=None, \
@@ -114,48 +121,7 @@ class InvResult:
             ax.set_xlabel(xlabel)
             
         ax.set_ylabel(ylabel)
-
-    #---------------------------------------------------------------
-
-    def _plot_sigma(self, fig, ax, mode, trace_id):
-        param = self._param
-        clabel = "Phase vel. (km/s)"
-        c_used = "Phase velocity is used?"
-        ulabel = "Group vel. (km/s)"
-        u_used = "Group velocity is used?"
-
-        if mode == "group":
-            file = "group_sigma" + str(trace_id).zfill(3) + ".ppd"
-            used_label = u_used
-        elif mode == "phase":
-            file = "phase_sigma" + str(trace_id).zfill(3) + ".ppd"
-            used_label = c_used
-        elif mode == "recv_func":
-            file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
         
-        if mode == "group" or mode == "phase":
-            df = pd.read_csv(param["obs_disper_file"],\
-                             delim_whitespace=True, \
-                             header=None, \
-                             names=(clabel, c_used, ulabel, u_used), \
-                             comment='#')
-            df_obs = df[df[used_label] == "T"]
-        else:
-            df_obs = (999,)
-
-        xlabel = "Standard deviation of data noise"
-        ylabel = "Probability"
-        if len(df_obs) > 0:
-            df = pd.read_csv(file, delim_whitespace=True, header=None, \
-                             names=(xlabel, ylabel))
-            df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
-        else:
-            ax.text(0.5, 0.5, "N/A", size=40, \
-                    horizontalalignment="center", \
-                    verticalalignment="center")
-            ax.set_xlabel(xlabel)
-            
-        ax.set_ylabel(ylabel)
 
     #---------------------------------------------------------------
 
@@ -410,6 +376,8 @@ class InvResult:
         c_used = "Phase velocity is used?"
         ulabel = "Group vel. (km/s)"
         u_used = "Group velocity is used?"
+        hvlabel = "H/V"
+        hv_used = "H/V is used?"
         if mode == "c":
             ppd_file = "syn_phase" + str(curve_id).zfill(3) + ".ppd"
             vlabel = clabel
@@ -418,6 +386,10 @@ class InvResult:
             ppd_file = "syn_group" + str(curve_id).zfill(3) + ".ppd"
             vlabel = ulabel
             used_label = u_used
+        elif mode == "hv":
+            ppd_file = "syn_hv" + str(curve_id).zfill(3) + ".ppd"
+            vlabel = hvlabel
+            used_label = hv_used
 
         if param["freq_or_period"] == "freq":
             xlabel = "Frequency (Hz)"
@@ -441,7 +413,8 @@ class InvResult:
         df = pd.read_csv(param["obs_disper_file"],\
                          delim_whitespace=True, \
                          header=None, \
-                         names=(clabel, c_used, ulabel, u_used), \
+                         names=(clabel, c_used, ulabel, u_used, \
+                                hvlabel, hv_used), \
                          comment='#')
         df[xlabel] = np.arange(x_min, x_max + 0.5 * del_x, del_x)
         df_obs = df[df[used_label] == "T"]
@@ -485,8 +458,8 @@ class InvResult:
                 if count == 1:
                     continue
 
-                if (count - 2) // 6 + 1 == curve_id:
-                    iloc = (count - 2) % 6
+                if (count - 2) // 7 + 1 == curve_id:
+                    iloc = (count - 2) % 7
                     if iloc == 0:
                         self._param["obs_disper_file"] = tmp_line.replace('\'','')
                         self._param["obs_disper_file"] = self._param["obs_disper_file"].replace('\"','')
@@ -598,7 +571,7 @@ class InvResult:
 
     
     def draw_surface_wave_set(self, curve_id):
-        grid_geom = (5, 4)
+        grid_geom = (5, 6)
         fig_size = (17, 10)
         param = self._param
         sns.set()
@@ -608,7 +581,7 @@ class InvResult:
         fig.subplots_adjust(wspace=0.7, hspace=0.9)
         
         # Number of layers
-        ax = plt.subplot2grid(grid_geom, (0, 0), colspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (0, 0), colspan=3, fig=fig)
         self._plot_n_layers(fig, ax)
         
         # Phase velocity
@@ -619,6 +592,10 @@ class InvResult:
         ax = plt.subplot2grid(grid_geom, (1, 1), fig=fig)
         self._plot_dispersion(fig, ax, "u", curve_id)
 
+        # H/V
+        ax = plt.subplot2grid(grid_geom, (1, 2), fig=fig)
+        self._plot_dispersion(fig, ax, "hv", curve_id)
+
         # Sigma phase velocity
         ax = plt.subplot2grid(grid_geom, (2, 0), fig=fig)
         self._plot_sigma(fig, ax, "phase", curve_id)
@@ -626,6 +603,10 @@ class InvResult:
         # Sigma group velocity
         ax = plt.subplot2grid(grid_geom, (2, 1), fig=fig)
         self._plot_sigma(fig, ax, "group", curve_id)
+
+        # Sigma H/V
+        ax = plt.subplot2grid(grid_geom, (2, 2), fig=fig)
+        self._plot_sigma(fig, ax, "hv", curve_id)
 
         # Vs-z
         ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
@@ -637,17 +618,17 @@ class InvResult:
             self._plot_vz(fig, ax, "vp")
             
         # Likelihood history
-        ax = plt.subplot2grid(grid_geom, (0, 2), colspan=2, rowspan=1, \
+        ax = plt.subplot2grid(grid_geom, (0, 3), colspan=3, rowspan=1, \
                               fig=fig)
         self._plot_likelihood_history(fig, ax)
 
         # Temperature hisotry
-        ax = plt.subplot2grid(grid_geom, (1, 2), colspan=2, rowspan=1, \
+        ax = plt.subplot2grid(grid_geom, (1, 3), colspan=3, rowspan=1, \
                               fig=fig)
         self._plot_temp_history(fig, ax)
 
         # Proposal count
-        ax = plt.subplot2grid(grid_geom, (2, 2), colspan=2, rowspan=2, \
+        ax = plt.subplot2grid(grid_geom, (2, 3), colspan=3, rowspan=2, \
                               fig=fig)
         self._plot_proposal_count(fig, ax)
 

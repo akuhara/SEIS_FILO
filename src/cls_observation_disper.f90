@@ -1,7 +1,7 @@
 !=======================================================================
 !   SEIS_FILO: 
 !   SEISmological tools for Flat Isotropic Layered structure in the Ocean
-!   Copyright (C) 2019 Takeshi Akuhara
+!   Copyright (C) 2019-2021 Takeshi Akuhara
 !
 !   This program is free software: you can redistribute it and/or modify
 !   it under the terms of the GNU General Public License as published by
@@ -36,14 +36,19 @@ module cls_observation_disper
      double precision, allocatable :: xmin(:), dx(:), xmax(:)
      double precision, allocatable :: c(:,:) ! phase velocity
      double precision, allocatable :: u(:,:) ! group velocity
+     double precision, allocatable :: hv(:,:) ! H/V ratio
      double precision, allocatable :: sig_c(:) ! uncertainties in c
      double precision, allocatable :: sig_u(:) ! uncertainties in u
+     double precision, allocatable :: sig_hv(:)
      double precision, allocatable :: cmin(:), cmax(:), dc(:)
-     double precision, allocatable :: sig_c_min(:), sig_u_min(:)
-     double precision, allocatable :: sig_c_max(:), sig_u_max(:)
+     double precision, allocatable :: sig_c_min(:), sig_u_min(:), &
+          & sig_hv_min(:)
+     double precision, allocatable :: sig_c_max(:), sig_u_max(:), &
+          & sig_hv_max(:)
      double precision, allocatable :: dev_sig_c(:), dev_sig_u(:)
+     double precision, allocatable :: dev_sig_hv(:)
      
-     logical, allocatable :: c_use(:,:), u_use(:,:)
+     logical, allocatable :: c_use(:,:), u_use(:,:), hv_use(:,:)
      integer, allocatable :: n_mode(:)
      character(1), allocatable :: disper_phase(:)
      character(6), allocatable :: freq_or_period(:)
@@ -63,16 +68,23 @@ module cls_observation_disper
      procedure :: get_c_array => observation_disper_get_c_array
      procedure :: get_u => observation_disper_get_u
      procedure :: get_u_array => observation_disper_get_u_array
+     procedure :: get_hv => observation_disper_get_hv
+     procedure :: get_hv_array => observation_disper_get_hv_array
      procedure :: get_sig_c => observation_disper_get_sig_c
      procedure :: get_sig_u => observation_disper_get_sig_u
+     procedure :: get_sig_hv => observation_disper_get_sig_hv
      procedure :: get_sig_c_min => observation_disper_get_sig_c_min
      procedure :: get_sig_u_min => observation_disper_get_sig_u_min
+     procedure :: get_sig_hv_min => observation_disper_get_sig_hv_min
      procedure :: get_sig_c_max => observation_disper_get_sig_c_max
      procedure :: get_sig_u_max => observation_disper_get_sig_u_max
+     procedure :: get_sig_hv_max => observation_disper_get_sig_hv_max
      procedure :: get_dev_sig_c => observation_disper_get_dev_sig_c
      procedure :: get_dev_sig_u => observation_disper_get_dev_sig_u
+     procedure :: get_dev_sig_hv => observation_disper_get_dev_sig_hv
      procedure :: get_c_use => observation_disper_get_c_use
      procedure :: get_u_use => observation_disper_get_u_use
+     procedure :: get_hv_use => observation_disper_get_hv_use
      
      procedure :: get_n_disp => observation_disper_get_n_disp
      procedure :: set_n_disp => observation_disper_set_n_disp
@@ -148,12 +160,16 @@ contains
     allocate(self%freq_or_period(self%n_disp))
     allocate(self%sig_c(self%n_disp))
     allocate(self%sig_u(self%n_disp))
+    allocate(self%sig_hv(self%n_disp))
     allocate(self%sig_c_min(self%n_disp))
     allocate(self%sig_u_min(self%n_disp))
+    allocate(self%sig_hv_min(self%n_disp))
     allocate(self%sig_c_max(self%n_disp))
     allocate(self%sig_u_max(self%n_disp))
+    allocate(self%sig_hv_max(self%n_disp))
     allocate(self%dev_sig_c(self%n_disp))
     allocate(self%dev_sig_u(self%n_disp))
+    allocate(self%dev_sig_hv(self%n_disp))
 
     do i = 1, self%n_disp
        ! get file name
@@ -288,6 +304,37 @@ contains
           
           exit
        end do
+       
+
+       ! sig_hv_min, sig_hv_max, dev_sig_hv
+       do 
+          read(io, '(a)')line
+          lt = line_text(line, ignore_space=.false.)
+          line = lt%get_line()
+          if (len_trim(line) == 0) cycle
+          read(line, *) self%sig_hv_min(i), self%sig_hv_max(i), &
+               & self%dev_sig_hv(i)
+          if (self%verb) then
+             write(*,'(A,F12.5)') &
+                  & "Min. sigma of H/V (sig_hv_min) = ", &
+                  & self%sig_hv_min(i)
+             write(*,'(A,F12.5)') &
+                  & "Max. sigma of H/V (sig_hv_max) = ", &
+                  & self%sig_hv_max(i)
+             write(*,'(A,F12.5)')"Stdev. sigma of H/V " &
+                  & // "(dev_sig_hv) = ", &
+                  & self%dev_sig_hv(i)
+          end if
+          
+          ! ERROR 
+          if (self%sig_hv_min(i) + self%dev_sig_hv(i) > self%sig_hv_max(i)) then
+             write(0,*)"ERROR: following relation must be satisfied"
+             write(0,*)"       sig_hv_min + dev_sig_hv <= sig_hv_max"
+             call mpi_abort(ierr)
+          end if
+          
+          exit
+       end do
 
        if (self%verb) write(*,*)"-----------------"
     end do
@@ -296,8 +343,10 @@ contains
     ! Read data files
     allocate(self%c(maxval(self%nx(:)), self%n_disp))
     allocate(self%u(maxval(self%nx(:)), self%n_disp))
+    allocate(self%hv(maxval(self%nx(:)), self%n_disp))
     allocate(self%c_use(maxval(self%nx(:)), self%n_disp))
     allocate(self%u_use(maxval(self%nx(:)), self%n_disp))
+    allocate(self%hv_use(maxval(self%nx(:)), self%n_disp))
     
     do i = 1, self%n_disp
        call self%read_data(filename(i), i)
@@ -448,7 +497,30 @@ contains
     
     return 
   end function observation_disper_get_u_array
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_hv(self, i, j) &
+       & result(hv)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i, j
+    
+    hv = self%hv(i, j)
+    
+    return 
+  end function observation_disper_get_hv
   
+  !---------------------------------------------------------------------
+  
+  function observation_disper_get_hv_array(self, i) result(hv)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    double precision :: hv(self%nx(i))
+    
+    hv(:) = self%hv(:, i)
+    
+    return 
+  end function observation_disper_get_hv_array
   !---------------------------------------------------------------------
 
   double precision function observation_disper_get_sig_c(self, i) &
@@ -474,6 +546,18 @@ contains
   end function observation_disper_get_sig_u
 
   !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_sig_hv(self, i) &
+       & result(sig_hv)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_hv = self%sig_hv(i)
+    
+    return 
+  end function observation_disper_get_sig_hv
+
+  !---------------------------------------------------------------------
   
   double precision function observation_disper_get_sig_c_min(self, i) &
        & result(sig_c_min)
@@ -496,6 +580,18 @@ contains
     
     return 
   end function observation_disper_get_sig_u_min
+
+  !---------------------------------------------------------------------
+
+  double precision function observation_disper_get_sig_hv_min(self, i) &
+       & result(sig_hv_min)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_hv_min = self%sig_hv_min(i)
+    
+    return 
+  end function observation_disper_get_sig_hv_min
 
   !---------------------------------------------------------------------
   
@@ -523,6 +619,18 @@ contains
 
   !---------------------------------------------------------------------
 
+  double precision function observation_disper_get_sig_hv_max(self, i) &
+       & result(sig_hv_max)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    sig_hv_max = self%sig_hv_max(i)
+    
+    return 
+  end function observation_disper_get_sig_hv_max
+
+  !---------------------------------------------------------------------
+
   double precision function observation_disper_get_dev_sig_c(self, i) &
        & result(dev_sig_c)
     class(observation_disper), intent(in) :: self
@@ -547,6 +655,18 @@ contains
 
   !---------------------------------------------------------------------
 
+  double precision function observation_disper_get_dev_sig_hv(self, i) &
+       & result(dev_sig_hv)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    dev_sig_hv = self%dev_sig_hv(i)
+    
+    return 
+  end function observation_disper_get_dev_sig_hv
+
+  !---------------------------------------------------------------------
+
   logical function observation_disper_get_c_use(self, i, j) &
        & result(c_use)
     class(observation_disper), intent(in) :: self
@@ -568,6 +688,18 @@ contains
     
     return 
   end function observation_disper_get_u_use
+
+  !---------------------------------------------------------------------
+
+  logical function observation_disper_get_hv_use(self, i, j) &
+       & result(hv_use)
+    class(observation_disper), intent(in) :: self
+    integer, intent(in) :: i, j
+    
+    hv_use = self%hv_use(i, j)
+    
+    return 
+  end function observation_disper_get_hv_use
 
   !---------------------------------------------------------------------
 
@@ -636,8 +768,10 @@ contains
           lt = line_text(line, ignore_space = .false.)
           line = lt%get_line()
           if (len_trim(line) == 0) cycle
-          read(line,*,iostat = ierr)self%c(j, i), self%c_use(j, i), &
-               & self%u(j, i), self%u_use(j, i)
+          read(line,*,iostat = ierr) &
+               & self%c(j, i),  self%c_use(j, i), &
+               & self%u(j, i),  self%u_use(j, i), &
+               & self%hv(j, i), self%hv_use(j, i)
           if (ierr /= 0) then
              write(0,*)"ERROR: while reading ", trim(filename), & 
                   & " of Line", j, "th data"

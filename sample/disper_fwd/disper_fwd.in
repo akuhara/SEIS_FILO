@@ -1,39 +1,40 @@
 #-----------------------------------------------------------------------
-# Parameter file:
 # Sample input to disper_fwd of SEIS_FILO package
-# by Takeshi Akuhara
 #-----------------------------------------------------------------------
 
-# Output frequencies (Hz)
-freq_or_period = freq
-xmin = 0.01
-xmax = 1.0
-dx   = 0.05
-
-# Input velocity model
-vmod_in = ../vmod/vmod.in
-
-# Velocity range (km/s)
-cmin    = 1.5
-cmax    = 4.6
-dc      = 0.02
-
-# Phase (R: Rayleigh)
-disper_phase = R
-
-# Mode number (0: fundamental mode, 1: 1st overtone, 2: 2nd overtone, etc.)
-n_mode = 0
-
-# Additive noise (km/s)
-noise_added = 0.03
-
-# Random number seed
-i_seed1 = 1001
-i_seed2 = 22002
-i_seed3 = 333003
-i_seed4 = 4444004
+#---- Required parameters ----------------------------------------------
 
 # Output filename
-disper_out = disper.out
+disper_out     = disper_fwd.out
 
+# Input velocity model
+vmod_in        = ../vmod/vmod.in
+
+# Output frequency or period range 
+freq_or_period = freq    # Output observables (Freq or Period)
+xmin           = 0.01    # Lower bound [Hz] / [s]
+xmax           = 1.0     # Upper bound [Hz] / [s]
+dx             = 0.05    # Interval    [Hz] / [s]
+
+# Phase velocity range for root search
+cmin           = 1.5     # Lower bound [km/s]
+cmax           = 4.6     # Upper bound [km/s]
+dc             = 0.02    # Interval    [km/s]
+
+# Phase type
+disper_phase   = R       # Currently only 'R' (Rayleigh wave) is supported
+n_mode         = 0       # Mode number 
+                         # (0: fundamental mode, 1: 1st higher mode, 
+                         #  2: 2nd higher mode, ...)
+
+#---- Optional parameters ----------------------------------------------
+
+# Additive noise 
+noise_added    = 0.0     # Standard deviation of noise (default=0.0)
+
+# Random number seeds (used for noise generation)
+i_seed1        = 1001
+i_seed2        = 22002
+i_seed3        = 333003
+i_seed4        = 4444004
 

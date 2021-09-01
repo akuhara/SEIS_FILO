@@ -104,10 +104,10 @@ contains
     double precision, intent(in) ::r_earth
     double precision, intent(out) :: log_likelihood
     logical, intent(out) :: is_ok
-    double precision :: misfit_c, misfit_u
+    double precision :: misfit_c, misfit_u, misfit_hv
     type(vmodel) :: vm, vm_flattened
-    double precision :: sc, su
-    integer :: i, j, nc, nu
+    double precision :: sc, su, shv
+    integer :: i, j, nc, nu, nhv
     
     call intpr%construct_vmodel(tm, vm, is_ok)
     
@@ -135,10 +135,13 @@ contains
     all_disp: do j = 1, obs%get_n_disp()
        misfit_c = 0.d0
        misfit_u = 0.d0
+       misfit_hv = 0.d0
        nc = 0
        nu = 0
-       sc = hyp%get_x(2*j-1)
-       su = hyp%get_x(2*j)
+       nhv = 0
+       sc = hyp%get_x(3*j-2)
+       su = hyp%get_x(3*j-1)
+       shv = hyp%get_x(3*j)
        do i = 1, obs%get_nx(j)
           if (disp(j)%get_c(i) == 0.d0 .or. &
                & disp(j)%get_u(i) == 0.d0) then
@@ -157,6 +160,12 @@ contains
                   & + (disp(j)%get_u(i) - obs%get_u(i,j)) ** 2 
              nu = nu + 1
           end if
+          if (obs%get_hv_use(i,j)) then
+             misfit_hv = misfit_hv &
+                  & + (disp(j)%get_hv(i) - obs%get_hv(i,j)) ** 2
+             nhv = nhv + 1
+          end if
+
        end do
        log_likelihood = log_likelihood  &
             & - 0.5d0 * misfit_c / (sc * sc) &
@@ -164,6 +173,9 @@ contains
        log_likelihood = log_likelihood  &
             & - 0.5d0 * misfit_u / (su * su) &
             & - nu * log_2pi_half - nu * log(su)
+       log_likelihood = log_likelihood  &
+            & - 0.5d0 * misfit_hv / (shv * shv) &
+            & - nhv * log_2pi_half - nhv * log(shv)
     end do all_disp
 
     

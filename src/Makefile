@@ -3,14 +3,14 @@
 #-----------------------------------------------------------------------
 
 # Example 1. GNU fortran for debug
-#FC     = mpif90
-#FFLAGS = -g -Wall -pedantic -std=f2008 -fbounds-check -O0 \
+FC     = mpif90
+FFLAGS = -g -Wall -pedantic -fbounds-check -O0 \
          -Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace \
 	 -pg
 
 # Example 2. GNU fortran for fast computation
-FC     = mpif90
-FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+#FC     = mpif90
+#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 # Example 3. Intel compmiler for fast computation
 #FC = mpiifort

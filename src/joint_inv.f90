@@ -24,7 +24,54 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
+
+
+module mod_joint_inv_required
+  ! Parameters that must be specified in a parameter file
+  character(200), dimension(36), parameter :: required_params = &
+       & ["recv_func_in    ", &
+       &  "disper_in       ", &
+       &  "solve_anomaly   ", &
+       &  "ref_vmod_in     ", &
+       &  "solve_vp        ", &
+       &  "solve_rf_sig    ", &
+       &  "solve_disper_sig", &
+       &  "is_sphere       ", &
+       &  "is_ocean        ", &
+       &  "ocean_thick     ", &
+       &  "vp_bottom       ", &
+       &  "vs_bottom       ", &
+       &  "rho_bottom      ", &
+       &  "n_iter          ", &
+       &  "n_burn          ", &
+       &  "n_corr          ", &
+       &  "n_chain         ", &
+       &  "n_cool          ", &
+       &  "temp_high       ", &
+       &  "k_min           ", &
+       &  "k_max           ", &
+       &  "vs_min          ", &
+       &  "vs_max          ", &
+       &  "dvs_sig         ", &
+       &  "vp_min          ", &
+       &  "vp_max          ", &
+       &  "dvp_sig         ", &
+       &  "z_min           ", &
+       &  "z_max           ", &
+       &  "dev_vs          ", &
+       &  "dev_vp          ", &
+       &  "dev_z           ", &
+       &  "n_bin_vs        ", &
+       &  "n_bin_vp        ", &
+       &  "n_bin_z         ", &
+       &  "n_bin_sig       "  &
+       & ]
+end module mod_joint_inv_required
+
+!=======================================================================
+
 program main
+  use mod_joint_inv_required
   use mod_mpi
   use cls_parallel  
   use mod_random
@@ -107,10 +154,10 @@ program main
  
   ! Read parameter file
   para = param(param_file, verb)
-  call para%check_mcmc_params(is_ok)
+  is_ok = para%check_given_param(required_params)
   if (.not. is_ok) then
      if (verb) then
-        write(0,*)"ERROR: while checking MCMC parameters"
+        error stop
      end if
      call mpi_finalize(ierr)
      stop
@@ -263,24 +310,29 @@ program main
 
   if (obs_disp%get_n_disp() > 0) then
      hyp_disp = hyper_model(                   &
-          & nx    = obs_disp%get_n_disp() * 2, &
+          & nx    = obs_disp%get_n_disp() * 3, &
           & verb  = verb                       &
           & )
      if (para%get_solve_disper_sig()) then
         do i = 1, obs_disp%get_n_disp()
-           call hyp_disp%set_prior(2*i - 1, &
+           call hyp_disp%set_prior(3*i - 2, &
                 & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_max(i))
-           call hyp_disp%set_perturb(2*i - 1, obs_disp%get_dev_sig_c(i))
-           call hyp_disp%set_prior(2*i, &
+           call hyp_disp%set_perturb(3*i - 2, obs_disp%get_dev_sig_c(i))
+           call hyp_disp%set_prior(3*i - 1, &
                 & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_max(i))
-           call hyp_disp%set_perturb(2*i, obs_disp%get_dev_sig_u(i))
+           call hyp_disp%set_perturb(3*i - 1, obs_disp%get_dev_sig_u(i))
+           call hyp_disp%set_prior(3*i, &
+                & obs_disp%get_sig_hv_min(i), obs_disp%get_sig_hv_max(i))
+           call hyp_disp%set_perturb(3*i, obs_disp%get_dev_sig_hv(i))
         end do
      else
         do i = 1, obs_disp%get_n_disp()
-           call hyp_disp%set_prior(2*i - 1, &
+           call hyp_disp%set_prior(3*i - 2, &
                 & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_min(i))
-           call hyp_disp%set_prior(2*i, &
+           call hyp_disp%set_prior(3*i - 1, &
                 & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_min(i))
+           call hyp_disp%set_prior(3*i, &
+                & obs_disp%get_sig_hv_min(i), obs_disp%get_sig_hv_min(i))
            !call hyp_disp%set_x(2*i - 1, obs_disp%get_sig_c_min(i))
            !call hyp_disp%set_x(2*i    , obs_disp%get_sig_u_min(i))
         end do
@@ -309,7 +361,7 @@ program main
              & correct_amp = obs_rf%get_correct_amp(i), &
              & amp_min = para%get_amp_min(), &
              & amp_max = para%get_amp_max(), &
-             & damp    = para%get_damp() &
+             & damp    = obs_rf%get_damp(i) &
              & )
         
      end do
@@ -565,21 +617,37 @@ program main
           & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
           & obs_disp%get_cmin(i), obs_disp%get_dc(i))
 
+     ! Synthetic H/V
+     write(filename, '(A6,I3.3,A4)')"syn_hv", i, ".ppd"
+     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
+          & disp(i)%get_nhv(), disp(i)%get_n_fhv(), &
+          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
+          & disp(i)%get_hv_min(), disp(i)%get_dhv())
+
      ! Noise phase velocity
-     del_amp = (hyp_disp%get_prior_param(2*i-1, 2) - &
-          & hyp_disp%get_prior_param(2*i-1, 1)) / para%get_n_bin_sig()
+     del_amp = (hyp_disp%get_prior_param(3*i-2, 2) - &
+          & hyp_disp%get_prior_param(3*i-2, 1)) / para%get_n_bin_sig()
      write(filename, '(A,I3.3,A)')"phase_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(2*i-1), n_mod, &
-          & hyp_disp%get_prior_param(2*i-1, 1), del_amp)
+          & intpr%get_n_disp_sig(3*i-2), n_mod, &
+          & hyp_disp%get_prior_param(3*i-2, 1), del_amp)
 
      ! Noise group velocity
-     del_amp = (hyp_disp%get_prior_param(2*i, 2) - &
-          & hyp_disp%get_prior_param(2*i, 1)) / para%get_n_bin_sig()
+     del_amp = (hyp_disp%get_prior_param(3*i-1, 2) - &
+          & hyp_disp%get_prior_param(3*i-1, 1)) / para%get_n_bin_sig()
      write(filename, '(A,I3.3,A)')"group_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(2*i), n_mod, &
-          & hyp_disp%get_prior_param(2*i, 1), del_amp)
+          & intpr%get_n_disp_sig(3*i-1), n_mod, &
+          & hyp_disp%get_prior_param(3*i-1, 1), del_amp)
+
+     ! Noise H/V
+     del_amp = (hyp_disp%get_prior_param(3*i, 2) - &
+          & hyp_disp%get_prior_param(3*i, 1)) / para%get_n_bin_sig()
+     write(filename, '(A,I3.3,A)')"hv_sigma", i, ".ppd"
+     call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+          & intpr%get_n_disp_sig(3*i), n_mod, &
+          & hyp_disp%get_prior_param(3*i, 1), del_amp)
+
   end do
   
   ! Likelihood history
