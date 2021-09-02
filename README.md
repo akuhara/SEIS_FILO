@@ -47,11 +47,11 @@ Type `make` in the `src` directory. Please edit the [Makefile](https://github.co
 
 ## Quick Guidance
 ### Forward problem
-* [__disper_fwd__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/disper_fwd): Surface wave forward computation (phase & group velocities)
-* [__recv_func_fwd__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/recv_func_fwd): Receiver function forward computation
+* [__disper_fwd__](https://github.com/akuhara/SEIS_FILO/tree/main/sample/disper_fwd): Surface wave forward computation (phase & group velocities)
+* [__recv_func_fwd__](https://github.com/akuhara/SEIS_FILO/tree/main/sample/recv_func_fwd): Receiver function forward computation
 
 ### Inverse problem
-* [__joint_inv__](https://github.com/akuhara/SEIS_FILO/tree/master/sample/joint_inv): Surface wave and receiver function joint inversion by RJMCMC
+* [__joint_inv__](https://github.com/akuhara/SEIS_FILO/tree/main/sample/joint_inv): Surface wave and receiver function joint inversion by RJMCMC
 
 See [online documentation](https://seis-filo.readthedocs.io/) for more details.
 
