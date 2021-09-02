@@ -16,8 +16,8 @@ RUN make FFTW="-I/usr/include -lfftw3"
 RUN useradd -m ${USER}
 USER ${USER}
 WORKDIR /home/${USER}
-ENV PATH=$PATH:/usr/local/SEIS_FILO/bin
-ENV OMPI_MCA_btl_vader_single_copy_mechanism=none
+ENV PATH=$PATH:/usr/local/SEIS_FILO/bin \
+    OMPI_MCA_btl_vader_single_copy_mechanism=none
 RUN cp -r /usr/local/SEIS_FILO/sample . \
   && cp -r /usr/local/SEIS_FILO/util . \
   && mkdir /home/${USER}/wrk
