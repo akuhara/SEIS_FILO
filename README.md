@@ -2,8 +2,8 @@
 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
-[![Build Status](https://travis-ci.org/akuhara/SEIS_FILO.svg?branch=master)](https://travis-ci.org/akuhara/SEIS_FILO)
-[![codecov](https://codecov.io/gh/akuhara/SEIS_FILO/branch/master/graph/badge.svg)](https://codecov.io/gh/akuhara/SEIS_FILO)
+[![Build Status](https://app.travis-ci.com/akuhara/SEIS_FILO.svg?branch=main)](https://app.travis-ci.com/akuhara/SEIS_FILO)
+[![codecov](https://codecov.io/gh/akuhara/SEIS_FILO/branch/main/graph/badge.svg?token=97D1SQ2VAV)](https://codecov.io/gh/akuhara/SEIS_FILO)
 ![GitHub](https://img.shields.io/github/license/akuhara/SEIS_FILO)
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/akuhara/seis-filo)
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
@@ -38,11 +38,11 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 * [FFTW library](http://fftw.org/)
 * [LAPACK library](http://www.netlib.org/lapack/)
 * [Open MPI](https://www.open-mpi.org/)
-* Some Python modules listed in [requirements.txt](https://github.com/akuhara/SEIS_FILO/blob/master/requirements.txt)
+* Some Python modules listed in [requirements.txt](https://github.com/akuhara/SEIS_FILO/blob/main/requirements.txt)
 
   
 ## Install
-Type `make` in the `src` directory. Please edit the [Makefile](https://github.com/akuhara/SEIS_FILO/tree/master/src/Makefile) in accordance with your environment (i.e., compiler type and libarary paths). 
+Type `make` in the `src` directory. Please edit the [Makefile](https://github.com/akuhara/SEIS_FILO/tree/main/src/Makefile) in accordance with your environment (i.e., compiler type and libarary paths). 
 
 
 ## Quick Guidance
