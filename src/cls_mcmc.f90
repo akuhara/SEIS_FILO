@@ -69,6 +69,7 @@ module cls_mcmc
      procedure :: get_temp_saved => mcmc_get_temp_saved
      procedure :: get_n_propose => mcmc_get_n_propose
      procedure :: get_n_accept => mcmc_get_n_accept
+     procedure :: calc_prior => mcmc_calc_prior
      procedure :: finish => mcmc_finish
   end type mcmc
   
@@ -357,6 +358,12 @@ contains
   end function mcmc_get_n_propose
   
   !---------------------------------------------------------------------
+  subroutine mcmc_calc_prior(self)
+    class(mcmc), intent(inout) :: self
+    
+    Return 
+  end subroutine mcmc_calc_prior
+  !---------------------------------------------------------------------
 
   subroutine mcmc_finish(self)
     class(mcmc), intent(inout) :: self
@@ -375,5 +382,6 @@ contains
   end subroutine mcmc_finish
 
   !---------------------------------------------------------------------
+
 
 end module cls_mcmc

@@ -1,6 +1,6 @@
 # Reference velocity file
 
-When solving for velocity anomalies ([solve_anomaly](parameter_list.md#solve_anomaly) = T), you must pass a reference velocity model through this file. The filename can be arbitrary but needs to be specified in a [main parameter file](main_parameter_file.md) using the parameter [solve_anomaly](parameter_list.md#solve_anomaly).
+When solving for velocity anomalies ([solve_anomaly](parameter_list.md#solve_anomaly) = T), you must pass a reference velocity model through this file. The filename can be arbitrary but needs to be specified in a [main parameter file](main_parameter_file.md) using the parameter [v_ref_mod_in](parameter_list.md#v_ref_mod_in).
 
 ## Format
 |1st column |2nd column |3rd column |

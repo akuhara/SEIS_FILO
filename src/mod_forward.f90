@@ -121,6 +121,10 @@ contains
        return
     end if
     
+
+    !log_likelihood = 0.d0
+    !return
+
     do j = 1, obs%get_n_disp()
        if (is_sphere) then
           call disp(j)%set_vmodel(vm_flattened)

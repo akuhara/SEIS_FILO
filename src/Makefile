@@ -3,18 +3,18 @@
 #-----------------------------------------------------------------------
 
 # Example 1. GNU fortran for debug
-FC     = mpif90
-FFLAGS = -g -Wall -pedantic -fbounds-check -O0 \
-         -Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace \
-	 -pg
+#FC     = mpif90
+#FFLAGS = -g -Wall -pedantic -fbounds-check -O0 \
+#         -Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace \
+#	 -pg
 
 # Example 2. GNU fortran for fast computation
 #FC     = mpif90
 #FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 # Example 3. Intel compmiler for fast computation
-#FC = mpiifort
-#FFLAGS = -assume byterecl -lmpi -xAVX -O3 
+FC = mpiifort
+FFLAGS = -assume byterecl -lmpi -xAVX -O3 
 
 # Example 4. EIC
 #FC      = mpif90
@@ -27,12 +27,12 @@ FFLAGS = -g -Wall -pedantic -fbounds-check -O0 \
 #-----------------------------------------------------------------------
 
 # Example 1-2. Free library
-FFTW   = -I/usr/local/include -lfftw3
-LAPACK = -llapack -lblas
+#FFTW   = -I/usr/local/include -lfftw3
+#LAPACK = -llapack -lblas
 
 # Example 3. Intel library
-#FFTW = -I/opt/intel/mkl/include/fftw -mkl=parallel
-#LAPACK =
+FFTW = -I/opt/intel/mkl/include/fftw -mkl=parallel
+LAPACK =
 
 # Example 4. EIC
 #FFTW    = -I$(MKLROOT)/include/fftw -mkl=parallel
