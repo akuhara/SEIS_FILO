@@ -96,7 +96,7 @@ program main
   integer :: n_mod
   double precision :: log_likelihood, temp, log_likelihood2
   double precision :: log_prior_ratio, log_proposal_ratio
-  double precision :: del_amp
+  double precision :: del_amp, prior
   logical :: is_ok, is_ok2
   type(vmodel) :: vm
   type(trans_d_model) :: tm, tm_tmp
@@ -488,7 +488,7 @@ program main
         call pt%set_mc(j, mc)
         
         ! One step summary
-        if (verb) then
+        if (verb .and. mod(i,100) == 0) then
            if (para%get_diagnostic_mode()) then
               call mc%one_step_summary()
            else if (j==1) then
@@ -497,39 +497,63 @@ program main
         end if
         
         ! Recording
-        if (i > para%get_n_burn() .and. &
-             & mod(i, para%get_n_corr()) == 0 .and. &
+        if (mod(i, para%get_n_corr()) == 0 .and. &
              & mc%get_temp() < 1.d0 + eps) then
            
-           ! V-Z
-           call intpr%save_model(mc%get_tm())
-
-           ! Sigma
-           if (para%get_solve_disper_sig()) then
-              call intpr%save_disp_sigma(mc%get_hyp_disp())
+           if (i > para%get_n_burn()) then
+              ! V-Z
+              call intpr%save_model(mc%get_tm())
+              
+              ! Sigma
+              if (para%get_solve_disper_sig()) then
+                 call intpr%save_disp_sigma(mc%get_hyp_disp())
+              end if
+              if (para%get_solve_rf_sig()) then
+                 call intpr%save_rf_sigma(mc%get_hyp_rf())
+              end if
+              
+              ! Synthetic data 
+              do k = 1, obs_rf%get_n_rf()
+                 call rf(k)%save_syn()
+              end do
+              do k = 1, obs_disp%get_n_disp()
+                 call disp(k)%save_syn()
+              end do
            end if
-           if (para%get_solve_rf_sig()) then
-              call intpr%save_rf_sigma(mc%get_hyp_rf())
-           end if
-
-           ! Synthetic data 
-           do k = 1, obs_rf%get_n_rf()
-              call rf(k)%save_syn()
-           end do
-           do k = 1, obs_disp%get_n_disp()
-              call disp(k)%save_syn()
-           end do
            
            ! V model
-           call intpr%construct_vmodel(mc%get_tm(), vm, is_ok)
-           write(io_vmod_all,'("> ",E15.7)') mc%get_log_likelihood()
+           tm_tmp = mc%get_tm()
+           call intpr%construct_vmodel(tm_tmp, vm, is_ok)
+           prior = tm_tmp%calc_log_prior()
+           if (obs_rf%get_n_rf() > 0) then
+              hyp_rf_tmp = mc%get_hyp_rf()
+              prior = prior + hyp_rf_tmp%calc_log_prior()
+           end if
+           if (obs_disp%get_n_disp() > 0) then
+              hyp_disp_tmp = mc%get_hyp_disp()
+              prior = prior + hyp_disp_tmp%calc_log_prior()
+           end if
+           write(io_vmod_all,'("> ",I5,I9,2E13.5)') &
+                & rank * para%get_n_chain() + j, i, &
+                & mc%get_log_likelihood(), prior
+           !if (prior * 0.d0 /= 0.d0) then
+           !   print *, "AAAAAAAA"
+           !   print *, prior, tm%calc_log_prior(), hyp_rf_tmp%calc_log_prior(), hyp_disp_tmp%calc_log_prior()
+           !   call mpi_finalize(ierr)
+           !   stop
+           !end if
+
+
            call vm%display(io_vmod_all)
-           flush(io_vmod_all)
+           write(io_vmod_all,'(a)') ">"
+           !flush(io_vmod_all)
         end if
      end do
      
      ! Swap temperture
-     call pt%swap_temperature(verb=.true.)
+     do j = 1, 10
+        call pt%swap_temperature(verb=.true.)
+     end do
   end do
   close(io_vmod_all)
 

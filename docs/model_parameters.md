@@ -13,8 +13,6 @@ Alternatively, one can solve for velocity anomalies centered on the given refere
 
 ![prior probability](./img/model_prior.png)
 
-
-
 !!! NOTE
     * The ocean and bottom half-space layers are not counted for \\(k\\).
     * The properties of the ocean layer are fixed during the inversion (P-wave velocity: 1.5 km/s and density: 1.0 g/cm^3, by default). These default values can be changed through the parameters [vp_ocean](parameter_list.md#vp_ocean) and [rho_ocean](parameter_list.md#rho_ocean).

@@ -48,8 +48,9 @@ module cls_hyper_model
      procedure :: set_x => hyper_model_set_x
      procedure :: generate_model => hyper_model_generate_model
      procedure :: perturb => hyper_model_perturb
+     procedure :: calc_log_prior => hyper_model_calc_log_prior
      procedure :: display => hyper_model_display
-     
+
   end type hyper_model
   
   interface hyper_model
@@ -206,6 +207,22 @@ contains
     return 
   end subroutine hyper_model_perturb
 
+  !---------------------------------------------------------------------
+
+  double precision function hyper_model_calc_log_prior(self) result(p)
+    class(hyper_model), intent(inout) :: self
+    integer :: i
+    
+    p = 0.d0
+    do i = 1, self%nx
+       p = p -log(self%prior_param(i, 2) &
+            & - self%prior_param(i, 1))
+    end do
+
+    return 
+  end function hyper_model_calc_log_prior
+
+  
   !---------------------------------------------------------------------
   
   subroutine hyper_model_display(self)

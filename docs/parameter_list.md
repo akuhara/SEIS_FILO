@@ -230,6 +230,11 @@ The minimum number of layers (excluding the seawater and bottom half-space).
 
 ## N
 
+### nx
+
+The number of data point in a dispersion curve.
+
+* Type: Integer 
 
 ### n_bin_vp
 
@@ -451,7 +456,7 @@ The minimum standard deviation for data noise in group velocity (km/s). Only use
 
 ### solve_anomaly
 
-If this parameter is set to ".true." (or "T"), velocity anomalies are solved for instead of the absolute  values. These anomalies are defined relative to a reference velocity model given by users. 
+If this parameter is set to ".true." (or "T"), velocity anomalies are solved for instead of the absolute  values. These anomalies are defined relative to a [reference velocity model](reference_velocity_file.md) given by users. See [here](model_parameters.md) for more details. 
 
 * Type: Logical
 
@@ -511,13 +516,17 @@ The maximum Vp (km/s)
 
 * Type: Double precision
 
-
 ### vp_min
 
 The minimum Vp (km/s)
 
 * Type: Double precision
 
+### v_ref_mod_in
+
+Filename for a reference velocity model. This is used when [solve_anomaly](parameter_list.md#solve_anomaly) = T. A required format for the reference model file is [here](reference_velocity_file.md).
+
+* Type: Character
 
 ### vs_bottom
 

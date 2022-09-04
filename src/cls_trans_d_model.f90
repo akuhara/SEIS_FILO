@@ -282,24 +282,35 @@ contains
 
   !---------------------------------------------------------------------
 
-  double precision function trans_d_model_calc_log_prior(self, k, &
-       & iparam) result(p)
+  double precision function trans_d_model_calc_log_prior(self) result(p)
     class(trans_d_model), intent(in) :: self
-    integer, intent(in) :: k, iparam
     double precision :: x, sig2, mu
     double precision, parameter :: pi2 = acos(-1.d0) * 2.d0
+    integer :: i, j
+    double precision :: fk
+
+    p = 0.d0
+    do i = 1, self%nx
+       do j = 1, self%k
+          x = self%x(j, i)
+          if (self%prior_type(i) == 1) then
+             p = p -log(self%prior_param(i, 2) &
+                  & - self%prior_param(i, 1))
+          else if (self%prior_type(i) == 2) then
+             mu = self%prior_param(i, 1)
+             sig2 = self%prior_param(i, 2) ** 2
+             p = p -0.5d0 * log(pi2 * sig2) &
+                  & - (x - mu) * (x - mu) / (2.d0 * sig2)
+          end if
+       end do
+    end do
     
-    x = self%x(k, iparam)
-    if (self%prior_type(iparam) == 1) then
-       p = -log(self%prior_param(iparam, 2) &
-            & - self%prior_param(iparam, 1))
-    else if (self%prior_type(iparam) == 2) then
-       mu = self%prior_param(iparam, 1)
-       sig2 = self%prior_param(iparam, 2) ** 2
-       p = -0.5d0 * log(pi2 * sig2) &
-            & - (x - mu) * (x - mu) / (2.d0 * sig2)
-    end if
-    
+    fk = 0.d0
+    do j = 2, self%k
+       fk = fk + log(dble(j))
+    end do
+    p = p + fk
+
     return 
   end function trans_d_model_calc_log_prior
     
