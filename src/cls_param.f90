@@ -68,6 +68,8 @@ module cls_param
      logical :: is_sphere = .false.
      double precision :: r_earth = 6371.d0
 
+     logical :: simulate_prior = .false.
+
      double precision :: dvp_sig = 0.1d0
      double precision :: dvs_sig = 0.1d0
      double precision :: rf_sig_min = 0.005d0
@@ -233,6 +235,8 @@ module cls_param
      procedure :: get_r_earth => param_get_r_earth
      
      procedure :: get_diagnostic_mode => param_get_diagnostic_mode
+     procedure :: get_simulate_prior => param_get_simulate_prior
+
 
      procedure :: check_mcmc_params => param_check_mcmc_params
      !procedure :: check_recv_func_fwd_params &
@@ -478,6 +482,8 @@ contains
        read(val, *) self%noise_added
     else if (name == "diagnostic_mode") then
        read(val, *) self%diagnostic_mode
+    else if (name == "simulate_prior") then
+       read(val, *) self%simulate_prior
     else
        if (self%verb) then
           write(0,*)"ERROR: Invalid parameter name"
@@ -1240,6 +1246,16 @@ contains
     return 
   end function param_get_r_earth
 
+  !---------------------------------------------------------------------
+
+  logical function param_get_simulate_prior(self) result(simulate_prior)
+    class(param), intent(in) :: self
+    
+    simulate_prior = self%simulate_prior
+  
+    return 
+  end function param_get_simulate_prior
+  
   !---------------------------------------------------------------------
 
   logical function param_get_diagnostic_mode(self) result(diagnostic_mode)

@@ -21,7 +21,7 @@ contains
   !---------------------------------------------------------------------
   
   subroutine forward_recv_func(tm, hyp, intpr, obs, rf, cov, &
-       & is_sphere, r_earth, log_likelihood, is_ok)
+       & is_sphere, r_earth, simulate_prior, log_likelihood, is_ok)
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp
     type(interpreter), intent(inout) :: intpr
@@ -30,6 +30,7 @@ contains
     type(covariance), intent(in) :: cov(:)
     logical, intent(in) :: is_sphere
     double precision, intent(in) :: r_earth
+    logical, intent(in) :: simulate_prior
     double precision, intent(out) :: log_likelihood
     logical, intent(out) :: is_ok
     double precision, allocatable :: misfit(:), phi1(:)
@@ -52,8 +53,10 @@ contains
        return
     end if
     
-    !log_likelihood = 0.d0
-    !return
+    if (simulate_prior) then
+       log_likelihood = 0.d0
+       return
+    end if
     
     do i = 1, obs%get_n_rf()
        if (is_sphere) then
@@ -63,8 +66,6 @@ contains
        end if
        call rf(i)%compute()
     end do
-    !log_likelihood = 0.d0 !!!!!!!!!!!!!!!!
-    !return !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     ! calc misfit
     log_likelihood = 0.d0
@@ -93,7 +94,7 @@ contains
   !-----------------------------------------------------------------------
   
   subroutine forward_disper(tm, hyp, intpr, obs, disp, &
-       & is_sphere, r_earth, log_likelihood, is_ok)
+       & is_sphere, r_earth, simulate_prior, log_likelihood, is_ok)
     implicit none 
     type(trans_d_model), intent(in) :: tm
     type(hyper_model), intent(in) :: hyp
@@ -102,6 +103,7 @@ contains
     type(disper), intent(inout) :: disp(:)
     logical, intent(in) :: is_sphere
     double precision, intent(in) ::r_earth
+    logical, intent(in) :: simulate_prior
     double precision, intent(out) :: log_likelihood
     logical, intent(out) :: is_ok
     double precision :: misfit_c, misfit_u, misfit_hv
@@ -121,9 +123,10 @@ contains
        return
     end if
     
-
-    !log_likelihood = 0.d0
-    !return
+    if (simulate_prior) then
+       log_likelihood = 0.d0
+       return
+    end if
 
     do j = 1, obs%get_n_disp()
        if (is_sphere) then

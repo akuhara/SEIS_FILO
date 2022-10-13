@@ -468,12 +468,14 @@ program main
            if (obs_rf%get_n_rf() > 0) then
               call forward_recv_func(tm_tmp, hyp_rf_tmp, intpr, obs_rf, &
                    & rf, cov, para%get_is_sphere(), &
-                   & para%get_r_earth(), log_likelihood, is_ok2)
+                   & para%get_r_earth(), para%get_simulate_prior(), &
+                   & log_likelihood, is_ok)
            end if
            if (obs_disp%get_n_disp() > 0) then
               call forward_disper(tm_tmp, hyp_disp_tmp, intpr, obs_disp, &
                    & disp, para%get_is_sphere(), &
-                   & para%get_r_earth(), log_likelihood2, is_ok2)
+                   & para%get_r_earth(), para%get_simulate_prior(), &
+                   & log_likelihood2, is_ok2)
            end if
            log_likelihood = &
                 log_likelihood + log_likelihood2
@@ -513,12 +515,14 @@ program main
               end if
               
               ! Synthetic data 
-              do k = 1, obs_rf%get_n_rf()
-                 call rf(k)%save_syn()
-              end do
-              do k = 1, obs_disp%get_n_disp()
-                 call disp(k)%save_syn()
-              end do
+              if (.not. para%get_simulate_prior()) then
+                 do k = 1, obs_rf%get_n_rf()
+                    call rf(k)%save_syn()
+                 end do
+                 do k = 1, obs_disp%get_n_disp()
+                    call disp(k)%save_syn()
+                 end do
+              end if
            end if
            
            ! V model
