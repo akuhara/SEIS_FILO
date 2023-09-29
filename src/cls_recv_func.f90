@@ -746,10 +746,6 @@ contains
     call self%sp%apply_filter()
     call self%sp%inverse_fft()
     noise = self%sp%get_t_data()
-    do i = 1, self%n
-       write(333,*)noise(i)
-       
-    end do
     
     ! Add noise
     self%rf_data(1:self%n) = self%rf_data(1:self%n) + noise(1:self%n)
