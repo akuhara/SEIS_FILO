@@ -106,10 +106,10 @@ contains
     logical, intent(in) :: simulate_prior
     double precision, intent(out) :: log_likelihood
     logical, intent(out) :: is_ok
-    double precision :: misfit_c, misfit_u, misfit_hv
+    double precision :: misfit_c, misfit_u, misfit_hv, misfit_ra
     type(vmodel) :: vm, vm_flattened
-    double precision :: sc, su, shv
-    integer :: i, j, nc, nu, nhv
+    double precision :: sc, su, shv, sra
+    integer :: i, j, nc, nu, nhv, nra
     
     call intpr%construct_vmodel(tm, vm, is_ok)
     
@@ -146,9 +146,10 @@ contains
        nc = 0
        nu = 0
        nhv = 0
-       sc = hyp%get_x(3*j-2)
-       su = hyp%get_x(3*j-1)
-       shv = hyp%get_x(3*j)
+       sc = hyp%get_x(4*j-3)
+       su = hyp%get_x(4*j-2)
+       shv = hyp%get_x(4*j-1)
+       sra = hyp%get_x(4*j)
        do i = 1, obs%get_nx(j)
           if (disp(j)%get_c(i) == 0.d0 .or. &
                & disp(j)%get_u(i) == 0.d0) then
@@ -172,6 +173,11 @@ contains
                   & + (disp(j)%get_hv(i) - obs%get_hv(i,j)) ** 2
              nhv = nhv + 1
           end if
+          if (obs%get_ra_use(i,j)) then
+             misfit_ra = misfit_ra &
+                  & + (disp(j)%get_ra(i) - obs%get_ra(i,j)) ** 2
+             nra = nra + 1
+          end if
 
        end do
        log_likelihood = log_likelihood  &
@@ -183,6 +189,10 @@ contains
        log_likelihood = log_likelihood  &
             & - 0.5d0 * misfit_hv / (shv * shv) &
             & - nhv * log_2pi_half - nhv * log(shv)
+       log_likelihood = log_likelihood  &
+            & - 0.5d0 * misfit_ra / (sra * sra) &
+            & - nra * log_2pi_half - nra * log(sra)
+       
     end do all_disp
 
     

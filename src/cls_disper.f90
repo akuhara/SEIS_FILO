@@ -66,7 +66,7 @@ module cls_disper
      integer, allocatable :: n_fc(:,:)
      integer, allocatable :: n_fu(:,:)
      integer, allocatable :: n_fhv(:,:)
-     integer, allocatable :: n_ra(:,:)
+     integer, allocatable :: n_fra(:,:)
      character(1) :: disper_phase
      integer :: n_mode
 
@@ -97,18 +97,24 @@ module cls_disper
      procedure :: get_nx => disper_get_nx
      procedure :: get_nc => disper_get_nc
      procedure :: get_nhv => disper_get_nhv
+     procedure :: get_nra => disper_get_nra
      procedure :: get_hv_min => disper_get_hv_min
+     procedure :: get_ra_min => disper_get_ra_min
      procedure :: get_dhv => disper_get_dhv
+     procedure :: get_dra => disper_get_dra
      procedure :: get_c => disper_get_c
      procedure :: get_c_array => disper_get_c_array
      procedure :: get_u => disper_get_u
      procedure :: get_u_array => disper_get_u_array
      procedure :: get_hv => disper_get_hv
      procedure :: get_hv_array => disper_get_hv_array
+     procedure :: get_ra => disper_get_ra
+     procedure :: get_ra_array => disper_get_ra_array
      procedure :: save_syn => disper_save_syn
      procedure :: get_n_fc => disper_get_n_fc
      procedure :: get_n_fu => disper_get_n_fu
      procedure :: get_n_fhv => disper_get_n_fhv
+     procedure :: get_n_fra => disper_get_n_fra
      
   end type disper
 
@@ -217,12 +223,12 @@ contains
     ! for MCMC
     allocate(self%n_fc(self%nx, self%nc), self%n_fu(self%nx, self%nc))
     allocate(self%n_fhv(self%nx, self%nhv))
-    allocate(self%n_ra(self%nx, self%nra))
+    allocate(self%n_fra(self%nx, self%nra))
     
     self%n_fc(:,:) = 0
     self%n_fu(:,:) = 0
     self%n_fhv(:,:) = 0
-    self%n_ra(:,:) = 0
+    self%n_fra(:,:) = 0
     return 
   end function init_disper
     
@@ -695,6 +701,16 @@ contains
 
   !---------------------------------------------------------------------
 
+  integer function disper_get_nra(self) result(nra)
+    class(disper), intent(in) :: self
+
+    nra = self%nra
+    
+    return 
+  end function disper_get_nra
+
+  !---------------------------------------------------------------------
+
   double precision function disper_get_hv_min(self) result(hv_min)
     class(disper), intent(in) :: self
     
@@ -705,6 +721,15 @@ contains
 
   !---------------------------------------------------------------------
 
+  double precision function disper_get_ra_min(self) result(ra_min)
+    class(disper), intent(in) :: self
+    
+    ra_min = self%ra_min
+    
+    return 
+  end function disper_get_ra_min
+
+  !---------------------------------------------------------------------
 
   double precision function disper_get_dhv(self) result(dhv)
     class(disper), intent(in) :: self
@@ -716,6 +741,16 @@ contains
 
   !---------------------------------------------------------------------
 
+  double precision function disper_get_dra(self) result(dra)
+    class(disper), intent(in) :: self
+    
+    dra = self%dra
+    
+    return 
+  end function disper_get_dra
+
+  !---------------------------------------------------------------------
+  
   double precision function disper_get_c(self, i) result(c)
     class(disper), intent(in) :: self
     integer, intent(in) :: i
@@ -781,6 +816,28 @@ contains
   end function disper_get_hv_array
 
   !---------------------------------------------------------------------
+
+  double precision function disper_get_ra(self, i) result(ra)
+    class(disper), intent(in) :: self
+    integer, intent(in) :: i
+    
+    ra = self%ra(i)
+
+    return 
+  end function disper_get_ra
+
+  !---------------------------------------------------------------------
+
+  function disper_get_ra_array(self) result(ra)
+    class(disper), intent(in) :: self
+    double precision :: ra(self%nx)
+  
+    ra(:) = self%ra(:)
+
+    return 
+  end function disper_get_ra_array
+
+  !---------------------------------------------------------------------
   
   subroutine disper_save_syn(self)
     class(disper), intent(inout) :: self
@@ -798,6 +855,12 @@ contains
        j = int((self%hv(i) - self%hv_min) / self%dhv) + 1
        if (j < 1 .or. j > self%nhv) cycle
        self%n_fhv(i, j) = self%n_fhv(i, j) + 1
+
+       j = int((self%ra(i) - self%ra_min) / self%dra) + 1
+       if (j < 1 .or. j > self%nra) cycle
+       self%n_fra(i, j) = self%n_fra(i, j) + 1
+       
+       
     end do
     
     return 
@@ -838,4 +901,15 @@ contains
   
   !---------------------------------------------------------------------
 
+  function disper_get_n_fra(self) result(n_fra)
+    class(disper), intent(in) :: self
+    integer :: n_fra(self%nx, self%nra)
+    
+    n_fra(:,:) = self%n_fra(:,:)
+
+    return 
+  end function disper_get_n_fra
+
+  !---------------------------------------------------------------------
+  
 end module cls_disper
