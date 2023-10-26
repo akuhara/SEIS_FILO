@@ -23,8 +23,9 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 * __Supported input types__
     * Dispersion curves of the fundamental and higher mode Rayleigh waves
     * Rayleigh wave ellipticity
-    * P receiver functions
-    * S receiver functions
+    * Rayleigh wave admittance
+    * P receiver functions (or Green's functions)
+    * S receiver functions (or Green's functions)
 * __Model parameters__
     * Absolute Vp & Vs
     * Vp and Vs anomalies relative to the reference
@@ -57,7 +58,13 @@ See [online documentation](https://seis-filo.readthedocs.io/) for more details.
 
 ## Publications
 
-### Rayleigh wave dispersion curves
+### Rayleigh wavce dispersion curve and P receiver functions
+* Akuhara, T., Yamashita, Y., Ohyanagi, S., Sawaki, Y., Yamada, T., & Shinohara, M. (2023). Shallow Low-Velocity Layer in the Hyuga-Nada Accretionary Prism and Its Hydrological Implications: Insights From a Passive Seismic Array. Journal of Geophysical Research: Solid Earth, 128(4). https://doi.org/10.1029/2022JB026298
+
+### Rayleigh wave dispersion curve, ellipticity, and S receiver functions
+* Ai, S., Akuhara, T., Morishige, M., Yoshizawa, K., Shinohara, M., & Nakahigashi, K. (2023). Layered Evolution of the Oceanic Lithosphere Beneath the Japan Basin, the Sea of Japan. Journal of Geophysical Research: Solid Earth, 128(2). https://doi.org/10.1029/2022JB025581
+
+### Multimode Rayleigh wave dispersion curves
 * Yamaya, L., Mochizuki, K., Akuhara, T., Nishida, K. (2021). Sedimentary structure derived from multi-mode ambient noise tomography with dense OBS network at the Japan Trench. _Journal of Geophysical Research: Solid Earth_, 126(6), e2021JB021789. https://doi.org/10.1029/2021JB021789
 
 ### S receiver functions
