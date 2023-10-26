@@ -58,7 +58,7 @@ See [online documentation](https://seis-filo.readthedocs.io/) for more details.
 
 ## Publications
 
-### Rayleigh wavce dispersion curve and P receiver functions
+### Rayleigh wave dispersion curve and P receiver functions
 * Akuhara, T., Yamashita, Y., Ohyanagi, S., Sawaki, Y., Yamada, T., & Shinohara, M. (2023). Shallow Low-Velocity Layer in the Hyuga-Nada Accretionary Prism and Its Hydrological Implications: Insights From a Passive Seismic Array. Journal of Geophysical Research: Solid Earth, 128(4). https://doi.org/10.1029/2022JB026298
 
 ### Rayleigh wave dispersion curve, ellipticity, and S receiver functions
