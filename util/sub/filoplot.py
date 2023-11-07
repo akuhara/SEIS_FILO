@@ -83,6 +83,8 @@ class InvResult:
         u_used = "Group velocity is used?"
         hvlabel = "H/V"
         hv_used = "H/V is used?"
+        ralabel = "Admittance (km/GPa)"
+        ra_used = "Admittance is used?"
         
         if mode == "group":
             file = "group_sigma" + str(trace_id).zfill(3) + ".ppd"
@@ -93,6 +95,9 @@ class InvResult:
         elif mode == "hv":
             file = "hv_sigma" + str(trace_id).zfill(3) + ".ppd"
             used_label = hv_used
+        elif mode == "ra":
+            file = "ra_sigma" + str(trace_id).zfill(3) + ".ppd"
+            used_label = ra_used
         elif mode == "recv_func":
             file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
 
@@ -102,7 +107,7 @@ class InvResult:
                              delim_whitespace=True, \
                              header=None, \
                              names=(clabel, c_used, ulabel, u_used, \
-                                    hvlabel, hv_used), \
+                                    hvlabel, hv_used, ralabel, ra_used), \
                              comment='#')
             df_obs = df[df[used_label] == "T"]
         else:
@@ -378,6 +383,9 @@ class InvResult:
         u_used = "Group velocity is used?"
         hvlabel = "H/V"
         hv_used = "H/V is used?"
+        ralabel = "Admittance (km/GPa)"
+        ra_used = "Admittance is used?"
+        
         if mode == "c":
             ppd_file = "syn_phase" + str(curve_id).zfill(3) + ".ppd"
             vlabel = clabel
@@ -390,6 +398,10 @@ class InvResult:
             ppd_file = "syn_hv" + str(curve_id).zfill(3) + ".ppd"
             vlabel = hvlabel
             used_label = hv_used
+        elif mode == "ra":
+            ppd_file = "syn_ra" + str(curve_id).zfill(3) + ".ppd"
+            vlabel = ralabel
+            used_label = ra_used
 
         if param["freq_or_period"] == "freq":
             xlabel = "Frequency (Hz)"
@@ -414,7 +426,7 @@ class InvResult:
                          delim_whitespace=True, \
                          header=None, \
                          names=(clabel, c_used, ulabel, u_used, \
-                                hvlabel, hv_used), \
+                                hvlabel, hv_used, ralabel, ra_used), \
                          comment='#')
         df[xlabel] = np.arange(x_min, x_max + 0.5 * del_x, del_x)
         df_obs = df[df[used_label] == "T"]
@@ -458,8 +470,8 @@ class InvResult:
                 if count == 1:
                     continue
 
-                if (count - 2) // 7 + 1 == curve_id:
-                    iloc = (count - 2) % 7
+                if (count - 2) // 8 + 1 == curve_id:
+                    iloc = (count - 2) % 8
                     if iloc == 0:
                         self._param["obs_disper_file"] = tmp_line.replace('\'','')
                         self._param["obs_disper_file"] = self._param["obs_disper_file"].replace('\"','')
@@ -596,6 +608,10 @@ class InvResult:
         ax = plt.subplot2grid(grid_geom, (1, 2), fig=fig)
         self._plot_dispersion(fig, ax, "hv", curve_id)
 
+        # Admittance
+        ax = plt.subplot2grid(grid_geom, (1, 3), fig=fig)
+        self._plot_dispersion(fig, ax, "ra", curve_id)
+
         # Sigma phase velocity
         ax = plt.subplot2grid(grid_geom, (2, 0), fig=fig)
         self._plot_sigma(fig, ax, "phase", curve_id)
@@ -608,6 +624,10 @@ class InvResult:
         ax = plt.subplot2grid(grid_geom, (2, 2), fig=fig)
         self._plot_sigma(fig, ax, "hv", curve_id)
 
+        # Sigma Admittance
+        ax = plt.subplot2grid(grid_geom, (2, 3), fig=fig)
+        self._plot_sigma(fig, ax, "ra", curve_id)
+
         # Vs-z
         ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
         self._plot_vz(fig, ax, "vs")
@@ -618,17 +638,17 @@ class InvResult:
             self._plot_vz(fig, ax, "vp")
             
         # Likelihood history
-        ax = plt.subplot2grid(grid_geom, (0, 3), colspan=3, rowspan=1, \
+        ax = plt.subplot2grid(grid_geom, (0, 4), colspan=2, rowspan=1, \
                               fig=fig)
         self._plot_likelihood_history(fig, ax)
 
         # Temperature hisotry
-        ax = plt.subplot2grid(grid_geom, (1, 3), colspan=3, rowspan=1, \
+        ax = plt.subplot2grid(grid_geom, (1, 4), colspan=2, rowspan=1, \
                               fig=fig)
         self._plot_temp_history(fig, ax)
 
         # Proposal count
-        ax = plt.subplot2grid(grid_geom, (2, 3), colspan=3, rowspan=2, \
+        ax = plt.subplot2grid(grid_geom, (2, 4), colspan=2, rowspan=2, \
                               fig=fig)
         self._plot_proposal_count(fig, ax)
 
