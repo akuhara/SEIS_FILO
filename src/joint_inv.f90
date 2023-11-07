@@ -656,7 +656,7 @@ program main
           & disp(i)%get_hv_min(), disp(i)%get_dhv())
 
      ! Synthetic RA
-     write(filename, '(A5,I3.3,A4)')"syn_ra", i, ".ppd"
+     write(filename, '(A6,I3.3,A4)')"syn_ra", i, ".ppd"
      call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
           & disp(i)%get_nra(), disp(i)%get_n_fra(), &
           & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &

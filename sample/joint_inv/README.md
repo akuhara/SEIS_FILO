@@ -106,6 +106,7 @@ i_seed4 = 99887622
 # sig_c_min, sig_c_max, dev_sig_c
 # sig_u_min, sig_u_max, dev_sig_u
 # sig_hv_min, sig_hv_max, dev_sig_hv
+# sig_ra_min, sig_ra_max, dev_sig_ra
 #------------------------------------------------
 rayleigh.0th
 R 0 period
@@ -113,6 +114,7 @@ R 0 period
 0.3 4.5 0.05
 0.005 0.09 0.03
 0.005 0.1 0.01
+0.005 0.09 0.03
 0.005 0.09 0.03
 #------------------------------------------------
 # If multiple inputs (n_disp >= 2), write them below.
@@ -123,6 +125,7 @@ R 0 period
 #0.3 4.5 0.05
 #0.005 0.09 0.03
 #0.005 0.1 0.01
+#0.005 0.09 0.03
 #0.005 0.09 0.03
 ```
 
@@ -182,6 +185,8 @@ T T 0.001
 # 4th       : data availability (T or F)
 # 5th       : H/V ratio
 # 6th       : data availability (T or F)
+# 7th       : Admittance (km/GPa)
+# 8th       : data availability (T or F)
 
 1.5013 T 1.4521 F 0.4141 F # 1.0000
 1.5506 T 1.4220 F 0.4077 F # 2.0000

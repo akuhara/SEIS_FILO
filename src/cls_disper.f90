@@ -1,7 +1,7 @@
 !=======================================================================
 !   SEIS_FILO: 
 !   SEISmological tools for Flat Isotropic Layered structure in the Ocean
-!   Copyright (C) 2019-2021 Takeshi Akuhara
+!   Copyright (C) 2019-2023 Takeshi Akuhara
 !
 !   This program is free software: you can redistribute it and/or modify
 !   it under the terms of the GNU General Public License as published by
@@ -54,9 +54,9 @@ module cls_disper
      double precision :: hv_min = -2.d0
      double precision :: hv_max = 2.d0
      double precision :: dhv    = 0.1d0
-     double precision :: ra_min = -2.d0
-     double precision :: ra_max = 2.d0
-     double precision :: dra = 0.1d0
+     double precision :: ra_min = 0.d0
+     double precision :: ra_max = 15.d0
+     double precision :: dra = 0.25d0
      
      integer :: nc
      integer :: nhv
