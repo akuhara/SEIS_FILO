@@ -2,6 +2,8 @@
 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
+![LOGO](./img/SEIS_FILO_LOGO.png)
+
 [![Build Status](https://app.travis-ci.com/akuhara/SEIS_FILO.svg?branch=main)](https://app.travis-ci.com/akuhara/SEIS_FILO)
 [![codecov](https://codecov.io/gh/akuhara/SEIS_FILO/branch/main/graph/badge.svg?token=97D1SQ2VAV)](https://codecov.io/gh/akuhara/SEIS_FILO)
 ![GitHub](https://img.shields.io/github/license/akuhara/SEIS_FILO)
@@ -9,11 +11,11 @@ __SEISmological transdimensional inversion tools for Flat and Isotropic Layered 
 [![Documentation Status](https://readthedocs.org/projects/seis-filo/badge/?version=latest)](https://seis-filo.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4082670.svg)](https://doi.org/10.5281/zenodo.4082670)
 
-Copyright (C) 2019-2022 __Takeshi Akuhara__[![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6129-8459)
+Copyright (C) 2019-2023 __Takeshi Akuhara__[![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6129-8459)
 
 ___
 
-
+ 
 
 The SEIS_FILO program package aims to carry out transdimensional joint inversion of surface waves and receiver functions for ocean-bottom observatories. The main features are: 
 
@@ -48,7 +50,7 @@ Type `make` in the `src` directory. Please edit the [Makefile](https://github.co
 
 ## Quick Guidance
 ### Forward problem
-* [__disper_fwd__](https://github.com/akuhara/SEIS_FILO/tree/main/sample/disper_fwd): Surface wave forward computation (phase & group velocities)
+* [__disper_fwd__](https://github.com/akuhara/SEIS_FILO/tree/main/sample/disper_fwd): Surface wave forward computation (phase and group velocities, ellipticity and admittance)
 * [__recv_func_fwd__](https://github.com/akuhara/SEIS_FILO/tree/main/sample/recv_func_fwd): Receiver function forward computation
 
 ### Inverse problem
@@ -72,4 +74,4 @@ See [online documentation](https://seis-filo.readthedocs.io/) for more details.
 
 ___
 
-![LOGO](./img/SEIS_FILO_LOGO.png)
+

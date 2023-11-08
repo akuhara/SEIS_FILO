@@ -68,29 +68,37 @@ The sampling interval of receiver functions (sec).
 
 ### dev_sig_c
 
-The standard deviation of random perturbation amount added to the standard deviation of phase velocity noise (km/s). Only used for inversion.
+The standard deviation of random perturbation amount added to the standard deviation of phase velocity data noise (km/s). Only used for inversion.
 
 * Type: Double precision
 
 ### dev_sig_hv
 
-The standard deviation of random perturbation amount added to the standard deviation of H/V ratio. Only used for inversion.
+The standard deviation of random perturbation amount added to the standard deviation of H/V ratio data noise. Only used for inversion.
 
 * Type: Double precision
 
+
+### dev_sig_ra
+
+The standard deviation of random perturbation amount added to the standard deviation of Rayleigh admittance data noise. Only used for inversion.
+
+* Type: Double precision
+
+
+
 ### dev_sig_rf
 
-The standard deviation of random perturbation amount added to the standard deviation of receiver function noise. Only used for inversion.
+The standard deviation of random perturbation amount added to the standard deviation of receiver function data noise (km/GPa). Only used for inversion.
 
 * Type: Double precision
 
 
 ### dev_sig_u
 
-The standard deviation of random perturbation amount added to the standard deviation of group velocity noise (km/s). Only used for inversion.
+The standard deviation of random perturbation amount added to the standard deviation of group velocity data noise (km/s). Only used for inversion.
 
 * Type: Double precision
-
 
 
 ### dev_vp
@@ -424,6 +432,19 @@ The maximum standard deviation for data noise in H/V ratio. Only used for invers
 ### sig_hv_min
 
 The minimum standard deviation for data noise in H/V ratio. Only used for inversion.
+
+* Type: Double precision
+
+
+### sig_ra_max
+
+The maximum standard deviation for data noise in Rayleigh admittance (km/GPa). Only used for inversion.
+
+* Type: Double precision
+
+### sig_ra_min
+
+The minimum standard deviation for data noise in Ryaleigh admittance (km/GPa). Only used for inversion.
 
 * Type: Double precision
 

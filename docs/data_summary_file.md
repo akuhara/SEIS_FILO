@@ -26,6 +26,7 @@ __Format__
 
     * Line vi: [sig_u_min](parameter_list.md#sig_u_min), [sig_u_max](parameter_list.md#sig_u_max), [dev_sig_u](parameter_list.md#dev_sig_u) 
     * Line vii: [sig_hv_min](parameter_list.md#sig_hv_min), [sig_hv_max](parameter_list.md#sig_hv_max), [dev_sig_hv](parameter_list.md#dev_sig_hv) 
+	* Line viii: [sig_ra_min](parameter_list.md#sig_ra_min), [sig_ra_max](parameter_list.md#sig_ra_max), [dev_sig_ra](parameter_list.md#dev_sig_ra) 
  
 
 ## Receiver functions
