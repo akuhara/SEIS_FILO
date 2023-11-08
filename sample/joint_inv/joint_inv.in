@@ -22,9 +22,9 @@ vs_bottom        = 4.7     # Bottom half-space Vs [km/s]
 rho_bottom       = 3.4     # Bottom half-space density [g/cm^3]
 
 # Iteration numbers
-n_iter           = 200000  # Number of total iterations
-n_burn           = 100000  # Number of iterations for burn-in period
-n_corr           = 100	   # Interval of iterations to evaluate models
+n_iter           = 2000000  # Number of total iterations
+n_burn           = 1000000  # Number of iterations for burn-in period
+n_corr           = 1000	   # Interval of iterations to evaluate models
 
 # Parallel temerping
 n_chain        = 5         # Number of MCMC chains per process 

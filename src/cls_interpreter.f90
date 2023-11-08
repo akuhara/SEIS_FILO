@@ -180,7 +180,7 @@ contains
     self%vsz_mean = 0.d0
     allocate(self%n_rf_sig(self%n_bin_sig, self%n_rf))
     self%n_rf_sig(:,:) = 0
-    allocate(self%n_disp_sig(self%n_bin_sig, self%n_disp * 3))
+    allocate(self%n_disp_sig(self%n_bin_sig, self%n_disp * 4))
     self%n_disp_sig(:,:) = 0
 
     if (present(is_ocean)) then

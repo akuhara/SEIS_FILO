@@ -37,9 +37,9 @@ vs_bottom        = 4.7     # Bottom half-space Vs [km/s]
 rho_bottom       = 3.4     # Bottom half-space density [g/cm^3]
 
 # Iteration numbers
-n_iter           = 200  # Number of total iterations
-n_burn           = 100  # Number of iterations for burn-in period
-n_corr           = 1	   # Interval of iterations to evaluate models
+n_iter           = 2000000  # Number of total iterations
+n_burn           = 1000000  # Number of iterations for burn-in period
+n_corr           = 1000	   # Interval of iterations to evaluate models
 
 # Parallel temerping
 n_chain        = 5         # Number of MCMC chains per process 
@@ -106,23 +106,26 @@ i_seed4 = 99887622
 # sig_c_min, sig_c_max, dev_sig_c
 # sig_u_min, sig_u_max, dev_sig_u
 # sig_hv_min, sig_hv_max, dev_sig_hv
+# sig_ra_min, sig_ra_max, dev_sig_ra
 #------------------------------------------------
-rayleigh.0th
+disper_obs.txt
 R 0 period
-30 1.0 1.0
+11 10.0 2.0
 0.3 4.5 0.05
 0.005 0.09 0.03
-0.005 0.1 0.01
+0.005 0.09 0.03
+0.005 0.09 0.03
 0.005 0.09 0.03
 #------------------------------------------------
 # If multiple inputs (n_disp >= 2), write them below.
 #------------------------------------------------
-#rayleigh.1th
+#disper_obs2.txt
 #R 1 period
 #30 1.0 1.0
 #0.3 4.5 0.05
 #0.005 0.09 0.03
 #0.005 0.1 0.01
+#0.005 0.09 0.03
 #0.005 0.09 0.03
 ```
 
@@ -147,7 +150,7 @@ R 0 period
 # sig_rf_min, sig_rf_max, dev_sig_rf
 # deconv_flag, correct_amp, damp
 #----------------------------------------------------------
-recv_func.sac
+recv_func_obs.sac
 8.0 0.05 0.05
 P
 0.0 2.5
@@ -156,7 +159,7 @@ T T 0.001
 #----------------------------------------------------------
 # If multiple inputs (n_rf <= 2), write them below.
 #----------------------------------------------------------
-#recv_func2.sac
+#recv_func_obs2.sac
 #8.0 0.06 0.05
 #P
 #0.0 3.5
@@ -182,37 +185,21 @@ T T 0.001
 # 4th       : data availability (T or F)
 # 5th       : H/V ratio
 # 6th       : data availability (T or F)
+# 7th       : Admittance (km/GPa)
+# 8th       : data availability (T or F)
 
-1.5013 T 1.4521 F 0.4141 F # 1.0000
-1.5506 T 1.4220 F 0.4077 F # 2.0000
-1.7351 T 1.2729 F 0.4306 F # 3.0000
-1.9642 T 1.1640 F 0.4671 F # 4.0000
-2.3346 T 1.1823 F 0.4452 F # 5.0000
-2.8300 T 1.5285 F 0.5179 F # 6.0000
-3.1888 T 2.0098 F 0.5738 F # 7.0000
-3.3816 T 2.4087 F 0.6466 F # 8.0000
-3.5165 T 2.6757 F 0.6860 F # 9.0000
-3.6116 T 2.8739 F 0.7789 F # 10.0000
-3.6700 T 3.0576 F 0.7876 F # 11.0000
-3.7606 T 3.1680 F 0.8124 F # 12.0000
-3.7919 T 3.3388 F 0.8214 F # 13.0000
-3.8527 T 3.4106 F 0.8734 F # 14.0000
-3.9082 T 3.4702 F 0.8716 F # 15.0000
-3.9215 T 3.5385 F 0.8878 F # 16.0000
-3.9424 T 3.5949 F 0.8676 F # 17.0000
-3.9773 T 3.6727 F 0.9240 F # 18.0000
-3.9495 T 3.6801 F 0.8705 F # 19.0000
-3.9735 T 3.7078 F 0.9387 F # 20.0000
-3.9802 T 3.7549 F 0.9093 F # 21.0000
-4.0058 T 3.8055 F 0.9593 F # 22.0000
-3.9953 T 3.8220 F 0.8982 F # 23.0000
-4.0158 T 3.8250 F 0.9131 F # 24.0000
-4.0536 T 3.8668 F 0.9106 F # 25.0000
-4.0429 T 3.8985 F 0.9289 F # 26.0000
-4.0266 T 3.8743 F 0.9052 F # 27.0000
-4.0321 T 3.8827 F 0.9115 F # 28.0000
-4.0409 T 3.8956 F 0.8837 F # 29.0000
-4.0822 T 3.9208 F 0.8999 F # 30.0000
+3.6100 T 2.8533 T 0.7668 T 0.9933 T # 10.0000
+3.7823 T 3.1762 T 0.8556 T 1.5467 T # 12.0000
+3.8545 T 3.4303 T 0.8396 T 2.2434 T # 14.0000
+3.9076 T 3.5896 T 0.8578 T 2.9880 T # 16.0000
+4.0121 T 3.6652 T 0.9221 T 3.8243 T # 18.0000
+3.9564 T 3.7565 T 0.8941 T 4.7970 T # 20.0000
+4.0117 T 3.7971 T 0.8721 T 5.8646 T # 22.0000
+4.0221 T 3.8531 T 0.8810 T 7.0496 T # 24.0000
+4.0270 T 3.8690 T 0.8896 T 8.2722 T # 26.0000
+4.0280 T 3.9286 T 0.8809 T 9.6848 T # 28.0000
+4.0618 T 3.9304 T 0.9222 T 11.1202 T # 30.0000
+
 
 ```
 

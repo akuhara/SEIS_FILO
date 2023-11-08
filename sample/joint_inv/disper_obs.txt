@@ -1,0 +1,26 @@
+#-------------------------------------------------------------
+# Sample Observation Data File:
+# Input to joint_inv of SEIS_FILO package
+#-------------------------------------------------------------
+
+# Format
+# 1st column: phase velocity (km/s)
+# 2nd       : data availability (T or F)
+# 3rd       : group velocity (km/s)
+# 4th       : data availability (T or F)
+# 5th       : H/V ratio
+# 6th       : data availability (T or F)
+# 7th       : admittance (km/GPa)
+# 8th       : data availability (T or F)
+
+3.6100 T 2.8533 T 0.7668 T 0.9933 T # 10.0000
+3.7823 T 3.1762 T 0.8556 T 1.5467 T # 12.0000
+3.8545 T 3.4303 T 0.8396 T 2.2434 T # 14.0000
+3.9076 T 3.5896 T 0.8578 T 2.9880 T # 16.0000
+4.0121 T 3.6652 T 0.9221 T 3.8243 T # 18.0000
+3.9564 T 3.7565 T 0.8941 T 4.7970 T # 20.0000
+4.0117 T 3.7971 T 0.8721 T 5.8646 T # 22.0000
+4.0221 T 3.8531 T 0.8810 T 7.0496 T # 24.0000
+4.0270 T 3.8690 T 0.8896 T 8.2722 T # 26.0000
+4.0280 T 3.9286 T 0.8809 T 9.6848 T # 28.0000
+4.0618 T 3.9304 T 0.9222 T 11.1202 T # 30.0000

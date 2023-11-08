@@ -1,7 +1,7 @@
 !=======================================================================
 !   SEIS_FILO: 
 !   SEISmological tools for Flat Isotropic Layered structure in the Ocean
-!   Copyright (C) 2019 Takeshi Akuhara
+!   Copyright (C) 2019-2023 Takeshi Akuhara
 !
 !   This program is free software: you can redistribute it and/or modify
 !   it under the terms of the GNU General Public License as published by
@@ -310,31 +310,34 @@ program main
 
   if (obs_disp%get_n_disp() > 0) then
      hyp_disp = hyper_model(                   &
-          & nx    = obs_disp%get_n_disp() * 3, &
+          & nx    = obs_disp%get_n_disp() * 4, &
           & verb  = verb                       &
           & )
      if (para%get_solve_disper_sig()) then
         do i = 1, obs_disp%get_n_disp()
-           call hyp_disp%set_prior(3*i - 2, &
+           call hyp_disp%set_prior(4*i - 3, &
                 & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_max(i))
-           call hyp_disp%set_perturb(3*i - 2, obs_disp%get_dev_sig_c(i))
-           call hyp_disp%set_prior(3*i - 1, &
+           call hyp_disp%set_perturb(4*i - 3, obs_disp%get_dev_sig_c(i))
+           call hyp_disp%set_prior(4*i - 2, &
                 & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_max(i))
-           call hyp_disp%set_perturb(3*i - 1, obs_disp%get_dev_sig_u(i))
-           call hyp_disp%set_prior(3*i, &
+           call hyp_disp%set_perturb(4*i - 2, obs_disp%get_dev_sig_u(i))
+           call hyp_disp%set_prior(4*i - 1, &
                 & obs_disp%get_sig_hv_min(i), obs_disp%get_sig_hv_max(i))
-           call hyp_disp%set_perturb(3*i, obs_disp%get_dev_sig_hv(i))
+           call hyp_disp%set_perturb(4*i -1, obs_disp%get_dev_sig_hv(i))
+           call hyp_disp%set_prior(4*i, &
+                & obs_disp%get_sig_ra_min(i), obs_disp%get_sig_ra_max(i))
+           call hyp_disp%set_perturb(4*i, obs_disp%get_dev_sig_ra(i))
         end do
      else
         do i = 1, obs_disp%get_n_disp()
-           call hyp_disp%set_prior(3*i - 2, &
+           call hyp_disp%set_prior(4*i - 3, &
                 & obs_disp%get_sig_c_min(i), obs_disp%get_sig_c_min(i))
-           call hyp_disp%set_prior(3*i - 1, &
+           call hyp_disp%set_prior(4*i - 2, &
                 & obs_disp%get_sig_u_min(i), obs_disp%get_sig_u_min(i))
-           call hyp_disp%set_prior(3*i, &
+           call hyp_disp%set_prior(4*i - 1, &
                 & obs_disp%get_sig_hv_min(i), obs_disp%get_sig_hv_min(i))
-           !call hyp_disp%set_x(2*i - 1, obs_disp%get_sig_c_min(i))
-           !call hyp_disp%set_x(2*i    , obs_disp%get_sig_u_min(i))
+           call hyp_disp%set_prior(4*i, &
+                & obs_disp%get_sig_ra_min(i), obs_disp%get_sig_ra_min(i))
         end do
      end if
   end if
@@ -652,30 +655,44 @@ program main
           & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
           & disp(i)%get_hv_min(), disp(i)%get_dhv())
 
+     ! Synthetic RA
+     write(filename, '(A6,I3.3,A4)')"syn_ra", i, ".ppd"
+     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
+          & disp(i)%get_nra(), disp(i)%get_n_fra(), &
+          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
+          & disp(i)%get_ra_min(), disp(i)%get_dra())
+
      ! Noise phase velocity
-     del_amp = (hyp_disp%get_prior_param(3*i-2, 2) - &
-          & hyp_disp%get_prior_param(3*i-2, 1)) / para%get_n_bin_sig()
+     del_amp = (hyp_disp%get_prior_param(4*i-3, 2) - &
+          & hyp_disp%get_prior_param(4*i-3, 1)) / para%get_n_bin_sig()
      write(filename, '(A,I3.3,A)')"phase_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(3*i-2), n_mod, &
-          & hyp_disp%get_prior_param(3*i-2, 1), del_amp)
+          & intpr%get_n_disp_sig(4*i-3), n_mod, &
+          & hyp_disp%get_prior_param(4*i-3, 1), del_amp)
 
      ! Noise group velocity
-     del_amp = (hyp_disp%get_prior_param(3*i-1, 2) - &
-          & hyp_disp%get_prior_param(3*i-1, 1)) / para%get_n_bin_sig()
+     del_amp = (hyp_disp%get_prior_param(4*i-2, 2) - &
+          & hyp_disp%get_prior_param(4*i-2, 1)) / para%get_n_bin_sig()
      write(filename, '(A,I3.3,A)')"group_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(3*i-1), n_mod, &
-          & hyp_disp%get_prior_param(3*i-1, 1), del_amp)
+          & intpr%get_n_disp_sig(4*i-2), n_mod, &
+          & hyp_disp%get_prior_param(4*i-2, 1), del_amp)
 
      ! Noise H/V
-     del_amp = (hyp_disp%get_prior_param(3*i, 2) - &
-          & hyp_disp%get_prior_param(3*i, 1)) / para%get_n_bin_sig()
+     del_amp = (hyp_disp%get_prior_param(4*i-1, 2) - &
+          & hyp_disp%get_prior_param(4*i-1, 1)) / para%get_n_bin_sig()
      write(filename, '(A,I3.3,A)')"hv_sigma", i, ".ppd"
      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(3*i), n_mod, &
-          & hyp_disp%get_prior_param(3*i, 1), del_amp)
+          & intpr%get_n_disp_sig(4*i-1), n_mod, &
+          & hyp_disp%get_prior_param(4*i-1, 1), del_amp)
 
+     ! Noise RA
+      del_amp = (hyp_disp%get_prior_param(4*i, 2) - &
+           & hyp_disp%get_prior_param(4*i, 1)) / para%get_n_bin_sig()
+      write(filename, '(A,I3.3,A)')"ra_sigma", i, ".ppd"
+      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+           & intpr%get_n_disp_sig(4*i), n_mod, &
+           & hyp_disp%get_prior_param(4*i, 1), del_amp)
   end do
   
   ! Likelihood history
