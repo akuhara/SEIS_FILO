@@ -1,4 +1,4 @@
-From ubuntu:22.04
+From ubuntu:18.04
 ARG USER=seismologist
 RUN apt-get update && apt-get install -y \
   gfortran \
