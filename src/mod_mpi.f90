@@ -25,6 +25,6 @@
 !
 !=======================================================================
 module mod_mpi
+  use mpi
   implicit none
-  include 'mpif.h'
 end module mod_mpi
