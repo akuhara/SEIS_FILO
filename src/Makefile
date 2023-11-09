@@ -6,7 +6,7 @@
 FC     = mpif90
 FFLAGS = -g -Wall -pedantic -fbounds-check -O0 \
          -Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace \
-	 -pg
+	 -pg -std=f2008
 
 # Example 2. GNU fortran for fast computation
 #FC     = mpif90
