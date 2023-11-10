@@ -55,8 +55,8 @@ module cls_disper
      double precision :: hv_max = 2.d0
      double precision :: dhv    = 0.1d0
      double precision :: ra_min = 0.d0
-     double precision :: ra_max = 15.d0
-     double precision :: dra = 0.25d0
+     double precision :: ra_max = 1.3d0
+     double precision :: dra = 0.015d0
      
      integer :: nc
      integer :: nhv
