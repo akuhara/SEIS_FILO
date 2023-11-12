@@ -57,4 +57,4 @@ ace wave dispersion curves
     * [Verification](verification.md)
     * [Spherical Earth mode](spherical_earth_mode.md)
     * [Diagnostic mode](diagnostic_mode.md)
-    * [Docker container](docker_container.md)
+    * [Docker image](docker_container.md)
