@@ -1,22 +1,15 @@
-# Docker container
+# Docker Image
 
-A docker container is available, which offers ready-to-use environment for the SEIS_FILO package.  There is no need to build the software by yourself any more. 
+The SEIS_FILO package is conveniently packaged as a Docker image, readily available on Docker Hub, providing an instantly deployable environment.
 
-1.  Clone Github repository.
-
-    `git clone --depth 1 https://github.com/akuhara/SEIS_FILO.git`
-
-2. Go inside the sofware directory.
-
-    `cd SEIS_FILO`
-
-3. Pull docker container.
+1. Pull the Docker Image from Docker Hub:
 
     `docker pull akuhara/seis-filo`
 
-4. Run docker container
+2. Run the docker container
 
-    `docker run -it -v (Absolute path to directory in host machine):/wrk akuhara/seis-filo`
+    `docker run -it -v (Absolute path to directory on host machine):/home/seismologist/wrk akuhara/seis-filo`
 
-!!! Note    
-    * With the -v option in the above procedure 4, a work direcory on a host PC is mounted on `/wrk` directory in the container.
+!!! Note
+    * Utilize the -v option to mount a working directory from your host PC onto the /wrk directory within the container. This facilitates seamless data file integration.
+    * Inside the container, your username is set as 'seismologist.'
