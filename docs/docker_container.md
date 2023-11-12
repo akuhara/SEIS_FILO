@@ -11,5 +11,5 @@ The SEIS_FILO package is conveniently packaged as a Docker image, readily availa
     `docker run -it -v (Absolute path to directory on host machine):/home/seismologist/wrk akuhara/seis-filo`
 
 !!! Note
-    * Utilize the -v option to mount a working directory from your host PC onto the /wrk directory within the container. This facilitates seamless data file integration.
+    * Utilize the -v option to mount a working directory from your host PC onto the /home/seismologist/wrk directory within the container. This facilitates seamless data file integration.
     * Inside the container, your username is set as 'seismologist.'
