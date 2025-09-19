@@ -143,9 +143,11 @@ contains
        misfit_c = 0.d0
        misfit_u = 0.d0
        misfit_hv = 0.d0
+       misfit_ra = 0.d0
        nc = 0
        nu = 0
        nhv = 0
+       nra = 0
        sc = hyp%get_x(4*j-3)
        su = hyp%get_x(4*j-2)
        shv = hyp%get_x(4*j-1)
