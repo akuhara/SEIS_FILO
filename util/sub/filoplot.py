@@ -67,7 +67,7 @@ class InvResult:
         file = "n_layers.ppd"
         xlabel = "# of layers"
         ylabel = "Probability"
-        df = pd.read_csv(file, delim_whitespace=True, header=None, \
+        df = pd.read_csv(file, sep=r'\s+', header=None, \
                          names=(xlabel, ylabel))
         df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
         ax.set_ylabel(ylabel)
@@ -102,9 +102,9 @@ class InvResult:
             file = "rf_sigma" + str(trace_id).zfill(3) + ".ppd"
 
         
-        if mode == "group" or mode == "phase" or mode == "hv":
+        if mode == "group" or mode == "phase" or mode == "hv" or mode == "ra":
             df = pd.read_csv(param["obs_disper_file"],\
-                             delim_whitespace=True, \
+                             sep=r'\s+', \
                              header=None, \
                              names=(clabel, c_used, ulabel, u_used, \
                                     hvlabel, hv_used, ralabel, ra_used), \
@@ -116,7 +116,7 @@ class InvResult:
         xlabel = "STDV of data noise"
         ylabel = "Probability"
         if len(df_obs) > 0:
-            df = pd.read_csv(file, delim_whitespace=True, header=None, \
+            df = pd.read_csv(file, sep=r'\s+', header=None, \
                              names=(xlabel, ylabel))
             df.plot(x=xlabel, y=ylabel, ax=ax, kind="area", legend=None)
         else:
@@ -158,20 +158,20 @@ class InvResult:
         nbin_z = int(param["n_bin_z"])
         del_z = (z_max - z_min) / nbin_z
         
-        df = pd.read_csv(file, delim_whitespace=True, header=None, \
+        df = pd.read_csv(file, sep=r'\s+', header=None, \
                          names=(vlabel, zlabel, plabel))
         v_tmp = df[df[vlabel].duplicated()==False][vlabel]
         z_tmp = df[df[zlabel].duplicated()==False][zlabel]
         df_below_sea = df[df[zlabel] > float(param["z_min"])]
         p_max = df_below_sea[plabel].max()
-        data = df.pivot(zlabel, vlabel, plabel)
+        data = df.pivot(index=zlabel, columns=vlabel, values=plabel)
         mappable = ax.pcolormesh(v_tmp, z_tmp, \
                                  data, shading='nearest', \
                                  cmap='hot_r', vmax=p_max)
         cbar = fig.colorbar(mappable, ax=ax)
         cbar.ax.set_ylabel(plabel)
         
-        df = pd.read_csv(mean_file, delim_whitespace=True, \
+        df = pd.read_csv(mean_file, sep=r'\s+', \
                          header=None, names=(zlabel, vlabel))
         line, = ax.plot(df[vlabel], df[zlabel], color="blue")
         lines.append(line)
@@ -189,7 +189,7 @@ class InvResult:
             xlabel2 = "Depth (km)"
             ylabel2 = "P wave velocity (km/s)"
             zlabel2 = "S wave velocity (km/s)"
-            df = pd.read_csv(ref_file, delim_whitespace=True, \
+            df = pd.read_csv(ref_file, sep=r'\s+', \
                              header=None, \
                              names=(xlabel2, ylabel2, zlabel2))
             if (mode == "vs"):
@@ -273,7 +273,7 @@ class InvResult:
         alabel = "RF amp."
         plabel = "Probability"
         
-        df = pd.read_csv(ppd_file, delim_whitespace=True, \
+        df = pd.read_csv(ppd_file, sep=r'\s+', \
                          header=None, \
                          names=(alabel, tlabel, plabel))
         if "amp_min" in param:
@@ -288,7 +288,7 @@ class InvResult:
             
         t_tmp = df[df[tlabel].duplicated()==False][tlabel]
         a_tmp = df[df[alabel].duplicated()==False][alabel]
-        data = df.pivot(tlabel, alabel, plabel)
+        data = df.pivot(index=tlabel, columns=alabel, values=plabel)
         mappable = ax.pcolormesh(a_tmp, t_tmp, data, cmap='hot_r', \
                                  shading='nearest')
         cbar = fig.colorbar(mappable, ax=ax)
@@ -385,6 +385,8 @@ class InvResult:
         hv_used = "H/V is used?"
         ralabel = "Admittance (km/GPa)"
         ra_used = "Admittance is used?"
+
+        print("Plotting " + mode + " for curve " + str(curve_id))
         
         if mode == "c":
             ppd_file = "syn_phase" + str(curve_id).zfill(3) + ".ppd"
@@ -410,7 +412,7 @@ class InvResult:
             
         
         plabel = "Probability"
-        df = pd.read_csv(ppd_file, delim_whitespace=True, header=None, \
+        df = pd.read_csv(ppd_file, sep=r'\s+', header=None, \
                          names=(xlabel, vlabel, plabel))
         
         x_min = float(param["xmin"])
@@ -419,11 +421,11 @@ class InvResult:
         x_max = x_min + (nx -1) * del_x
         v_tmp = df[df[vlabel].duplicated()==False][vlabel]
         x_tmp = df[df[xlabel].duplicated()==False][xlabel]
-        data = df.pivot(vlabel, xlabel, plabel)
+        data = df.pivot(index=vlabel, columns=xlabel, values=plabel)
 
         # Observation
         df = pd.read_csv(param["obs_disper_file"],\
-                         delim_whitespace=True, \
+                         sep=r'\s+', \
                          header=None, \
                          names=(clabel, c_used, ulabel, u_used, \
                                 hvlabel, hv_used, ralabel, ra_used), \
@@ -501,7 +503,7 @@ class InvResult:
 
         if diagnostic == ".true." or diagnostic == "t":
             file = "likelihood.history"
-            df = pd.read_csv(file, delim_whitespace=True, header=None)
+            df = pd.read_csv(file, sep=r'\s+', header=None)
             n_all = len(df.columns)
             if n_all > 5:
                 df.plot(ax=ax, legend=None, linewidth=0.5, color="gray")
@@ -535,7 +537,7 @@ class InvResult:
 
         if diagnostic == ".true." or diagnostic == "t":
             file = "temp.history"
-            df = pd.read_csv(file, delim_whitespace=True, header=None,
+            df = pd.read_csv(file, sep=r'\s+', header=None,
                              dtype=np.float64)
             n_all = len(df.columns)
             if n_all > 5:
@@ -564,7 +566,7 @@ class InvResult:
     def _plot_proposal_count(self, fig, ax):
         param = self._param
         file = "proposal.count"
-        df = pd.read_csv(file, delim_whitespace=True, header=None, \
+        df = pd.read_csv(file, sep=r'\s+', header=None, \
                          index_col=0)
     
         #if param["solve_vp"].lower() == ".true.":
