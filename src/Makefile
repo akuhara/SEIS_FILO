@@ -27,7 +27,7 @@ FFLAGS = -g -Wall -pedantic -fbounds-check -O0 \
 #-----------------------------------------------------------------------
 
 # Example 1-2. Free library
-FFTW   = -I/usr/local/include -lfftw3
+FFTW   = -I/usr/include -lfftw3
 LAPACK = -llapack -lblas
 
 # Example 3. Intel library
