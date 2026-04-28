@@ -45,7 +45,7 @@ contains
          & MPI_COMM_WORLD, ierr)
     
     if (rank == 0) then
-       open(newunit = io_x, file = filename, status = "unknown", &
+       open(newunit = io_x, file = filename, status = "replace", &
             & iostat = ierr)
        if (ierr /= 0) then
           write(0, *)"ERROR: cannot open ", trim(filename)
@@ -80,7 +80,7 @@ contains
          & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     
     if (rank == 0) then
-       open(newunit = io_xy, file = filename, status = "unknown", &
+       open(newunit = io_xy, file = filename, status = "replace", &
             & iostat = ierr)
        if (ierr /= 0) then
           write(0, *)"ERROR: cannot open ", trim(filename)
@@ -118,7 +118,7 @@ contains
          & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     
     if (rank == 0) then
-       open(newunit = io_x, file = filename, status = "unknown", &
+       open(newunit = io_x, file = filename, status = "replace", &
             & iostat = ierr)
        if (ierr /= 0) then
           write(0, *)"ERROR: cannot open ", trim(filename)

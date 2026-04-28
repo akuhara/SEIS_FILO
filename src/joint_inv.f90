@@ -71,6 +71,7 @@ end module mod_joint_inv_required
 !=======================================================================
 
 program main
+  use iso_fortran_env, only: output_unit
   use mod_joint_inv_required
   use mod_mpi
   use cls_parallel  
@@ -93,7 +94,7 @@ program main
   integer :: n_td, io_vmod_all
   logical :: verb
   integer :: i, j, k, ierr, n_proc, rank, n_arg
-  integer :: n_mod
+  integer :: n_mod, n_mod_local
   double precision :: log_likelihood, temp, log_likelihood2
   double precision :: log_prior_ratio, log_proposal_ratio
   double precision :: del_amp, prior
@@ -139,6 +140,7 @@ program main
      write(*,*)
      write(*,*)"Start Program <joint_inv>"
      write(*,*)
+     flush(output_unit)
   end if
 
   ! Get parameter file name from command line argument
@@ -177,6 +179,7 @@ program main
      obs_rf = observation_recv_func(para%get_recv_func_in(), verb)
   else
      if (verb) write(*,*)"<< No receiver function input >>"
+     if (verb) flush(output_unit)
      call obs_rf%set_n_rf(0)
   end if
   
@@ -185,6 +188,7 @@ program main
      obs_disp = observation_disper(para%get_disper_in(), verb)
   else
      if (verb) write(*,*)"<< No dispersion curve input >>"
+     if (verb) flush(output_unit)
      call obs_disp%set_n_disp(0)
   end if
   
@@ -444,6 +448,7 @@ program main
   !---------------------------------------------------------------------
   ! 2. MCMC 
   !---------------------------------------------------------------------
+  n_mod_local = 0
   write(filename,'("vmod_out.",I3.3)') rank
   open(newunit = io_vmod_all, file = filename, iostat = ierr, &
        & status = "replace")
@@ -499,6 +504,7 @@ program main
            else if (j==1) then
               write(*,*) i, "/", para%get_n_iter()
            end if
+           flush(output_unit)
         end if
         
         ! Recording
@@ -526,6 +532,7 @@ program main
                     call disp(k)%save_syn()
                  end do
               end if
+              n_mod_local = n_mod_local + 1
            end if
            
            ! V model
@@ -553,9 +560,15 @@ program main
 
            call vm%display(io_vmod_all)
            write(io_vmod_all,'(a)') ">"
-           !flush(io_vmod_all)
+           flush(io_vmod_all)
         end if
      end do
+
+     if (mod(i, para%get_n_corr()) == 0 .and. i > para%get_n_burn()) then
+        call mpi_allreduce(n_mod_local, n_mod, 1, MPI_INTEGER4, &
+             & MPI_SUM, MPI_COMM_WORLD, ierr)
+        call output_joint_inv_products(n_mod, i)
+     end if
      
      ! Swap temperture
      do j = 1, 10
@@ -569,144 +582,151 @@ program main
   !---------------------------------------------------------------------
 
   ! Total model number
-  n_mod = para%get_n_cool() * n_proc * &
-       & (para%get_n_iter() - para%get_n_burn()) / &
-       & para%get_n_corr()
+  call mpi_allreduce(n_mod_local, n_mod, 1, MPI_INTEGER4, &
+       & MPI_SUM, MPI_COMM_WORLD, ierr)
 
-  ! K
-  filename = "n_layers.ppd"
-  call output_ppd_1d(filename, rank, para%get_k_max(), &
-       & intpr%get_n_layers(), n_mod, &
-       & 1.d0 , 1.d0)
-  
-  ! marginal posterior of Vs 
-  filename = "vs_z.ppd"
-  call output_ppd_2d(filename, rank, para%get_n_bin_vs(), &
-       & para%get_n_bin_z(), intpr%get_n_vsz(), n_mod, &
-       & para%get_vs_min() + 0.5d0 * intpr%get_dvs(), &
-       & intpr%get_dvs(), &
-       & 0.5d0 * intpr%get_dz(), &
-       & intpr%get_dz())
-  
-  ! Mean Vs
-  filename = "vs_z.mean"
-  call output_mean_model(filename, rank, para%get_n_bin_z(), &
-       & intpr%get_vsz_mean(), n_mod, &
-       & 0.5d0 * intpr%get_dz(), &
-       & intpr%get_dz())
-
-  if (para%get_solve_vp()) then
-     ! marginal posterior of Vp
-     filename = "vp_z.ppd"
-     call output_ppd_2d(filename, rank, para%get_n_bin_vp(), &
-          & para%get_n_bin_z(), intpr%get_n_vpz(), n_mod, &
-          & para%get_vp_min() + 0.5d0 * intpr%get_dvp(), &
-          & intpr%get_dvp(), &
-          & 0.5d0 * intpr%get_dz(), &
-          & intpr%get_dz())
-     ! Mean Vp
-     filename = "vp_z.mean"
-     call output_mean_model(filename, rank, para%get_n_bin_z(), &
-          & intpr%get_vpz_mean(), n_mod, &
-          & 0.5d0 * intpr%get_dz(), &
-          & intpr%get_dz())
-  end if
-  
-  ! RF
-  do i = 1, obs_rf%get_n_rf()
-     ! Synthetic 
-     del_amp = (rf(i)%get_amp_max() - rf(i)%get_amp_min()) / &
-          & rf(i)%get_n_bin_amp()
-     write(filename, '(A6,I3.3,A4)')"syn_rf", i, ".ppd"
-     call output_ppd_2d(filename, rank, 1024, &
-          & rf(i)%get_n_bin_amp(), rf(i)%get_n_syn_rf(), &
-          & n_mod, obs_rf%get_t_start(i), obs_rf%get_delta(i), &
-          & rf(i)%get_amp_min(), del_amp)
-
-     ! Noise
-     del_amp = (hyp_rf%get_prior_param(i, 2) - &
-          & hyp_rf%get_prior_param(i, 1)) / para%get_n_bin_sig()
-     write(filename, '(A,I3.3,A)')"rf_sigma", i, ".ppd"
-     call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_rf_sig(i), n_mod, &
-          & hyp_rf%get_prior_param(i, 1), del_amp)
-  end do
-  
-  ! Dispersion
-  do i = 1, obs_disp%get_n_disp()
-     ! Synthetic phase velocity
-     write(filename, '(A9,I3.3,A4)')"syn_phase", i, ".ppd"
-     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
-          & disp(i)%get_nc(), disp(i)%get_n_fc(), &
-          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
-          & obs_disp%get_cmin(i), obs_disp%get_dc(i))
-     
-     ! Synthetic group velocity
-     write(filename, '(A9,I3.3,A4)')"syn_group", i, ".ppd"
-     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
-          & disp(i)%get_nc(), disp(i)%get_n_fu(), &
-          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
-          & obs_disp%get_cmin(i), obs_disp%get_dc(i))
-
-     ! Synthetic H/V
-     write(filename, '(A6,I3.3,A4)')"syn_hv", i, ".ppd"
-     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
-          & disp(i)%get_nhv(), disp(i)%get_n_fhv(), &
-          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
-          & disp(i)%get_hv_min(), disp(i)%get_dhv())
-
-     ! Synthetic RA
-     write(filename, '(A6,I3.3,A4)')"syn_ra", i, ".ppd"
-     call output_ppd_2d(filename, rank, disp(i)%get_nx(), &
-          & disp(i)%get_nra(), disp(i)%get_n_fra(), &
-          & n_mod, obs_disp%get_xmin(i), obs_disp%get_dx(i), &
-          & disp(i)%get_ra_min(), disp(i)%get_dra())
-
-     ! Noise phase velocity
-     del_amp = (hyp_disp%get_prior_param(4*i-3, 2) - &
-          & hyp_disp%get_prior_param(4*i-3, 1)) / para%get_n_bin_sig()
-     write(filename, '(A,I3.3,A)')"phase_sigma", i, ".ppd"
-     call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(4*i-3), n_mod, &
-          & hyp_disp%get_prior_param(4*i-3, 1), del_amp)
-
-     ! Noise group velocity
-     del_amp = (hyp_disp%get_prior_param(4*i-2, 2) - &
-          & hyp_disp%get_prior_param(4*i-2, 1)) / para%get_n_bin_sig()
-     write(filename, '(A,I3.3,A)')"group_sigma", i, ".ppd"
-     call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(4*i-2), n_mod, &
-          & hyp_disp%get_prior_param(4*i-2, 1), del_amp)
-
-     ! Noise H/V
-     del_amp = (hyp_disp%get_prior_param(4*i-1, 2) - &
-          & hyp_disp%get_prior_param(4*i-1, 1)) / para%get_n_bin_sig()
-     write(filename, '(A,I3.3,A)')"hv_sigma", i, ".ppd"
-     call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-          & intpr%get_n_disp_sig(4*i-1), n_mod, &
-          & hyp_disp%get_prior_param(4*i-1, 1), del_amp)
-
-     ! Noise RA
-      del_amp = (hyp_disp%get_prior_param(4*i, 2) - &
-           & hyp_disp%get_prior_param(4*i, 1)) / para%get_n_bin_sig()
-      write(filename, '(A,I3.3,A)')"ra_sigma", i, ".ppd"
-      call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
-           & intpr%get_n_disp_sig(4*i), n_mod, &
-           & hyp_disp%get_prior_param(4*i, 1), del_amp)
-  end do
-  
-  ! Likelihood history
-  if (para%get_diagnostic_mode()) then
-     filename = "likelihood.history"
-     call pt%output_history(filename, 'l')
-     filename = "temp.history"
-     call pt%output_history(filename, 't')
-  end if
-  
-  ! Proposal count
-  filename = "proposal.count"
-  call pt%output_proposal(filename, prop%get_labels())
+  call output_joint_inv_products(n_mod)
   
   call mpi_finalize(ierr)
   stop
+contains
+
+  subroutine output_joint_inv_products(n_mod_current, n_iter_current)
+    integer, intent(in) :: n_mod_current
+    integer, intent(in), optional :: n_iter_current
+    integer :: i_out
+
+    if (n_mod_current > 0) then
+       filename = "n_layers.ppd"
+       call output_ppd_1d(filename, rank, para%get_k_max(), &
+            & intpr%get_n_layers(), n_mod_current, &
+            & 1.d0 , 1.d0)
+
+       filename = "vs_z.ppd"
+       call output_ppd_2d(filename, rank, para%get_n_bin_vs(), &
+            & para%get_n_bin_z(), intpr%get_n_vsz(), n_mod_current, &
+            & para%get_vs_min() + 0.5d0 * intpr%get_dvs(), &
+            & intpr%get_dvs(), &
+            & 0.5d0 * intpr%get_dz(), &
+            & intpr%get_dz())
+
+       filename = "vs_z.mean"
+       call output_mean_model(filename, rank, para%get_n_bin_z(), &
+            & intpr%get_vsz_mean(), n_mod_current, &
+            & 0.5d0 * intpr%get_dz(), &
+            & intpr%get_dz())
+
+       if (para%get_solve_vp()) then
+          filename = "vp_z.ppd"
+          call output_ppd_2d(filename, rank, para%get_n_bin_vp(), &
+               & para%get_n_bin_z(), intpr%get_n_vpz(), n_mod_current, &
+               & para%get_vp_min() + 0.5d0 * intpr%get_dvp(), &
+               & intpr%get_dvp(), &
+               & 0.5d0 * intpr%get_dz(), &
+               & intpr%get_dz())
+          filename = "vp_z.mean"
+          call output_mean_model(filename, rank, para%get_n_bin_z(), &
+               & intpr%get_vpz_mean(), n_mod_current, &
+               & 0.5d0 * intpr%get_dz(), &
+               & intpr%get_dz())
+       end if
+
+       do i_out = 1, obs_rf%get_n_rf()
+          del_amp = (rf(i_out)%get_amp_max() - rf(i_out)%get_amp_min()) / &
+               & rf(i_out)%get_n_bin_amp()
+          write(filename, '(A6,I3.3,A4)')"syn_rf", i_out, ".ppd"
+          call output_ppd_2d(filename, rank, 1024, &
+               & rf(i_out)%get_n_bin_amp(), rf(i_out)%get_n_syn_rf(), &
+               & n_mod_current, obs_rf%get_t_start(i_out), &
+               & obs_rf%get_delta(i_out), rf(i_out)%get_amp_min(), del_amp)
+
+          del_amp = (hyp_rf%get_prior_param(i_out, 2) - &
+               & hyp_rf%get_prior_param(i_out, 1)) / para%get_n_bin_sig()
+          write(filename, '(A,I3.3,A)')"rf_sigma", i_out, ".ppd"
+          call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+               & intpr%get_n_rf_sig(i_out), n_mod_current, &
+               & hyp_rf%get_prior_param(i_out, 1), del_amp)
+       end do
+
+       do i_out = 1, obs_disp%get_n_disp()
+          write(filename, '(A9,I3.3,A4)')"syn_phase", i_out, ".ppd"
+          call output_ppd_2d(filename, rank, disp(i_out)%get_nx(), &
+               & disp(i_out)%get_nc(), disp(i_out)%get_n_fc(), &
+               & n_mod_current, obs_disp%get_xmin(i_out), &
+               & obs_disp%get_dx(i_out), obs_disp%get_cmin(i_out), &
+               & obs_disp%get_dc(i_out))
+
+          write(filename, '(A9,I3.3,A4)')"syn_group", i_out, ".ppd"
+          call output_ppd_2d(filename, rank, disp(i_out)%get_nx(), &
+               & disp(i_out)%get_nc(), disp(i_out)%get_n_fu(), &
+               & n_mod_current, obs_disp%get_xmin(i_out), &
+               & obs_disp%get_dx(i_out), obs_disp%get_cmin(i_out), &
+               & obs_disp%get_dc(i_out))
+
+          write(filename, '(A6,I3.3,A4)')"syn_hv", i_out, ".ppd"
+          call output_ppd_2d(filename, rank, disp(i_out)%get_nx(), &
+               & disp(i_out)%get_nhv(), disp(i_out)%get_n_fhv(), &
+               & n_mod_current, obs_disp%get_xmin(i_out), &
+               & obs_disp%get_dx(i_out), disp(i_out)%get_hv_min(), &
+               & disp(i_out)%get_dhv())
+
+          write(filename, '(A6,I3.3,A4)')"syn_ra", i_out, ".ppd"
+          call output_ppd_2d(filename, rank, disp(i_out)%get_nx(), &
+               & disp(i_out)%get_nra(), disp(i_out)%get_n_fra(), &
+               & n_mod_current, obs_disp%get_xmin(i_out), &
+               & obs_disp%get_dx(i_out), disp(i_out)%get_ra_min(), &
+               & disp(i_out)%get_dra())
+
+          del_amp = (hyp_disp%get_prior_param(4*i_out-3, 2) - &
+               & hyp_disp%get_prior_param(4*i_out-3, 1)) / &
+               & para%get_n_bin_sig()
+          write(filename, '(A,I3.3,A)')"phase_sigma", i_out, ".ppd"
+          call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+               & intpr%get_n_disp_sig(4*i_out-3), n_mod_current, &
+               & hyp_disp%get_prior_param(4*i_out-3, 1), del_amp)
+
+          del_amp = (hyp_disp%get_prior_param(4*i_out-2, 2) - &
+               & hyp_disp%get_prior_param(4*i_out-2, 1)) / &
+               & para%get_n_bin_sig()
+          write(filename, '(A,I3.3,A)')"group_sigma", i_out, ".ppd"
+          call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+               & intpr%get_n_disp_sig(4*i_out-2), n_mod_current, &
+               & hyp_disp%get_prior_param(4*i_out-2, 1), del_amp)
+
+          del_amp = (hyp_disp%get_prior_param(4*i_out-1, 2) - &
+               & hyp_disp%get_prior_param(4*i_out-1, 1)) / &
+               & para%get_n_bin_sig()
+          write(filename, '(A,I3.3,A)')"hv_sigma", i_out, ".ppd"
+          call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+               & intpr%get_n_disp_sig(4*i_out-1), n_mod_current, &
+               & hyp_disp%get_prior_param(4*i_out-1, 1), del_amp)
+
+          del_amp = (hyp_disp%get_prior_param(4*i_out, 2) - &
+               & hyp_disp%get_prior_param(4*i_out, 1)) / &
+               & para%get_n_bin_sig()
+          write(filename, '(A,I3.3,A)')"ra_sigma", i_out, ".ppd"
+          call output_ppd_1d(filename, rank, para%get_n_bin_sig(), &
+               & intpr%get_n_disp_sig(4*i_out), n_mod_current, &
+               & hyp_disp%get_prior_param(4*i_out, 1), del_amp)
+       end do
+    end if
+
+    if (para%get_diagnostic_mode()) then
+       filename = "likelihood.history"
+       if (present(n_iter_current)) then
+          call pt%output_history(filename, 'l', n_iter_current)
+       else
+          call pt%output_history(filename, 'l')
+       end if
+       filename = "temp.history"
+       if (present(n_iter_current)) then
+          call pt%output_history(filename, 't', n_iter_current)
+       else
+          call pt%output_history(filename, 't')
+       end if
+    end if
+
+    filename = "proposal.count"
+    call pt%output_proposal(filename, prop%get_labels())
+  end subroutine output_joint_inv_products
 end program main

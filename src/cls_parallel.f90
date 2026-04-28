@@ -373,20 +373,27 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine parallel_output_history(self, filename, mode)
+  subroutine parallel_output_history(self, filename, mode, n_iter_out)
     class(parallel), intent(in) :: self
     character(*), intent(in) :: filename
     character(*), intent(in) :: mode
+    integer, intent(in), optional :: n_iter_out
     integer :: i, ierr, io
     type(mcmc) :: mc
-    integer :: icol, n_all, n_iter
+    integer :: icol, n_all, n_iter, n_iter_write
     double precision, allocatable :: hist_all(:,:), hist_all2(:,:)
     character(50) :: fmt
     !write(*,*)self%n_chain,  self%n_proc
     n_all = self%n_chain * self%n_proc
     mc = self%mc(1)
     n_iter = mc%get_n_iter()
+    n_iter_write = n_iter
+    if (present(n_iter_out)) then
+       n_iter_write = min(max(n_iter_out, 0), n_iter)
+    end if
     allocate(hist_all(n_iter, n_all), hist_all2(n_iter, n_all))
+    hist_all(:,:) = 0.d0
+    hist_all2(:,:) = 0.d0
 
     ! Gather information within the same node
     do i = 1, self%n_chain
@@ -409,14 +416,14 @@ contains
     
     ! Output
     if (self%rank == 0) then
-       open(newunit = io, file = filename, status = "unknown", &
+       open(newunit = io, file = filename, status = "replace", &
             & iostat = ierr)
        if (ierr /= 0) then
           write(0,*)"ERROR: cannot create ", trim(filename)
           call mpi_finalize(ierr)
           stop
        end if
-       do i = 1, n_iter
+       do i = 1, n_iter_write
           write(fmt, '("(",I0,"E16.4)")')n_all
           write(io, trim(fmt))hist_all2(i, 1:n_all)
        end do
@@ -455,7 +462,7 @@ contains
          & 0, MPI_COMM_WORLD, ierr)
     ! Output
     if (self%rank == 0) then
-       open(newunit = io, file = filename, status = "unknown", &
+       open(newunit = io, file = filename, status = "replace", &
             & iostat = ierr)
        do i = 1, n
           write(io, '(A,2I10)')'"' // label(i) // '"', &

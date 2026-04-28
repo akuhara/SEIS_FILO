@@ -584,7 +584,7 @@ class InvResult:
     #---------------------------------------------------------------
 
     
-    def draw_surface_wave_set(self, curve_id):
+    def create_surface_wave_figure(self, curve_id):
         grid_geom = (5, 6)
         fig_size = (17, 10)
         param = self._param
@@ -654,7 +654,12 @@ class InvResult:
                               fig=fig)
         self._plot_proposal_count(fig, ax)
 
-        # Output
+        return fig
+
+    #---------------------------------------------------------------
+
+    def draw_surface_wave_set(self, curve_id):
+        fig = self.create_surface_wave_figure(curve_id)
         out_file = "disper" + str(curve_id).zfill(2) + ".png"
         print("Output: " + out_file)
         fig.savefig(out_file)
@@ -662,7 +667,7 @@ class InvResult:
         
         
     #---------------------------------------------------------------
-    def draw_recv_func_set(self, trace_id):
+    def create_recv_func_figure(self, trace_id):
         grid_geom = (5, 4)
         fig_size = (17, 10)
         param = self._param
@@ -708,7 +713,12 @@ class InvResult:
                               fig=fig)
         self._plot_proposal_count(fig, ax)
 
-        # Output
+        return fig
+
+    #---------------------------------------------------------------
+
+    def draw_recv_func_set(self, trace_id):
+        fig = self.create_recv_func_figure(trace_id)
         out_file = "recv_func" + str(trace_id).zfill(2) + ".png"
         print("Output: " + out_file)
         fig.savefig(out_file)

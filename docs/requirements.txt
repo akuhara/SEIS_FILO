@@ -1,2 +1,5 @@
+mkdocs
 python-markdown-math
-
+ipykernel
+ipywidgets
+jupyter
