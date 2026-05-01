@@ -493,11 +493,15 @@ contains
        stop
     end if
     
-    tmp = name
-    call move_alloc(self%given, tmp)
-    allocate(self%given(size(tmp)+1))
-    self%given(1:size(tmp)) = tmp(:)
-    self%given(size(tmp)+1) = name
+    if (allocated(self%given)) then
+       call move_alloc(self%given, tmp)
+       allocate(self%given(size(tmp)+1))
+       self%given(1:size(tmp)) = tmp(:)
+       self%given(size(tmp)+1) = name
+    else
+       allocate(self%given(1))
+       self%given(1) = name
+    end if
     
     return 
   end subroutine param_set_value
