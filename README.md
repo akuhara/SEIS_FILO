@@ -1,5 +1,5 @@
 # SEIS_FILO 
-
+ 
 __SEISmological transdimensional inversion tools for Flat and Isotropic Layered structures in the Ocean__ 
 
 ![LOGO](./img/SEIS_FILO_LOGO.png)
@@ -23,7 +23,7 @@ The SEIS_FILO program package aims to carry out transdimensional joint inversion
 * __Parallel tempering__
 * __Ocean layer__
 * __Supported input types__
-    * Dispersion curves of the fundamental and higher mode Rayleigh waves
+    * Dispersion curves of the fundamental and higher mode Rayleigh/Love waves
     * Rayleigh wave ellipticity
     * Rayleigh wave admittance
     * P receiver functions (or Green's functions)
