@@ -90,6 +90,7 @@ module cls_disper
      procedure :: init_propagation_sh => disper_init_propagation_sh
      procedure :: do_propagation => disper_do_propagation
      procedure :: solid_propagator_sv => disper_solid_propagator_sv
+     procedure :: solid_propagator_sh => disper_solid_propagator_sh
      procedure :: liquid_propagator => disper_liquid_propagator
      procedure :: find_root => disper_find_root
      procedure :: set_full_calculation => disper_set_full_calculation
@@ -446,15 +447,14 @@ contains
     integer :: i, nlay, i0
     
     nlay = self%vmodel%get_nlay()
-
+    if (self%is_ocean) then
+       i0 = 2
+    else
+       i0 = 1
+    end if
+    
     select case (self%disper_phase)
     case ("R")
-       if (self%is_ocean) then
-          i0 = 2
-       else
-          i0 = 1
-       end if
-       
        call self%init_propagation_sv(c, is_ok)
        do i = nlay-1, i0, -1
           self%y = matmul(self%solid_propagator_sv(i, omega, c), self%y)
@@ -472,11 +472,17 @@ contains
           rslt = self%y(i24)
           ra = 0.d0
        end if
-       
-       return
     case ("L")
        call self%init_propagation_sh(c, is_ok)
+       do i = nlay-1, i0, -1
+          self%y(1:2) = matmul(self%solid_propagator_sh(i, omega, c), self%y(1:2))
+       end do
+       rslt = self%y(2)
+       hv = 0.d0
+       ra = 0.d0
     end select
+    
+    return 
   end subroutine disper_do_propagation
   
   !---------------------------------------------------------------------
@@ -525,32 +531,28 @@ contains
     double precision, intent(in) :: c
     logical, intent(out) :: is_ok
 
-    double precision :: vp, vs, rho, ra, rb, gm
+    double precision :: vs, rho, rb, mu
 
     ! get velocity of model bottom
     nlay = self%vmodel%get_nlay()
-    vp = self%vmodel%get_vp(nlay)
     vs = self%vmodel%get_vs(nlay)
     rho = self%vmodel%get_rho(nlay)
 
     is_ok = .true.
 
-    if (c > vp .or. c > vs) then
-       write(0,*)"ERROR: phase velocity must be lower than Vp or Vs "
+    if (c > vs) then
+       write(0,*)"ERROR: phase velocity must be lower than Vs "
        write(0,*)"     : at the model bottom (disper_init_propagation)"
-       write(0,*)"     : vp=", vp, "vs=", vs, "c=", c
+       write(0,*)"     : vs=", vs, "c=", c
        is_ok = .false.
        return
     end if
-    ra = sqrt(1.d0 - (c / vp) ** 2)
     rb = sqrt(1.d0 - (c / vs) ** 2)
-    gm = 2.d0 * (vs / c) ** 2
+    mu = rho * vs ** 2
     
-    self%y(i13) = ra * rb - 1.d0 
-    self%y(i14) = -rho * ra       
-    self%y(i23) = -rho * rb      
-    self%y(i12) = rho * (gm * self%y(i13) + 1.d0) 
-    self%y(i24) = -rho * (gm * self%y(i12) + rho * (gm - 1.d0)) 
+    self%y(1) = 1.d0
+    self%y(2) = mu * rb
+    self%y(3:5) = 0.d0
     
     return 
   end subroutine disper_init_propagation_sh
@@ -624,6 +626,32 @@ contains
 
     return
   end function disper_solid_propagator_sv 
+
+  !---------------------------------------------------------------------
+
+  function disper_solid_propagator_sh(self, i, omega, c) result(p)
+    class(disper), intent(inout) :: self
+    integer, intent(in) :: i
+    double precision, intent(in) :: omega, c
+    double precision :: p(2, 2)
+    double precision :: vs, rho, h, mu
+    double precision :: k
+    double precision :: cb, sb, rb2, fac
+
+    vs = self%vmodel%get_vs(i)
+    rho = self%vmodel%get_rho(i)
+    h = self%vmodel%get_h(i)
+    
+    k = omega / c
+    call calc_hyp_trig(c, vs, h, k, cb, sb, rb2, fac)
+    mu = rho * vs**2
+    p(1, 1) = cb
+    p(1, 2) = sb / mu
+    p(2, 1) = mu * rb2 * sb
+    p(2, 2) = cb
+
+    return
+  end function disper_solid_propagator_sh
 
   !---------------------------------------------------------------------
   

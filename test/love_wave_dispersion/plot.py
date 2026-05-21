@@ -30,7 +30,7 @@ cbar = fig.colorbar(mappable, ax=ax)
 
 
 with open("tmp.disp", 'w') as f2:
-    with open("SDISPR.TXT", 'r') as f:
+    with open("SDISPL.TXT", 'r') as f:
         for line in f:
             item = line.split()
             if len(item) == 3 and item[0].isdecimal():
@@ -41,4 +41,4 @@ df2 = pd.read_csv("tmp.disp", sep=r"\s+", header=None, \
                   names=("ID", "Frequency (Hz)", "Phase velocity (km/s)"))
 df2.plot.scatter("Frequency (Hz)", "Phase velocity (km/s)", ax=ax, s=2, \
                  marker=".", c="green")
-fig.savefig("rayleigh_test.png")
+fig.savefig("love_test.png")
