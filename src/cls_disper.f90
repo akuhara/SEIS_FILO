@@ -292,7 +292,7 @@ contains
              self%u(:) = 0.d0
              self%hv(:) = 0.d0
              self%ra(:) = 0.d0
-             write(*,*)"END dispersion calculation"
+             !write(*,*)"END dispersion calculation"
              if (present(is_ok)) is_ok = .false.
              return
           end if
@@ -387,10 +387,10 @@ contains
        prev_rslt = rslt
     end do
     if (.not. is_found) then
-       write(0,*)"Warning: root is not found (disper_find_root)", &
-            & " frequency = ", omega / 2.0 / pi, &
-            & ", c_tmp = ", c_tmp, ", n_mode = ", &
-            & self%n_mode
+       !write(0,*)"Warning: root is not found (disper_find_root)", &
+       !     & " frequency = ", omega / 2.0 / pi, &
+       !     & ", c_tmp = ", c_tmp, ", n_mode = ", &
+       !     & self%n_mode
        c = 0.d0
        u = 0.d0
        hv = 0.d0
