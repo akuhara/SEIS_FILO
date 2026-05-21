@@ -22,7 +22,7 @@ cmax           = 4.6     # Upper bound [km/s]
 dc             = 0.02    # Interval    [km/s]
 
 # Phase type
-disper_phase   = L       # Currently only 'R' (Rayleigh wave) is supported
+disper_phase   = R       # R (Rayleigh wave) or L (Love wave)
 n_mode         = 0       # Mode number 
                          # (0: fundamental mode, 1: 1st higher mode, 
                          #  2: 2nd higher mode, ...)
