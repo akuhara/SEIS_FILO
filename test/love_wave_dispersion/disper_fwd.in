@@ -1,0 +1,12 @@
+#
+freq_or_period = freq
+xmin = 0.01
+xmax = 1.0
+dx   = 0.002
+vmod_in = ../vmod/vmod_land.in
+cmin    = 2.5
+cmax    = 4.6
+dc      = 0.02
+disper_phase = L
+n_mode = -1        # for full output
+disper_out = disper_test.out

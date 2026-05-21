@@ -31,7 +31,7 @@ module cls_disper
   implicit none 
   
   double precision, private, parameter :: pi = acos(-1.d0)
-  double precision, private, parameter :: eps = 1.0d-10
+  !double precision, private, parameter :: eps = 1.0d-10
   double precision, private, parameter :: huge = 100.d0
   integer, private, parameter :: i12 = 1, i13 = 2, i14 = 3
   integer, private, parameter :: i23 = 4, i24 = 5
@@ -86,9 +86,11 @@ module cls_disper
 
    contains
      procedure :: dispersion => disper_dispersion
-     procedure :: init_propagation => disper_init_propagation
+     procedure :: init_propagation_sv => disper_init_propagation_sv
+     procedure :: init_propagation_sh => disper_init_propagation_sh
      procedure :: do_propagation => disper_do_propagation
-     procedure :: solid_propagator => disper_solid_propagator
+     procedure :: solid_propagator_sv => disper_solid_propagator_sv
+     procedure :: solid_propagator_sh => disper_solid_propagator_sh
      procedure :: liquid_propagator => disper_liquid_propagator
      procedure :: find_root => disper_find_root
      procedure :: set_full_calculation => disper_set_full_calculation
@@ -196,9 +198,9 @@ contains
     end if
     
     self%disper_phase = disper_phase
-    if (self%disper_phase == "L") then
-       error stop "Love wave it not supported yet"
-    end if
+    !if (self%disper_phase == "L") then
+    !   error stop "Love wave it not supported yet"
+    !end if
     if (self%disper_phase /= "L" .and. self%disper_phase /= "R") then
        error stop "disper_phase must be L or R"
     end if
@@ -445,37 +447,47 @@ contains
     integer :: i, nlay, i0
     
     nlay = self%vmodel%get_nlay()
-
     if (self%is_ocean) then
        i0 = 2
     else
        i0 = 1
     end if
     
-    call self%init_propagation(c, is_ok)
-    do i = nlay-1, i0, -1
-       self%y = matmul(self%solid_propagator(i, omega, c), self%y)
-    end do
-
-    hv = self%y(i12) / self%y(i14) ! Retrograde positive
-
-    if (self%is_ocean) then
-       self%y(1) = self%y(3)
-       self%y(2) = self%y(5)
-       ra = self%y(1) / (self%y(2) * omega * c)
-       self%y(1:2) = matmul(self%liquid_propagator(omega, c), self%y(1:2))
+    select case (self%disper_phase)
+    case ("R")
+       call self%init_propagation_sv(c, is_ok)
+       do i = nlay-1, i0, -1
+          self%y = matmul(self%solid_propagator_sv(i, omega, c), self%y)
+       end do
+       
+       hv = self%y(i12) / self%y(i14) ! Retrograde positive
+       
+       if (self%is_ocean) then
+          self%y(1) = self%y(3)
+          self%y(2) = self%y(5)
+          ra = self%y(1) / (self%y(2) * omega * c)
+          self%y(1:2) = matmul(self%liquid_propagator(omega, c), self%y(1:2))
+          rslt = self%y(2)
+       else
+          rslt = self%y(i24)
+          ra = 0.d0
+       end if
+    case ("L")
+       call self%init_propagation_sh(c, is_ok)
+       do i = nlay-1, i0, -1
+          self%y(1:2) = matmul(self%solid_propagator_sh(i, omega, c), self%y(1:2))
+       end do
        rslt = self%y(2)
-    else
-       rslt = self%y(i24)
+       hv = 0.d0
        ra = 0.d0
-    end if
+    end select
     
     return 
   end subroutine disper_do_propagation
   
   !---------------------------------------------------------------------
   
-  subroutine disper_init_propagation(self, c, is_ok)
+  subroutine disper_init_propagation_sv(self, c, is_ok)
     class(disper), intent(inout) :: self
     integer :: nlay
     double precision, intent(in) :: c
@@ -509,11 +521,44 @@ contains
     self%y(i24) = -rho * (gm * self%y(i12) + rho * (gm - 1.d0)) 
     
     return 
-  end subroutine disper_init_propagation
+  end subroutine disper_init_propagation_sv
   
   !---------------------------------------------------------------------
   
-  function disper_solid_propagator(self, i, omega, c) result(p)
+  subroutine disper_init_propagation_sh(self, c, is_ok)
+    class(disper), intent(inout) :: self
+    integer :: nlay
+    double precision, intent(in) :: c
+    logical, intent(out) :: is_ok
+
+    double precision :: vs, rho, rb, mu
+
+    ! get velocity of model bottom
+    nlay = self%vmodel%get_nlay()
+    vs = self%vmodel%get_vs(nlay)
+    rho = self%vmodel%get_rho(nlay)
+
+    is_ok = .true.
+
+    if (c > vs) then
+       write(0,*)"ERROR: phase velocity must be lower than Vs "
+       write(0,*)"     : at the model bottom (disper_init_propagation)"
+       write(0,*)"     : vs=", vs, "c=", c
+       is_ok = .false.
+       return
+    end if
+    rb = sqrt(1.d0 - (c / vs) ** 2)
+    mu = rho * vs ** 2
+    
+    self%y(1) = 1.d0
+    self%y(2) = mu * rb
+    self%y(3:5) = 0.d0
+    
+    return 
+  end subroutine disper_init_propagation_sh
+  
+  !---------------------------------------------------------------------
+  function disper_solid_propagator_sv(self, i, omega, c) result(p)
     class(disper), intent(inout) :: self
     integer, intent(in) :: i
     double precision, intent(in) :: omega, c
@@ -580,7 +625,33 @@ contains
     
 
     return
-  end function disper_solid_propagator
+  end function disper_solid_propagator_sv 
+
+  !---------------------------------------------------------------------
+
+  function disper_solid_propagator_sh(self, i, omega, c) result(p)
+    class(disper), intent(inout) :: self
+    integer, intent(in) :: i
+    double precision, intent(in) :: omega, c
+    double precision :: p(2, 2)
+    double precision :: vs, rho, h, mu
+    double precision :: k
+    double precision :: cb, sb, rb2, fac
+
+    vs = self%vmodel%get_vs(i)
+    rho = self%vmodel%get_rho(i)
+    h = self%vmodel%get_h(i)
+    
+    k = omega / c
+    call calc_hyp_trig(c, vs, h, k, cb, sb, rb2, fac)
+    mu = rho * vs**2
+    p(1, 1) = cb
+    p(1, 2) = sb / mu
+    p(2, 1) = mu * rb2 * sb
+    p(2, 2) = cb
+
+    return
+  end function disper_solid_propagator_sh
 
   !---------------------------------------------------------------------
   
