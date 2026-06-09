@@ -63,6 +63,14 @@ class InvResult:
         
     #---------------------------------------------------------------
 
+    def _param_is_true(self, name):
+        if name not in self._param:
+            return False
+
+        return self._param[name].lower() in (".true.", "t", "true")
+
+    #---------------------------------------------------------------
+
     def _plot_n_layers(self, fig, ax):
         file = "n_layers.ppd"
         xlabel = "# of layers"
@@ -162,8 +170,16 @@ class InvResult:
                          names=(vlabel, zlabel, plabel))
         v_tmp = df[df[vlabel].duplicated()==False][vlabel]
         z_tmp = df[df[zlabel].duplicated()==False][zlabel]
-        df_below_sea = df[df[zlabel] > float(param["z_min"])]
-        p_max = df_below_sea[plabel].max()
+        vmax_depth_min = float(param["z_min"])
+        if self._param_is_true("is_ocean"):
+            vmax_depth_min = max(vmax_depth_min, float(param["ocean_thick"]))
+            vmax_depth_min += 0.5 * del_z
+        df_for_vmax = df[df[zlabel] > vmax_depth_min]
+        if len(df_for_vmax) == 0:
+            df_for_vmax = df[df[zlabel] > float(param["z_min"])]
+        if len(df_for_vmax) == 0:
+            df_for_vmax = df
+        p_max = df_for_vmax[plabel].max()
         data = df.pivot(index=zlabel, columns=vlabel, values=plabel)
         mappable = ax.pcolormesh(v_tmp, z_tmp, \
                                  data, shading='nearest', \
