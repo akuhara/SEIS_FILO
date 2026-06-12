@@ -244,14 +244,23 @@ contains
     double precision :: c_bracket_min, c_bracket_max
     double precision :: c_scan_prev, c_scan, dc_scan
     double precision :: hv_dummy, ra_dummy
-    double precision :: c, u, hv, ra, period
+    double precision :: c, u, hv, ra, period, prev_x, prev_omega
     logical :: first_flag, use_bracket
-    integer :: i
+    integer :: i, i_start, i_end, i_step, i_prev
     
     prev_rslt = 0.d0
     c_start = self%cmin
     first_flag = .true.
-    do i = 1, self%nx
+    if (self%freq_or_period == "freq" .and. .not. self%full_calculation) then
+       i_start = self%nx
+       i_end = 1
+       i_step = -1
+    else
+       i_start = 1
+       i_end = self%nx
+       i_step = 1
+    end if
+    do i = i_start, i_end, i_step
        if (self%freq_or_period == "freq") then
           omega = 2.d0 * pi * (self%xmin + (i - 1) * self%dx)
        else if (self%freq_or_period == "period") then
@@ -261,27 +270,31 @@ contains
        if (.not. self%full_calculation) then
           ! find root
           use_bracket = .false.
-          if (i /= 1) then
+          if (i /= i_start) then
              first_flag = .false.
-             if (self%u(i-1) /= 0.d0) then
+             i_prev = i - i_step
+             if (self%u(i_prev) /= 0.d0) then
                 if (self%freq_or_period == "freq") then
+                   prev_omega = 2.d0 * pi * &
+                        & (self%xmin + (i_prev - 1) * self%dx)
                    ! dc/dw
-                   grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
-                        & self%c(i-1) / (omega - 2.d0 * pi * self%dx)
-                   c_pred = self%c(i-1) + grad * 2.d0 * pi * self%dx
+                   grad = (1.d0 - self%c(i_prev) / self%u(i_prev)) * &
+                        & self%c(i_prev) / prev_omega
+                   c_pred = self%c(i_prev) + grad * (omega - prev_omega)
                 else if (self%freq_or_period == "period") then
+                   prev_x = self%xmin + (i_prev - 1) * self%dx
                    ! dc/dT
-                   grad = -(1.d0 - self%c(i-1) / self%u(i-1)) * &
-                        & self%c(i-1) / (period - self%dx)
-                   c_pred = self%c(i-1) + grad * self%dx
+                   grad = -(1.d0 - self%c(i_prev) / self%u(i_prev)) * &
+                        & self%c(i_prev) / prev_x
+                   c_pred = self%c(i_prev) + grad * (period - prev_x)
                 end if
 
                 if (c_pred < self%cmin .or. c_pred > self%cmax) then
                    c_start = self%cmin
                    first_flag = .true.
                 else
-                   c_scan_prev = self%c(i-1)
-                   dc_scan = sign(self%dc, c_pred - self%c(i-1))
+                   c_scan_prev = self%c(i_prev)
+                   dc_scan = sign(self%dc, c_pred - self%c(i_prev))
                    call self%do_propagation(omega, c_scan_prev, &
                         & rslt_prev, hv_dummy, ra_dummy)
                    do while ((c_pred - c_scan_prev) * dc_scan > 0.d0)
