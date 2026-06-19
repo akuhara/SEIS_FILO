@@ -240,14 +240,27 @@ contains
     class(disper), intent(inout) :: self
     logical, intent(out), optional :: is_ok
     double precision :: omega, c_start, prev_rslt, grad
-    double precision :: c, u, hv, ra, period
-    logical :: first_flag
-    integer :: i
+    double precision :: c_pred, rslt_prev, rslt_pred
+    double precision :: c_bracket_min, c_bracket_max
+    double precision :: c_scan_prev, c_scan, dc_scan
+    double precision :: hv_dummy, ra_dummy
+    double precision :: c, u, hv, ra, period, prev_x, prev_omega
+    logical :: first_flag, use_bracket
+    integer :: i, i_start, i_end, i_step, i_prev
     
     prev_rslt = 0.d0
     c_start = self%cmin
     first_flag = .true.
-    do i = 1, self%nx
+    if (self%freq_or_period == "freq" .and. .not. self%full_calculation) then
+       i_start = self%nx
+       i_end = 1
+       i_step = -1
+    else
+       i_start = 1
+       i_end = self%nx
+       i_step = 1
+    end if
+    do i = i_start, i_end, i_step
        if (self%freq_or_period == "freq") then
           omega = 2.d0 * pi * (self%xmin + (i - 1) * self%dx)
        else if (self%freq_or_period == "period") then
@@ -256,39 +269,70 @@ contains
        end if
        if (.not. self%full_calculation) then
           ! find root
-          if (i /= 1) then
+          use_bracket = .false.
+          if (i /= i_start) then
              first_flag = .false.
-             if (self%u(i-1) /= 0.d0) then
+             i_prev = i - i_step
+             if (self%u(i_prev) /= 0.d0) then
                 if (self%freq_or_period == "freq") then
+                   prev_omega = 2.d0 * pi * &
+                        & (self%xmin + (i_prev - 1) * self%dx)
                    ! dc/dw
-                   grad = (1.d0 - self%c(i-1) / self%u(i-1)) * &
-                        & self%c(i-1) / (omega - 2.d0 * pi * self%dx)
+                   grad = (1.d0 - self%c(i_prev) / self%u(i_prev)) * &
+                        & self%c(i_prev) / prev_omega
+                   c_pred = self%c(i_prev) + grad * (omega - prev_omega)
                 else if (self%freq_or_period == "period") then
+                   prev_x = self%xmin + (i_prev - 1) * self%dx
                    ! dc/dT
-                   grad = -(1.d0 - self%c(i-1) / self%u(i-1)) * &
-                        & self%c(i-1) / (period - self%dx)
+                   grad = -(1.d0 - self%c(i_prev) / self%u(i_prev)) * &
+                        & self%c(i_prev) / prev_x
+                   c_pred = self%c(i_prev) + grad * (period - prev_x)
                 end if
-                
-                if (self%freq_or_period == "freq" .and. grad < -0.01d0) then
-                   c_start = self%c(i-1) + &
-                        & 3.5d0 * grad * 2.d0 * pi * self%dx ! 3.5
-                else if (self%freq_or_period == "period" .and. grad > 0.1d0) then
-                   c_start = self%c(i-1) + &
-                        & 0.07d0 * grad * self%dx ! 0.5
-                else 
+
+                if (c_pred < self%cmin .or. c_pred > self%cmax) then
                    c_start = self%cmin
                    first_flag = .true.
+                else
+                   c_scan_prev = self%c(i_prev)
+                   dc_scan = sign(self%dc, c_pred - self%c(i_prev))
+                   call self%do_propagation(omega, c_scan_prev, &
+                        & rslt_prev, hv_dummy, ra_dummy)
+                   do while ((c_pred - c_scan_prev) * dc_scan > 0.d0)
+                      c_scan = c_scan_prev + dc_scan
+                      if ((c_pred - c_scan) * dc_scan < 0.d0) c_scan = c_pred
+                      call self%do_propagation(omega, c_scan, &
+                           & rslt_pred, hv_dummy, ra_dummy)
+                      if (rslt_prev * rslt_pred < 0.d0) then
+                         c_bracket_min = min(c_scan_prev, c_scan)
+                         c_bracket_max = max(c_scan_prev, c_scan)
+                         c_start = c_bracket_min
+                         use_bracket = .true.
+                         exit
+                      end if
+                      c_scan_prev = c_scan
+                      rslt_prev = rslt_pred
+                   end do
+                   if (.not. use_bracket) c_start = c_pred
                 end if
 
                 if (c_start <= self%cmin) then
                    c_start = self%cmin
                 end if
+             else
+                c_start = self%cmin
+                first_flag = .true.
              end if
           else
              c_start = self%cmin
           end if
-          call self%find_root(omega, c_start, c, u, hv, ra, &
-               & first_flag)
+          if (use_bracket) then
+             call self%find_root(omega, c_start, c, u, hv, ra, &
+                  & first_flag, c_bracket_min=c_bracket_min, &
+                  & c_bracket_max=c_bracket_max)
+          else
+             call self%find_root(omega, c_start, c, u, hv, ra, &
+                  & first_flag)
+          end if
           if (c == 0.d0) then
              self%c(:) = 0.d0
              self%u(:) = 0.d0
@@ -353,11 +397,12 @@ contains
   !---------------------------------------------------------------------
   
   subroutine disper_find_root(self, omega, c_start, c, u, hv, ra, &
-       & first_flag)
+       & first_flag, c_bracket_min, c_bracket_max)
     class(disper), intent(inout) :: self
     double precision, intent(in) :: omega, c_start
     double precision, intent(out) :: c, u, hv, ra
     logical, intent(in) :: first_flag
+    double precision, intent(in), optional :: c_bracket_min, c_bracket_max
     integer :: i, count
     double precision :: c_tmp, rslt, prev_rslt, cmin2, cmax2
     double precision :: c1, c2, rslt1_c, rslt2_c, del_c
@@ -367,27 +412,40 @@ contains
 
     is_found = .false.
 
-    ! First step 
-    prev_rslt = 0.d0
-    count = -1
-    do i = 1, self%nc
-       c_tmp = c_start + (i - 1) * self%dc
-       !write(*,*)"C_tmp=", c_tmp
-       if (c_tmp > self%cmax) exit
-       !write(*,*)"First"
-       call self%do_propagation(omega, c_tmp, rslt, hv, ra)
-       if (prev_rslt * rslt < 0) then
-          count = count + 1
-          if (.not. first_flag .or. self%n_mode == count) then
-             is_found = .true.
-             prev_rslt = rslt
-             cmin2 = c_tmp - self%dc
-             cmax2 = c_tmp
-             exit
-          end if
+    if (present(c_bracket_min) .and. present(c_bracket_max)) then
+       cmin2 = max(self%cmin, min(c_bracket_min, c_bracket_max))
+       cmax2 = min(self%cmax, max(c_bracket_min, c_bracket_max))
+       call self%do_propagation(omega, cmin2, prev_rslt, hv, ra)
+       call self%do_propagation(omega, cmax2, rslt, hv, ra)
+       if (prev_rslt * rslt < 0.d0) then
+          prev_rslt = rslt
+          is_found = .true.
        end if
-       prev_rslt = rslt
-    end do
+    end if
+
+    ! First step 
+    if (.not. is_found) then
+       prev_rslt = 0.d0
+       count = -1
+       do i = 1, self%nc
+          c_tmp = c_start + (i - 1) * self%dc
+          !write(*,*)"C_tmp=", c_tmp
+          if (c_tmp > self%cmax) exit
+          !write(*,*)"First"
+          call self%do_propagation(omega, c_tmp, rslt, hv, ra)
+          if (prev_rslt * rslt < 0) then
+             count = count + 1
+             if (.not. first_flag .or. self%n_mode == count) then
+                is_found = .true.
+                prev_rslt = rslt
+                cmin2 = c_tmp - self%dc
+                cmax2 = c_tmp
+                exit
+             end if
+          end if
+          prev_rslt = rslt
+       end do
+    end if
     if (.not. is_found) then
        !write(0,*)"Warning: root is not found (disper_find_root)", &
        !     & " frequency = ", omega / 2.0 / pi, &
